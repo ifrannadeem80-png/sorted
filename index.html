@@ -1,0 +1,2064 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E5B4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sorted">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#9989;</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<title>Sorted</title>
+<style>
+  /* ---------- Design tokens ---------- */
+  :root {
+    --bg: #F6F7F5;
+    --surface: #FFFFFF;
+    --surface-2: #EDF0EB;
+    --ink: #1B2420;
+    --ink-soft: #5C6862;
+    --ink-faint: #8B958F;
+    --line: #DDE3DC;
+    --line-soft: #E8ECE6;
+    --accent: #1E5B4A;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E2EDE8;
+    --q1: #B54430; --q1-soft: #F6E3DE;
+    --q2: #1E5B4A; --q2-soft: #E2EDE8;
+    --q3: #A1720E; --q3-soft: #F4EAD3;
+    --q4: #66716B; --q4-soft: #E9ECE9;
+    --danger: #B3402E;
+    --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 4px 16px rgba(27,36,32,0.07);
+    --shadow-lift: 0 2px 6px rgba(27,36,32,0.10), 0 10px 30px rgba(27,36,32,0.14);
+    --radius: 10px;
+    --serif: 'Charter', 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131816;
+      --surface: #1B221F;
+      --surface-2: #222B27;
+      --ink: #E7ECE8;
+      --ink-soft: #A0ACA5;
+      --ink-faint: #6E7A73;
+      --line: #2D3732;
+      --line-soft: #26302B;
+      --accent: #62A98E;
+      --accent-ink: #10201A;
+      --accent-soft: #22362E;
+      --q1: #D9765F; --q1-soft: #3A2620;
+      --q2: #62A98E; --q2-soft: #22362E;
+      --q3: #CFA045; --q3-soft: #38301B;
+      --q4: #90998F; --q4-soft: #2A322D;
+      --danger: #D9765F;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+      --shadow-lift: 0 2px 6px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131816;
+    --surface: #1B221F;
+    --surface-2: #222B27;
+    --ink: #E7ECE8;
+    --ink-soft: #A0ACA5;
+    --ink-faint: #6E7A73;
+    --line: #2D3732;
+    --line-soft: #26302B;
+    --accent: #62A98E;
+    --accent-ink: #10201A;
+    --accent-soft: #22362E;
+    --q1: #D9765F; --q1-soft: #3A2620;
+    --q2: #62A98E; --q2-soft: #22362E;
+    --q3: #CFA045; --q3-soft: #38301B;
+    --q4: #90998F; --q4-soft: #2A322D;
+    --danger: #D9765F;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-lift: 0 2px 6px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.45);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F7F5;
+    --surface: #FFFFFF;
+    --surface-2: #EDF0EB;
+    --ink: #1B2420;
+    --ink-soft: #5C6862;
+    --ink-faint: #8B958F;
+    --line: #DDE3DC;
+    --line-soft: #E8ECE6;
+    --accent: #1E5B4A;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E2EDE8;
+    --q1: #B54430; --q1-soft: #F6E3DE;
+    --q2: #1E5B4A; --q2-soft: #E2EDE8;
+    --q3: #A1720E; --q3-soft: #F4EAD3;
+    --q4: #66716B; --q4-soft: #E9ECE9;
+    --danger: #B3402E;
+    --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 4px 16px rgba(27,36,32,0.07);
+    --shadow-lift: 0 2px 6px rgba(27,36,32,0.10), 0 10px 30px rgba(27,36,32,0.14);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  input, select, textarea { font: inherit; color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+
+  /* ---------- Shell ---------- */
+  .shell { display: flex; height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .sidebar {
+    width: 244px; flex: none;
+    border-right: 1px solid var(--line);
+    background: var(--surface);
+    display: flex; flex-direction: column;
+    padding: 20px 14px 14px;
+    gap: 4px;
+    overflow-y: auto;
+  }
+  .area-row { display: flex; align-items: center; }
+  .area-row .proj-btn { flex: 1; font-weight: 600; color: var(--ink); }
+  .area-row .proj-btn.active { color: var(--accent); }
+  .caret { padding: 4px 7px; color: var(--ink-faint); font-size: 10px; border-radius: 6px; }
+  .caret:hover { background: var(--surface-2); color: var(--ink); }
+  .proj-btn.indent { padding-left: 28px; }
+  .brand {
+    font-family: var(--serif);
+    font-size: 26px; font-weight: 700;
+    letter-spacing: 0.01em;
+    padding: 0 10px 14px;
+    color: var(--ink);
+  }
+  .brand .dot { color: var(--accent); }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px;
+    color: var(--ink-soft); text-align: left;
+    font-weight: 500;
+    transition: background 0.12s;
+  }
+  .nav-btn:hover { background: var(--surface-2); }
+  .nav-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .nav-btn svg { flex: none; }
+  .nav-count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+  .side-label {
+    margin: 18px 10px 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-faint);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .side-label button { color: var(--ink-faint); font-size: 16px; line-height: 1; padding: 0 2px; }
+  .side-label button:hover { color: var(--accent); }
+  .proj-btn {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 10px; border-radius: 8px;
+    color: var(--ink-soft); text-align: left; width: 100%;
+  }
+  .proj-btn:hover { background: var(--surface-2); }
+  .proj-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .proj-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .proj-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-foot { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  .topbar {
+    display: flex; gap: 10px; align-items: center;
+    padding: 14px 22px 10px;
+  }
+  .view-title {
+    font-family: var(--serif);
+    font-size: 24px; font-weight: 700;
+    text-wrap: balance;
+    margin-right: auto;
+    white-space: nowrap;
+  }
+  .view-sub { font-size: 13px; color: var(--ink-faint); margin-left: 10px; font-family: var(--sans); font-weight: 400; }
+
+  .quickadd-wrap { padding: 4px 22px 12px; }
+  .quickadd {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 4px 6px 4px 14px;
+    box-shadow: var(--shadow);
+  }
+  .quickadd:focus-within { border-color: var(--accent); }
+  .quickadd input {
+    flex: 1; border: none; background: none; outline: none;
+    padding: 8px 0; font-size: 15px;
+  }
+  .quickadd input::placeholder { color: var(--ink-faint); }
+  .quickadd .add-go {
+    background: var(--accent); color: var(--accent-ink);
+    border-radius: 8px; padding: 8px 16px; font-weight: 600;
+  }
+  .quickadd-hint {
+    font-size: 12px; color: var(--ink-faint);
+    padding: 6px 4px 0;
+  }
+  .quickadd-hint b { font-weight: 600; color: var(--ink-soft); }
+
+  .searchbar { position: relative; }
+  .searchbar input {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 12px 8px 32px; width: 190px; outline: none;
+  }
+  .searchbar input:focus { border-color: var(--accent); }
+  .searchbar svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
+
+  .icon-btn {
+    padding: 8px; border-radius: 8px; color: var(--ink-soft);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
+
+  .content { flex: 1; overflow-y: auto; padding: 4px 22px 90px; }
+
+  /* ---------- Task rows ---------- */
+  .task-row {
+    display: flex; align-items: flex-start; gap: 11px;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    padding: 11px 13px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    transition: box-shadow 0.12s, border-color 0.12s;
+  }
+  .task-row:hover { border-color: var(--line); box-shadow: var(--shadow); }
+  .task-row.done-row { opacity: 0.6; }
+  .task-row.done-row .t-title { text-decoration: line-through; }
+  .check {
+    flex: none; width: 20px; height: 20px; margin-top: 1px;
+    border: 2px solid var(--ink-faint); border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: transparent; background: none;
+    transition: all 0.12s;
+  }
+  .check:hover { border-color: var(--accent); }
+  .check.checked { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .t-body { flex: 1; min-width: 0; }
+  .t-title { font-weight: 500; overflow-wrap: anywhere; }
+  .t-meta { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 4px; font-size: 12px; color: var(--ink-faint); align-items: center; }
+  .t-meta .m-proj { display: inline-flex; align-items: center; gap: 5px; }
+  .m-due.overdue { color: var(--q1); font-weight: 600; }
+  .m-due.today { color: var(--q3); font-weight: 600; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    padding: 1px 8px; border-radius: 999px;
+  }
+  .chip.q1 { background: var(--q1-soft); color: var(--q1); }
+  .chip.q2 { background: var(--q2-soft); color: var(--q2); }
+  .chip.q3 { background: var(--q3-soft); color: var(--q3); }
+  .chip.q4 { background: var(--q4-soft); color: var(--q4); }
+  .chip.st { background: var(--surface-2); color: var(--ink-soft); }
+  .star-btn { flex: none; color: var(--ink-faint); padding: 2px; margin-top: -1px; }
+  .star-btn:hover { color: var(--q3); }
+  .star-btn.on { color: var(--q3); }
+
+  .group-head {
+    font-family: var(--serif);
+    font-size: 16px; font-weight: 700;
+    margin: 20px 2px 9px;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .group-head:first-child { margin-top: 8px; }
+  .group-head .g-count { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .group-head .g-dot { width: 10px; height: 10px; border-radius: 50%; align-self: center; }
+  .sub-head {
+    font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    margin: 10px 2px 6px; display: flex; gap: 7px; align-items: center;
+  }
+  .sub-head .g-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .sub-head .g-count { font-size: 11px; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+  .toolbar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding: 2px 0 8px;
+  }
+  .seg { display: inline-flex; background: var(--surface-2); border-radius: 8px; padding: 3px; }
+  .seg button { padding: 5px 12px; border-radius: 6px; font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  .tool-label { font-size: 12px; color: var(--ink-faint); margin-right: -2px; }
+  .link-btn { color: var(--accent); font-size: 13px; font-weight: 600; padding: 5px 8px; border-radius: 6px; }
+  .link-btn:hover { background: var(--accent-soft); }
+
+  .empty {
+    text-align: center; color: var(--ink-faint);
+    padding: 48px 20px; font-size: 14px;
+  }
+  .empty .e-big { font-family: var(--serif); font-size: 19px; color: var(--ink-soft); margin-bottom: 6px; }
+
+  /* ---------- Priority table ---------- */
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .ptable { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; }
+  .ptable th {
+    text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--ink-faint);
+    padding: 10px 12px; border-bottom: 1px solid var(--line);
+  }
+  .ptable td { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  .ptable tr:last-child td { border-bottom: none; }
+  .ptable tbody tr { cursor: pointer; }
+  .ptable tbody tr:hover td { background: var(--surface-2); }
+  .ptable .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pri-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums;
+  }
+  .pri-1 { background: var(--q1-soft); color: var(--q1); }
+  .pri-2 { background: var(--q3-soft); color: var(--q3); }
+  .pri-3 { background: var(--q2-soft); color: var(--q2); }
+  .pri-4 { background: var(--q4-soft); color: var(--q4); }
+  .chip.pri { background: var(--surface-2); color: var(--ink-soft); }
+
+  /* ---------- Matrix ---------- */
+  .matrix-wrap { display: grid; grid-template-columns: 26px 1fr 1fr; grid-template-rows: 24px 1fr 1fr; gap: 8px; min-height: 60vh; }
+  .ax {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .ax.vert { writing-mode: vertical-rl; transform: rotate(180deg); }
+  .quad {
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    padding: 10px;
+    display: flex; flex-direction: column;
+    min-height: 170px;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .quad.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .quad-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 2px 4px 8px;
+    font-weight: 700; font-size: 14px;
+  }
+  .quad-head .q-mark { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .quad-head .q-count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .quad-body { flex: 1; overflow-y: auto; }
+  .quad-body .task-row { padding: 8px 10px; margin-bottom: 6px; }
+  .quad-body .t-meta { margin-top: 2px; }
+  .tray {
+    margin-top: 14px;
+    background: var(--surface-2);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 12px;
+  }
+  .tray.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .tray-head { font-weight: 700; font-size: 14px; display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+  .tray-head span { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
+  .drag-hint { font-size: 12px; color: var(--ink-faint); padding: 4px 2px 10px; }
+
+  /* ---------- Board ---------- */
+  .board { display: grid; grid-template-columns: repeat(4, minmax(230px, 1fr)); gap: 10px; align-items: start; overflow-x: auto; padding-bottom: 10px; }
+  .col {
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 10px;
+    min-height: 200px;
+    border: 1px solid transparent;
+  }
+  .col.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .col-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; padding: 2px 4px 10px; }
+  .col-head .q-count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .col .task-row { padding: 9px 11px; }
+
+  /* ---------- Modal / sheet ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(15,20,17,0.45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 18px;
+  }
+  .sheet {
+    background: var(--surface);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lift);
+    width: 100%; max-width: 520px;
+    max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    padding: 22px;
+  }
+  .sheet h2 { font-family: var(--serif); font-size: 20px; margin-bottom: 14px; }
+  .f-row { margin-bottom: 14px; }
+  .f-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+  .f-input, .f-select, .f-textarea {
+    width: 100%; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 12px; outline: none;
+  }
+  .f-input:focus, .f-select:focus, .f-textarea:focus { border-color: var(--accent); }
+  .f-textarea { resize: vertical; min-height: 64px; }
+  .pick-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pick {
+    padding: 7px 12px; border-radius: 8px;
+    background: var(--surface-2); color: var(--ink-soft);
+    font-size: 13px; font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .pick.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .pick.q1.on { background: var(--q1-soft); color: var(--q1); border-color: var(--q1); }
+  .pick.q2.on { background: var(--q2-soft); color: var(--q2); border-color: var(--q2); }
+  .pick.q3.on { background: var(--q3-soft); color: var(--q3); border-color: var(--q3); }
+  .pick.q4.on { background: var(--q4-soft); color: var(--q4); border-color: var(--q4); }
+  .sheet-actions { display: flex; gap: 8px; margin-top: 20px; align-items: center; }
+  .btn-primary {
+    background: var(--accent); color: var(--accent-ink);
+    padding: 10px 20px; border-radius: 8px; font-weight: 600;
+  }
+  .btn-quiet { padding: 10px 14px; border-radius: 8px; color: var(--ink-soft); font-weight: 500; }
+  .btn-quiet:hover { background: var(--surface-2); }
+  .btn-danger { color: var(--danger); padding: 10px 14px; border-radius: 8px; font-weight: 600; margin-right: auto; }
+  .btn-danger:hover { background: var(--q1-soft); }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg);
+    padding: 10px 18px; border-radius: 999px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lift);
+    z-index: 90; opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ---------- Auth ---------- */
+  .auth-wrap {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .auth-card {
+    width: 100%; max-width: 360px;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lift);
+    padding: 30px 26px;
+  }
+  .auth-card .brand { padding: 0 0 4px; font-size: 32px; }
+  .auth-sub { color: var(--ink-faint); font-size: 13.5px; margin-bottom: 20px; }
+  .auth-card .f-row { margin-bottom: 12px; }
+  .auth-btn {
+    width: 100%; background: var(--accent); color: var(--accent-ink);
+    padding: 11px; border-radius: 8px; font-weight: 600; font-size: 15px;
+    margin-top: 4px;
+  }
+  .auth-btn:disabled { opacity: 0.6; cursor: default; }
+  .auth-alt { text-align: center; margin-top: 14px; font-size: 13.5px; color: var(--ink-faint); }
+  .auth-alt button { color: var(--accent); font-weight: 600; }
+  .auth-err { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 10px; text-align: center; }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--q2); flex: none;
+    transition: background 0.3s;
+  }
+  .sync-dot.off { background: var(--q3); }
+
+  /* ---------- Mobile ---------- */
+  .tabbar { display: none; }
+  .mobile-fab { display: none; }
+  .chipbar { display: none; }
+  .chip-f {
+    flex: none; display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line);
+    font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .chip-f.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+  @media (max-width: 880px) {
+    .sidebar { display: none; }
+    .topbar { padding: 12px 14px 8px; flex-wrap: wrap; }
+    .quickadd-wrap { padding: 4px 14px 10px; }
+    .quickadd-hint { display: none; }
+    .chipbar { display: flex; gap: 6px; overflow-x: auto; padding: 0 14px 10px; scrollbar-width: none; }
+    .chipbar::-webkit-scrollbar { display: none; }
+    .content { padding: 4px 14px 130px; }
+    .searchbar input { width: 130px; }
+    .view-title { font-size: 21px; }
+    .view-sub { display: block; margin-left: 0; }
+    .matrix-wrap { grid-template-columns: 18px 1fr; grid-template-rows: auto auto auto auto auto; min-height: 0; }
+    .ax.horiz { display: none; }
+    .ax.vert { display: none; }
+    .matrix-wrap .quad { grid-column: 1 / -1; min-height: 0; }
+    .board { grid-template-columns: repeat(4, 82vw); }
+    .tabbar {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    }
+    .tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 2px; border-radius: 8px;
+      font-size: 10.5px; font-weight: 600; color: var(--ink-faint);
+    }
+    .tab.active { color: var(--accent); }
+  }
+</style>
+
+<div class="auth-wrap" id="authWrap" style="display:none">
+  <div class="auth-card">
+    <div class="brand">Sorted<span class="dot">.</span></div>
+    <div class="auth-sub" id="authSub">Sign in to see your tasks on any device.</div>
+    <div class="f-row"><label class="f-label" for="authEmail">Email</label><input class="f-input" id="authEmail" type="email" autocomplete="username" inputmode="email"></div>
+    <div class="f-row"><label class="f-label" for="authPass">Password</label><input class="f-input" id="authPass" type="password" autocomplete="current-password"></div>
+    <button class="auth-btn" id="authGo">Sign in</button>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-alt" id="authAlt">First time here? <button id="authToggle">Create your account</button></div>
+  </div>
+</div>
+
+<div class="shell" id="shell" style="display:none">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main">
+    <div class="topbar">
+      <h1 class="view-title" id="viewTitle">Today</h1>
+      <span class="sync-dot" id="syncDot" title="Synced" aria-label="Sync status"></span>
+      <div class="searchbar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input id="searchInput" type="search" placeholder="Search" aria-label="Search tasks">
+      </div>
+      <button class="icon-btn" id="settingsBtn" title="Settings and backup" aria-label="Settings and backup">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+    <div class="quickadd-wrap">
+      <div class="quickadd">
+        <input id="quickAdd" type="text" placeholder="Add a task, e.g. Call plumber tomorrow #Office !!" aria-label="Add a task">
+        <button class="icon-btn" id="bulkAddBtn" title="Add several tasks at once" aria-label="Add several tasks at once">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h11M3 10h11M3 15h7"></path><path d="M18 12v8M14 16h8"></path></svg>
+        </button>
+        <button class="add-go" id="quickAddGo">Add</button>
+      </div>
+      <div class="quickadd-hint">Try: <b>tomorrow</b>, <b>friday</b>, <b>12/8</b> for dates &middot; <b>#Project</b> or <b>#Group</b> &middot; <b>!</b> important, <b>!!</b> urgent and important &middot; <b>p1</b> to <b>p4</b> priority</div>
+    </div>
+    <div class="chipbar" id="chipbar"></div>
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<nav class="tabbar" id="tabbar"></nav>
+<div class="toast" id="toast" role="status"></div>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+
+/* ================= Cloud config ================= */
+
+const SB_URL = 'https://cnouvshaoramdmkcjcxe.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNub3V2c2hhb3JhbWRta2NqY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NDkwMDIsImV4cCI6MjEwMDUyNTAwMn0.W641moclFovb-I9lQqmG4sLWN3jGCtVOWAaoeGdpkJw';
+let sb = null;
+let sbUser = null;
+
+/* ================= State ================= */
+
+const STORE_KEY = 'sorted.cloud.v1';
+
+const QUADS = [1, 2, 3, 4];
+
+const defaultSettings = () => ({
+  quadNames: ['Do first', 'Schedule', 'Delegate', 'Park'],
+  axisX: ['Urgent', 'Not urgent'],
+  axisY: ['Important', 'Not important'],
+  collapsed: [],
+});
+
+function seedAreas() {
+  return [
+    { id: uid(), name: 'Property', colour: '#1E5B4A' },
+    { id: uid(), name: 'China (Orders)', colour: '#B54430' },
+    { id: uid(), name: 'Tiling Smart', colour: '#A1720E' },
+    { id: uid(), name: 'AI System Development', colour: '#3E5F8A' },
+  ];
+}
+
+let state = {
+  tasks: [],
+  projects: [],
+  areas: [],
+  settings: defaultSettings(),
+};
+
+let ui = {
+  view: 'today',           // today | list | matrix | board
+  groupBy: 'project',      // project | due | quadrant
+  filterProject: null,     // project id or null
+  filterArea: null,        // area (group) id or null
+  search: '',
+  showDone: false,
+  editingId: null,
+};
+
+function uid() {
+  return (crypto.randomUUID) ? crypto.randomUUID() : ('id-' + Date.now() + '-' + Math.floor(Math.random() * 1e9));
+}
+
+/* Local cache: instant paint on open; the cloud is the source of truth. */
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.tasks)) return false;
+    state.tasks = data.tasks;
+    state.projects = Array.isArray(data.projects) ? data.projects : [];
+    state.areas = Array.isArray(data.areas) ? data.areas : [];
+    state.settings = Object.assign(defaultSettings(), data.settings || {});
+    return true;
+  } catch (e) { return false; }
+}
+function saveCache() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, tasks: state.tasks, projects: state.projects, areas: state.areas, settings: state.settings }));
+  } catch (e) { /* cache only; cloud still saves */ }
+}
+
+let saveTimer = null;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveCache();
+    scheduleSync();
+  }, 150);
+}
+
+/* ================= Cloud sync engine =================
+   Diff-based: after any change, rows that differ from the last-pushed
+   snapshot are upserted, missing ones deleted. Failed pushes stay dirty
+   and retry, so brief offline periods heal themselves. */
+
+const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
+
+const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
+const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
+const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
+const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour });
+const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour });
+
+function snapshotBaseline() {
+  baseline.tasks = {}; baseline.projects = {}; baseline.areas = {};
+  state.tasks.forEach(t => { baseline.tasks[t.id] = JSON.stringify(taskToRow(t)); });
+  state.projects.forEach(p => { baseline.projects[p.id] = JSON.stringify(projToRow(p)); });
+  state.areas.forEach(a => { baseline.areas[a.id] = JSON.stringify(areaToRow(a)); });
+  baseline.settings = JSON.stringify(state.settings);
+}
+
+let syncTimer = null, syncInFlight = false, syncFailedOnce = false;
+function scheduleSync(delay) {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(runSync, delay || 350);
+}
+
+async function runSync() {
+  if (!sb || !sbUser) return;
+  if (syncInFlight) { scheduleSync(500); return; }
+  syncInFlight = true;
+  try {
+    const kinds = [
+      ['tasks', state.tasks, taskToRow],
+      ['projects', state.projects, projToRow],
+      ['areas', state.areas, areaToRow],
+    ];
+    for (const [table, list, toRow] of kinds) {
+      const seen = new Set();
+      const upserts = [];
+      for (const item of list) {
+        seen.add(item.id);
+        const row = toRow(item);
+        const js = JSON.stringify(row);
+        if (baseline[table][item.id] !== js) upserts.push([item.id, row, js]);
+      }
+      const deletions = Object.keys(baseline[table]).filter(id => !seen.has(id));
+      if (upserts.length) {
+        const { error } = await sb.from(table).upsert(upserts.map(u => u[1]));
+        if (error) throw error;
+        upserts.forEach(u => { baseline[table][u[0]] = u[2]; });
+      }
+      if (deletions.length) {
+        const { error } = await sb.from(table).delete().in('id', deletions);
+        if (error) throw error;
+        deletions.forEach(id => { delete baseline[table][id]; });
+      }
+    }
+    const sjs = JSON.stringify(state.settings);
+    if (baseline.settings !== sjs) {
+      const { error } = await sb.from('settings').upsert({ user_id: sbUser.id, data: state.settings });
+      if (error) throw error;
+      baseline.settings = sjs;
+    }
+    if (syncFailedOnce) { syncFailedOnce = false; toast('Back online. Everything saved.'); }
+    setSyncIndicator(true);
+  } catch (e) {
+    if (!syncFailedOnce) { syncFailedOnce = true; toast('Cannot reach the cloud. Your changes are kept here and will save when the connection returns.'); }
+    setSyncIndicator(false);
+    scheduleSync(6000);
+  } finally {
+    syncInFlight = false;
+  }
+}
+
+function setSyncIndicator(ok) {
+  const el = document.getElementById('syncDot');
+  if (el) {
+    el.classList.toggle('off', !ok);
+    el.title = ok ? 'Synced' : 'Offline: changes waiting to sync';
+  }
+}
+
+async function fullLoad() {
+  const [t, p, a, s] = await Promise.all([
+    sb.from('tasks').select('*'),
+    sb.from('projects').select('*'),
+    sb.from('areas').select('*'),
+    sb.from('settings').select('*').maybeSingle(),
+  ]);
+  if (t.error || p.error || a.error || s.error) {
+    toast('Could not load from the cloud; showing this device’s last copy.');
+    setSyncIndicator(false);
+    return;
+  }
+  state.tasks = t.data.map(rowToTask);
+  state.projects = p.data.map(rowToProj);
+  state.areas = a.data.map(rowToArea);
+  state.settings = Object.assign(defaultSettings(), (s.data && s.data.data) || {});
+  snapshotBaseline();
+  if (!state.tasks.length && !state.projects.length && !state.areas.length && !s.data) {
+    state.areas = seedAreas();
+    state.settings = defaultSettings();
+    scheduleSync();
+  }
+  saveCache();
+  setSyncIndicator(true);
+}
+
+let rtChannel = null;
+function subscribeRealtime() {
+  if (rtChannel) { sb.removeChannel(rtChannel); rtChannel = null; }
+  const apply = (table, rowToX, listKey) => (payload) => {
+    const list = state[listKey];
+    if (payload.eventType === 'DELETE') {
+      const id = payload.old && payload.old.id;
+      if (!id) return;
+      state[listKey] = list.filter(x => x.id !== id);
+      delete baseline[table][id];
+    } else {
+      const item = rowToX(payload.new);
+      const js = JSON.stringify(payload.new ? (table === 'tasks' ? taskToRow(item) : table === 'projects' ? projToRow(item) : areaToRow(item)) : null);
+      const i = list.findIndex(x => x.id === item.id);
+      if (i === -1) list.unshift(item); else list[i] = item;
+      baseline[table][item.id] = js;
+    }
+    saveCache();
+    render();
+  };
+  rtChannel = sb.channel('sorted-sync')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'user_id=eq.' + sbUser.id }, apply('tasks', rowToTask, 'tasks'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: 'user_id=eq.' + sbUser.id }, apply('projects', rowToProj, 'projects'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'areas', filter: 'user_id=eq.' + sbUser.id }, apply('areas', rowToArea, 'areas'))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: 'user_id=eq.' + sbUser.id }, (payload) => {
+      if (payload.new && payload.new.data) {
+        state.settings = Object.assign(defaultSettings(), payload.new.data);
+        baseline.settings = JSON.stringify(state.settings);
+        saveCache(); render();
+      }
+    })
+    .subscribe();
+}
+
+/* ================= Dates ================= */
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function addDaysISO(base, days) {
+  const [y, m, dd] = base.split('-').map(Number);
+  const d = new Date(y, m - 1, dd + days);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function fmtDue(iso) {
+  const t = todayISO();
+  if (iso === t) return 'Today';
+  if (iso === addDaysISO(t, 1)) return 'Tomorrow';
+  if (iso === addDaysISO(t, -1)) return 'Yesterday';
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+  if (y !== new Date().getFullYear()) opts.year = 'numeric';
+  return dt.toLocaleDateString('en-GB', opts);
+}
+function dueClass(iso) {
+  const t = todayISO();
+  if (iso < t) return 'overdue';
+  if (iso === t) return 'today';
+  return '';
+}
+
+/* ================= Quick-add parsing ================= */
+
+const DOW = { monday: 1, mon: 1, tuesday: 2, tue: 2, tues: 2, wednesday: 3, wed: 3, thursday: 4, thu: 4, thur: 4, thurs: 4, friday: 5, fri: 5, saturday: 6, sat: 6, sunday: 0, sun: 0 };
+
+function nextDow(target) {
+  const now = new Date();
+  let diff = (target - now.getDay() + 7) % 7;
+  if (diff === 0) diff = 7;
+  return addDaysISO(todayISO(), diff);
+}
+
+function parseQuickAdd(text) {
+  const result = { title: '', due: null, quadrant: null, projectId: null, areaId: null, priority: null };
+  let working = text.trim();
+
+  // #Name: match an existing project first, then a group (both allow spaces), else a
+  // single word creates a new project (filed under the current group when one is open)
+  const hashIdx = working.indexOf('#');
+  if (hashIdx !== -1) {
+    const after = working.slice(hashIdx + 1);
+    let matched = null;
+    for (const p of [...state.projects].sort((a, b) => b.name.length - a.name.length)) {
+      if (after.toLowerCase().startsWith(p.name.toLowerCase())) {
+        const rest = after.slice(p.name.length);
+        if (rest === '' || rest[0] === ' ') { matched = p; break; }
+      }
+    }
+    let matchedArea = null;
+    if (!matched) {
+      for (const a of [...state.areas].sort((x, y) => y.name.length - x.name.length)) {
+        if (after.toLowerCase().startsWith(a.name.toLowerCase())) {
+          const rest = after.slice(a.name.length);
+          if (rest === '' || rest[0] === ' ') { matchedArea = a; break; }
+        }
+      }
+    }
+    if (matched) {
+      result.projectId = matched.id;
+      working = (working.slice(0, hashIdx) + working.slice(hashIdx + 1 + matched.name.length)).trim();
+    } else if (matchedArea) {
+      result.areaId = matchedArea.id;
+      working = (working.slice(0, hashIdx) + working.slice(hashIdx + 1 + matchedArea.name.length)).trim();
+    } else {
+      const word = after.split(/\s+/)[0];
+      if (word) {
+        const proj = addProject(word, null, ui.filterArea || null);
+        result.projectId = proj.id;
+        working = (working.slice(0, hashIdx) + after.slice(word.length)).trim();
+      }
+    }
+  }
+
+  const tokens = working.split(/\s+/).filter(Boolean);
+  const keep = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const tk = tokens[i];
+    const low = tk.toLowerCase();
+    if (tk === '!!') { result.quadrant = 1; continue; }
+    if (tk === '!') { result.quadrant = 2; continue; }
+    const pm = tk.match(/^[pP]([1-9])$/);
+    if (pm) { result.priority = Number(pm[1]); continue; }
+    if (low === 'today' || low === 'tonight') { result.due = todayISO(); continue; }
+    if (low === 'tomorrow') { result.due = addDaysISO(todayISO(), 1); continue; }
+    if (low === 'next' && tokens[i + 1] && tokens[i + 1].toLowerCase() === 'week') { result.due = addDaysISO(todayISO(), 7); i++; continue; }
+    if (Object.prototype.hasOwnProperty.call(DOW, low)) { result.due = nextDow(DOW[low]); continue; }
+    const dm = tk.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
+    if (dm) {
+      const day = Number(dm[1]), mon = Number(dm[2]);
+      if (day >= 1 && day <= 31 && mon >= 1 && mon <= 12) {
+        let yr = dm[3] ? Number(dm[3]) : new Date().getFullYear();
+        if (yr < 100) yr += 2000;
+        let iso = yr + '-' + String(mon).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+        if (!dm[3] && iso < todayISO()) iso = (yr + 1) + iso.slice(4);
+        result.due = iso;
+        continue;
+      }
+    }
+    keep.push(tk);
+  }
+  result.title = keep.join(' ');
+  return result;
+}
+
+/* ================= Task ops ================= */
+
+function addProject(name, colour, areaId) {
+  const existing = state.projects.find(p => p.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing;
+  const colours = ['#1E5B4A', '#B54430', '#A1720E', '#3E5F8A', '#7A4E8A', '#4E7A56', '#8A5B3E'];
+  const proj = { id: uid(), name: name, colour: colour || colours[state.projects.length % colours.length], areaId: areaId || null };
+  state.projects.push(proj);
+  save();
+  return proj;
+}
+
+function addArea(name) {
+  const existing = state.areas.find(a => a.name.toLowerCase() === name.toLowerCase());
+  if (existing) return existing;
+  const colours = ['#1E5B4A', '#B54430', '#A1720E', '#3E5F8A', '#7A4E8A', '#4E7A56', '#8A5B3E'];
+  const area = { id: uid(), name: name, colour: colours[state.areas.length % colours.length] };
+  state.areas.push(area);
+  save();
+  return area;
+}
+
+function addTask(fields) {
+  const t = Object.assign({
+    id: uid(), title: '', notes: '', projectId: null, areaId: null, due: null,
+    quadrant: null, priority: null, status: 'todo', focus: false,
+    createdAt: Date.now(), completedAt: null,
+  }, fields);
+  if (!t.title.trim()) return null;
+  state.tasks.unshift(t);
+  save();
+  return t;
+}
+
+function getTask(id) { return state.tasks.find(t => t.id === id); }
+
+function toggleDone(id) {
+  const t = getTask(id);
+  if (!t) return;
+  if (t.status === 'done') {
+    t.status = 'todo'; t.completedAt = null;
+  } else {
+    t.status = 'done'; t.completedAt = Date.now();
+  }
+  save(); render();
+}
+
+function toggleFocus(id) {
+  const t = getTask(id);
+  if (!t) return;
+  t.focus = !t.focus;
+  save(); render();
+}
+
+function deleteTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  save(); render();
+}
+
+function projectOf(t) { return state.projects.find(p => p.id === t.projectId) || null; }
+function areaOf(id) { return state.areas.find(a => a.id === id) || null; }
+function taskAreaId(t) {
+  const p = projectOf(t);
+  return p ? (p.areaId || null) : (t.areaId || null);
+}
+
+/* ================= Filtering ================= */
+
+function visibleTasks() {
+  let list = state.tasks;
+  if (ui.filterProject) list = list.filter(t => t.projectId === ui.filterProject);
+  else if (ui.filterArea) list = list.filter(t => taskAreaId(t) === ui.filterArea);
+  if (ui.search.trim()) {
+    const q = ui.search.trim().toLowerCase();
+    list = list.filter(t => t.title.toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q));
+  }
+  return list;
+}
+function openTasks() { return visibleTasks().filter(t => t.status !== 'done'); }
+function doneTasks() { return visibleTasks().filter(t => t.status === 'done').sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0)); }
+
+function sortByDue(a, b) {
+  if (a.due && b.due && a.due !== b.due) return a.due < b.due ? -1 : 1;
+  if (a.due && !b.due) return -1;
+  if (!a.due && b.due) return 1;
+  return a.createdAt - b.createdAt;
+}
+
+/* ================= Rendering helpers ================= */
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const ICONS = {
+  today: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>',
+  list: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"></path><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"></circle></svg>',
+  matrix: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>',
+  priority: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"></path><path d="M4 4h14l-3.5 4.5L18 13H4"></path></svg>',
+  done: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 5-5"></path></svg>',
+  board: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="5" height="18" rx="1.5"></rect><rect x="10" y="3" width="5" height="12" rx="1.5"></rect><rect x="17" y="3" width="5" height="8" rx="1.5"></rect></svg>',
+  star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>',
+  starOff: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>',
+  tick: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>',
+};
+
+const STATUSES = [
+  { key: 'todo', name: 'To do' },
+  { key: 'doing', name: 'In progress' },
+  { key: 'waiting', name: 'Waiting on' },
+  { key: 'done', name: 'Done' },
+];
+
+function statusName(key) { const s = STATUSES.find(s => s.key === key); return s ? s.name : key; }
+
+function taskRowHTML(t, opts) {
+  opts = opts || {};
+  const proj = projectOf(t);
+  const meta = [];
+  if (proj && !opts.hideProject) {
+    meta.push('<span class="m-proj"><span class="proj-dot" style="background:' + proj.colour + '"></span>' + esc(proj.name) + '</span>');
+  }
+  if (!proj && t.areaId && !opts.hideArea) {
+    const area = areaOf(t.areaId);
+    if (area) meta.push('<span class="m-proj"><span class="proj-dot" style="background:' + area.colour + '"></span>' + esc(area.name) + '</span>');
+  }
+  if (t.due && !opts.hideDue) {
+    meta.push('<span class="m-due ' + dueClass(t.due) + '">' + esc(fmtDue(t.due)) + '</span>');
+  }
+  if (t.priority && !opts.hidePriority) {
+    const pcls = t.priority >= 1 && t.priority <= 4 ? 'q' + (t.priority === 2 ? 3 : t.priority === 3 ? 2 : t.priority) : 'q4';
+    meta.push('<span class="chip ' + pcls + '">P' + t.priority + '</span>');
+  }
+  if (t.quadrant && !opts.hideQuad) {
+    meta.push('<span class="chip q' + t.quadrant + '">' + esc(state.settings.quadNames[t.quadrant - 1]) + '</span>');
+  }
+  if (!opts.hideStatus && (t.status === 'doing' || t.status === 'waiting')) {
+    meta.push('<span class="chip st">' + esc(statusName(t.status)) + '</span>');
+  }
+  if (t.notes) {
+    meta.push('<span title="Has notes">&#9998;</span>');
+  }
+  const doneCls = t.status === 'done' ? ' done-row' : '';
+  return '<div class="task-row' + doneCls + '" draggable="true" data-task="' + t.id + '" role="button" tabindex="0">' +
+    '<button class="check' + (t.status === 'done' ? ' checked' : '') + '" data-act="done" aria-label="Mark complete">' + ICONS.tick + '</button>' +
+    '<div class="t-body"><div class="t-title">' + esc(t.title) + '</div>' +
+    (meta.length ? '<div class="t-meta">' + meta.join('') + '</div>' : '') +
+    '</div>' +
+    '<button class="star-btn' + (t.focus ? ' on' : '') + '" data-act="focus" aria-label="Toggle Today focus" title="Add to Today">' + (t.focus ? ICONS.star : ICONS.starOff) + '</button>' +
+    '</div>';
+}
+
+function rowsHTML(list, opts) { return list.map(t => taskRowHTML(t, opts)).join(''); }
+
+/* ================= Views ================= */
+
+const VIEWS = [
+  { key: 'today', name: 'Today' },
+  { key: 'list', name: 'List' },
+  { key: 'matrix', name: 'Matrix' },
+  { key: 'board', name: 'Board' },
+  { key: 'priority', name: 'Priority' },
+];
+
+function renderSidebar() {
+  const open = state.tasks.filter(t => t.status !== 'done');
+  const counts = {
+    today: open.filter(t => t.focus || (t.due && t.due <= todayISO())).length,
+    list: open.length,
+    matrix: open.filter(t => !t.quadrant).length,
+    board: open.filter(t => t.status === 'doing').length,
+    priority: open.filter(t => t.priority).length,
+  };
+  const countLabel = { today: '', list: '', matrix: ' unsorted', board: ' active', priority: ' prioritised' };
+  let html = '<div class="brand">Sorted<span class="dot">.</span></div>';
+  for (const v of VIEWS) {
+    const c = counts[v.key];
+    html += '<button class="nav-btn' + (ui.view === v.key ? ' active' : '') + '" data-view="' + v.key + '">' +
+      ICONS[v.key] + v.name +
+      (c ? '<span class="nav-count" title="' + c + countLabel[v.key] + '">' + c + '</span>' : '') +
+      '</button>';
+  }
+  const projBtn = (p, indent) => {
+    const c = state.tasks.filter(t => t.projectId === p.id && t.status !== 'done').length;
+    return '<button class="proj-btn' + (indent ? ' indent' : '') + (ui.filterProject === p.id ? ' active' : '') + '" data-proj="' + p.id + '">' +
+      '<span class="proj-dot" style="background:' + p.colour + '"></span><span class="proj-name">' + esc(p.name) + '</span>' +
+      (c ? '<span class="nav-count">' + c + '</span>' : '') + '</button>';
+  };
+  html += '<div class="side-label">Groups <button data-addproj title="New project" aria-label="New project">+</button></div>';
+  const collapsed = state.settings.collapsed || [];
+  for (const a of state.areas) {
+    const c = open.filter(t => taskAreaId(t) === a.id).length;
+    const isCollapsed = collapsed.includes(a.id);
+    html += '<div class="area-row">' +
+      '<button class="proj-btn' + (ui.filterArea === a.id ? ' active' : '') + '" data-area="' + a.id + '">' +
+      '<span class="proj-dot" style="background:' + a.colour + '"></span><span class="proj-name">' + esc(a.name) + '</span>' +
+      (c ? '<span class="nav-count">' + c + '</span>' : '') + '</button>' +
+      '<button class="caret" data-caret="' + a.id + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + esc(a.name) + '">' + (isCollapsed ? '&#9656;' : '&#9662;') + '</button>' +
+      '</div>';
+    if (!isCollapsed) {
+      for (const p of state.projects.filter(p => p.areaId === a.id)) html += projBtn(p, true);
+    }
+  }
+  const unfiled = state.projects.filter(p => !p.areaId);
+  if (unfiled.length) {
+    html += '<div class="side-label">Other projects</div>';
+    for (const p of unfiled) html += projBtn(p, false);
+  }
+  const doneCount = state.tasks.filter(t => t.status === 'done').length;
+  html += '<div class="sidebar-foot">' +
+    '<button class="nav-btn' + (ui.view === 'done' ? ' active' : '') + '" data-view="done">' + ICONS.done + 'Completed' +
+    (doneCount ? '<span class="nav-count">' + doneCount + '</span>' : '') + '</button>' +
+    '<button class="nav-btn" data-openset>' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path></svg>' +
+    'Backup &amp; settings</button></div>';
+  document.getElementById('sidebar').innerHTML = html;
+}
+
+function renderTabbar() {
+  let html = '';
+  for (const v of VIEWS) {
+    html += '<button class="tab' + (ui.view === v.key ? ' active' : '') + '" data-view="' + v.key + '">' + ICONS[v.key] + v.name + '</button>';
+  }
+  html += '<button class="tab" data-openset><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path></svg>More</button>';
+  document.getElementById('tabbar').innerHTML = html;
+}
+
+function viewTitle() {
+  if (ui.filterProject) {
+    const p = state.projects.find(p => p.id === ui.filterProject);
+    if (p) return esc(p.name);
+  }
+  if (ui.filterArea) {
+    const a = areaOf(ui.filterArea);
+    if (a) return esc(a.name);
+  }
+  if (ui.view === 'done') return 'Completed';
+  const v = VIEWS.find(v => v.key === ui.view);
+  return v ? v.name : '';
+}
+
+function renderChipbar() {
+  let html = '<button class="chip-f' + (!ui.filterArea && !ui.filterProject ? ' on' : '') + '" data-all>All</button>';
+  const activeProj = ui.filterProject ? state.projects.find(p => p.id === ui.filterProject) : null;
+  for (const a of state.areas) {
+    const expanded = ui.filterArea === a.id || (activeProj && activeProj.areaId === a.id);
+    html += '<button class="chip-f' + (ui.filterArea === a.id ? ' on' : '') + '" data-area="' + a.id + '">' +
+      '<span class="proj-dot" style="background:' + a.colour + '"></span>' + esc(a.name) + '</button>';
+    if (expanded) {
+      for (const p of state.projects.filter(p => p.areaId === a.id)) {
+        html += '<button class="chip-f' + (ui.filterProject === p.id ? ' on' : '') + '" data-proj="' + p.id + '">' + esc(p.name) + '</button>';
+      }
+    }
+  }
+  for (const p of state.projects.filter(p => !p.areaId)) {
+    html += '<button class="chip-f' + (ui.filterProject === p.id ? ' on' : '') + '" data-proj="' + p.id + '">' +
+      '<span class="proj-dot" style="background:' + p.colour + '"></span>' + esc(p.name) + '</button>';
+  }
+  document.getElementById('chipbar').innerHTML = html;
+}
+
+function render() {
+  renderSidebar();
+  renderTabbar();
+  renderChipbar();
+  const titleEl = document.getElementById('viewTitle');
+  const t = todayISO();
+  const [y, m, d] = t.split('-').map(Number);
+  const dateStr = new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  titleEl.innerHTML = viewTitle() + (ui.view === 'today' && !ui.filterProject ? '<span class="view-sub">' + dateStr + '</span>' : '');
+  const el = document.getElementById('content');
+  if (ui.view === 'today') el.innerHTML = renderToday();
+  else if (ui.view === 'list') el.innerHTML = renderList();
+  else if (ui.view === 'matrix') el.innerHTML = renderMatrix();
+  else if (ui.view === 'priority') el.innerHTML = renderPriority();
+  else if (ui.view === 'done') el.innerHTML = renderArchive();
+  else el.innerHTML = renderBoard();
+}
+
+/* ----- Priority ----- */
+
+function whereLabel(t) {
+  const proj = projectOf(t);
+  if (proj) return '<span class="m-proj"><span class="proj-dot" style="background:' + proj.colour + '"></span>' + esc(proj.name) + '</span>';
+  const area = t.areaId ? areaOf(t.areaId) : null;
+  if (area) return '<span class="m-proj"><span class="proj-dot" style="background:' + area.colour + '"></span>' + esc(area.name) + '</span>';
+  return '<span style="color:var(--ink-faint)">&ndash;</span>';
+}
+
+function renderPriority() {
+  const items = openTasks().filter(t => t.priority)
+    .sort((a, b) => (a.priority - b.priority) || sortByDue(a, b));
+  if (!items.length) {
+    return '<div class="empty"><div class="e-big">No priorities set.</div>' +
+      'Give a task a priority from 1 to 4 in its editor, or type <b>p1</b> to <b>p4</b> when adding one, e.g. "Chase arrears p1". Only prioritised work appears here.</div>';
+  }
+  let html = '<div class="table-wrap"><table class="ptable"><thead><tr>' +
+    '<th style="width:36px"></th><th style="width:52px">Pri</th><th>Task</th><th>Where</th><th style="width:110px">Due</th>' +
+    '</tr></thead><tbody>';
+  for (const t of items) {
+    const pcls = t.priority >= 1 && t.priority <= 4 ? 'pri-' + t.priority : 'pri-4';
+    html += '<tr data-task="' + t.id + '" tabindex="0">' +
+      '<td><button class="check" data-act="done" aria-label="Mark complete">' + ICONS.tick + '</button></td>' +
+      '<td><span class="pri-badge ' + pcls + '">' + t.priority + '</span></td>' +
+      '<td><div class="t-title" style="font-weight:500">' + esc(t.title) + '</div>' +
+      (t.quadrant ? '<span class="chip q' + t.quadrant + '" style="margin-top:3px">' + esc(state.settings.quadNames[t.quadrant - 1]) + '</span>' : '') +
+      '</td>' +
+      '<td>' + whereLabel(t) + '</td>' +
+      '<td class="num"><span class="m-due ' + (t.due ? dueClass(t.due) : '') + '">' + (t.due ? esc(fmtDue(t.due)) : '&ndash;') + '</span></td>' +
+      '</tr>';
+  }
+  html += '</tbody></table></div>';
+  html += '<div class="drag-hint" style="padding-top:10px">Priority is your own ranking of what matters today, separate from the matrix. Completed tasks leave this table automatically.</div>';
+  return html;
+}
+
+/* ----- Completed archive ----- */
+
+function renderArchive() {
+  const done = doneTasks();
+  if (!done.length) {
+    return '<div class="empty"><div class="e-big">Nothing completed yet.</div>Finished tasks are kept here automatically. Tick a task anywhere in the app to complete it.</div>';
+  }
+  const t = todayISO();
+  const dayOf = (ms) => {
+    const d = new Date(ms);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  };
+  const buckets = [
+    ['Today', x => dayOf(x.completedAt || 0) === t],
+    ['Yesterday', x => dayOf(x.completedAt || 0) === addDaysISO(t, -1)],
+    ['Past week', x => { const d = dayOf(x.completedAt || 0); return d < addDaysISO(t, -1) && d >= addDaysISO(t, -7); }],
+    ['Past month', x => { const d = dayOf(x.completedAt || 0); return d < addDaysISO(t, -7) && d >= addDaysISO(t, -31); }],
+    ['Older', x => dayOf(x.completedAt || 0) < addDaysISO(t, -31)],
+  ];
+  let html = '<div class="drag-hint">Everything you finish is kept here. Untick a task to bring it back; use Backup &amp; settings to clear the archive.</div>';
+  for (const [name, fn] of buckets) {
+    const items = done.filter(fn);
+    if (!items.length) continue;
+    html += '<div class="group-head">' + name + ' <span class="g-count">' + items.length + '</span></div>' + rowsHTML(items);
+  }
+  return html;
+}
+
+/* ----- Today ----- */
+
+function renderToday() {
+  const open = openTasks();
+  const t = todayISO();
+  const weekEnd = addDaysISO(t, 7);
+  const focus = open.filter(x => x.focus).sort(sortByDue);
+  const overdue = open.filter(x => !x.focus && x.due && x.due < t).sort(sortByDue);
+  const today = open.filter(x => !x.focus && x.due === t).sort(sortByDue);
+  const week = open.filter(x => !x.focus && x.due && x.due > t && x.due <= weekEnd).sort(sortByDue);
+  let html = '';
+  if (focus.length) html += '<div class="group-head">Focus <span class="g-count">' + focus.length + '</span></div>' + rowsHTML(focus);
+  if (overdue.length) html += '<div class="group-head" style="color:var(--q1)">Overdue <span class="g-count">' + overdue.length + '</span></div>' + rowsHTML(overdue);
+  if (today.length) html += '<div class="group-head">Due today <span class="g-count">' + today.length + '</span></div>' + rowsHTML(today);
+  if (week.length) html += '<div class="group-head">This week <span class="g-count">' + week.length + '</span></div>' + rowsHTML(week);
+  if (!html) {
+    html = '<div class="empty"><div class="e-big">A clear day.</div>Nothing due or flagged for now. Star a task with the &#9734; to bring it here, or add one above.</div>';
+  }
+  return html;
+}
+
+/* ----- List ----- */
+
+function renderList() {
+  const open = openTasks();
+  const done = doneTasks();
+  let html = '<div class="toolbar"><span class="tool-label">Group by</span><div class="seg">' +
+    ['project', 'due', 'quadrant'].map(g =>
+      '<button class="' + (ui.groupBy === g ? 'on' : '') + '" data-group="' + g + '">' + (g === 'project' ? 'Project' : g === 'due' ? 'Due date' : 'Quadrant') + '</button>'
+    ).join('') + '</div>';
+  if (ui.filterProject) html += '<button class="link-btn" data-clearproj>Show all projects</button>';
+  html += '</div>';
+
+  if (!open.length && !done.length) {
+    return html + '<div class="empty"><div class="e-big">Nothing here yet.</div>Add your first task in the bar above. Use #Project to file it as you go.</div>';
+  }
+
+  if (ui.groupBy === 'project') {
+    for (const a of [...state.areas, null]) {
+      const aid = a ? a.id : null;
+      const direct = open.filter(t => !t.projectId && (t.areaId || null) === aid).sort(sortByDue);
+      const blocks = [];
+      for (const p of state.projects.filter(p => (p.areaId || null) === aid)) {
+        const items = open.filter(t => t.projectId === p.id).sort(sortByDue);
+        if (items.length) blocks.push({ p, items });
+      }
+      if (!blocks.length && !direct.length) continue;
+      const total = direct.length + blocks.reduce((n, b) => n + b.items.length, 0);
+      html += '<div class="group-head">' +
+        (a ? '<span class="g-dot" style="background:' + a.colour + '"></span>' + esc(a.name) : 'Other') +
+        ' <span class="g-count">' + total + '</span></div>';
+      if (direct.length) html += rowsHTML(direct, { hideProject: true, hideArea: true });
+      for (const b of blocks) {
+        html += '<div class="sub-head"><span class="g-dot" style="background:' + b.p.colour + '"></span>' + esc(b.p.name) + ' <span class="g-count">' + b.items.length + '</span></div>' + rowsHTML(b.items, { hideProject: true });
+      }
+    }
+  } else if (ui.groupBy === 'due') {
+    const t = todayISO();
+    const buckets = [
+      ['Overdue', x => x.due && x.due < t],
+      ['Today', x => x.due === t],
+      ['Tomorrow', x => x.due === addDaysISO(t, 1)],
+      ['This week', x => x.due && x.due > addDaysISO(t, 1) && x.due <= addDaysISO(t, 7)],
+      ['Later', x => x.due && x.due > addDaysISO(t, 7)],
+      ['No date', x => !x.due],
+    ];
+    for (const [name, fn] of buckets) {
+      const items = open.filter(fn).sort(sortByDue);
+      if (!items.length) continue;
+      const style = name === 'Overdue' ? ' style="color:var(--q1)"' : '';
+      html += '<div class="group-head"' + style + '>' + name + ' <span class="g-count">' + items.length + '</span></div>' + rowsHTML(items);
+    }
+  } else {
+    for (const q of QUADS) {
+      const items = open.filter(x => x.quadrant === q).sort(sortByDue);
+      if (!items.length) continue;
+      html += '<div class="group-head"><span class="g-dot" style="background:var(--q' + q + ')"></span>' + esc(state.settings.quadNames[q - 1]) + ' <span class="g-count">' + items.length + '</span></div>' + rowsHTML(items, { hideQuad: true });
+    }
+    const unsorted = open.filter(x => !x.quadrant).sort(sortByDue);
+    if (unsorted.length) html += '<div class="group-head">Not yet sorted <span class="g-count">' + unsorted.length + '</span></div>' + rowsHTML(unsorted);
+  }
+
+  if (done.length) {
+    html += '<div class="toolbar" style="margin-top:18px"><button class="link-btn" data-toggledone>' + (ui.showDone ? 'Hide' : 'Show') + ' completed (' + done.length + ')</button></div>';
+    if (ui.showDone) html += rowsHTML(done.slice(0, 100));
+  }
+  return html;
+}
+
+/* ----- Matrix ----- */
+
+function renderMatrix() {
+  const open = openTasks();
+  const s = state.settings;
+  const unsorted = open.filter(t => !t.quadrant).sort(sortByDue);
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  let html = '<div class="drag-hint">' + (isTouch ? 'Tap a task to file it in a quadrant.' : 'Drag tasks between quadrants, or tap to edit.') + '</div>';
+  html += '<div class="matrix-wrap">';
+  html += '<div></div><div class="ax horiz">' + esc(s.axisX[0]) + '</div><div class="ax horiz">' + esc(s.axisX[1]) + '</div>';
+  const cells = [
+    { q: 1, axis: s.axisY[0] }, { q: 2, axis: null },
+    { q: 3, axis: s.axisY[1] }, { q: 4, axis: null },
+  ];
+  for (const c of cells) {
+    if (c.axis !== null) html += '<div class="ax vert">' + esc(c.axis) + '</div>';
+    const items = open.filter(t => t.quadrant === c.q).sort(sortByDue);
+    html += '<div class="quad" data-quad="' + c.q + '">' +
+      '<div class="quad-head"><span class="q-mark" style="background:var(--q' + c.q + ')"></span>' + esc(s.quadNames[c.q - 1]) +
+      '<span class="q-count">' + items.length + '</span></div>' +
+      '<div class="quad-body">' + rowsHTML(items, { hideQuad: true }) +
+      (items.length ? '' : '<div class="empty" style="padding:18px 8px;font-size:13px">Drop tasks here</div>') +
+      '</div></div>';
+  }
+  html += '</div>';
+  html += '<div class="tray" data-quad="0"><div class="tray-head">To be sorted <span>' + unsorted.length + (unsorted.length === 1 ? ' task' : ' tasks') + '</span></div>' +
+    (unsorted.length ? rowsHTML(unsorted, { hideQuad: true }) : '<div class="empty" style="padding:10px;font-size:13px">Everything is sorted. New tasks land here first.</div>') +
+    '</div>';
+  return html;
+}
+
+/* ----- Board ----- */
+
+function renderBoard() {
+  const open = openTasks();
+  const done = doneTasks();
+  let html = '<div class="drag-hint">' + (window.matchMedia('(pointer: coarse)').matches ? 'Tap a task to change its status.' : 'Drag tasks across columns as work moves.') + '</div>';
+  html += '<div class="board">';
+  for (const st of STATUSES) {
+    const items = st.key === 'done' ? done.slice(0, 30) : open.filter(t => t.status === st.key).sort(sortByDue);
+    html += '<div class="col" data-status="' + st.key + '">' +
+      '<div class="col-head">' + esc(st.name) + '<span class="q-count">' + items.length + '</span></div>' +
+      rowsHTML(items, { hideStatus: true }) +
+      '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ================= Modals ================= */
+
+function closeModal() {
+  document.getElementById('modalRoot').innerHTML = '';
+  ui.editingId = null;
+}
+
+function openEdit(id) {
+  const t = getTask(id);
+  if (!t) return;
+  ui.editingId = id;
+  const s = state.settings;
+  const projOpts = ['<option value="">No project</option>'].concat(
+    state.projects.map(p => '<option value="' + p.id + '"' + (t.projectId === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>')
+  ).join('');
+  const areaOpts = ['<option value="">No group</option>'].concat(
+    state.areas.map(a => '<option value="' + a.id + '"' + (t.areaId === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>')
+  ).join('');
+  const quadBtns = QUADS.map(q =>
+    '<button class="pick q' + q + (t.quadrant === q ? ' on' : '') + '" data-quad="' + q + '">' + esc(s.quadNames[q - 1]) + '</button>'
+  ).join('') + '<button class="pick' + (!t.quadrant ? ' on' : '') + '" data-quad="0">Unsorted</button>';
+  const statBtns = STATUSES.map(st =>
+    '<button class="pick' + (t.status === st.key ? ' on' : '') + '" data-status="' + st.key + '">' + st.name + '</button>'
+  ).join('');
+  const priBtns = [1, 2, 3, 4].map(p =>
+    '<button class="pick' + (t.priority === p ? ' on' : '') + '" data-pri="' + p + '">P' + p + '</button>'
+  ).join('') + '<button class="pick' + (!t.priority ? ' on' : '') + '" data-pri="0">None</button>';
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="overlay" data-close>' +
+    '<div class="sheet" role="dialog" aria-label="Edit task">' +
+    '<h2>Edit task</h2>' +
+    '<div class="f-row"><label class="f-label" for="etTitle">Task</label><input class="f-input" id="etTitle" value="' + esc(t.title) + '"></div>' +
+    '<div class="f-row"><label class="f-label" for="etNotes">Notes</label><textarea class="f-textarea" id="etNotes">' + esc(t.notes || '') + '</textarea></div>' +
+    '<div class="f-row" style="display:flex;gap:10px;flex-wrap:wrap">' +
+    '<div style="flex:1;min-width:140px"><label class="f-label" for="etProj">Project</label><select class="f-select" id="etProj">' + projOpts + '</select></div>' +
+    '<div style="flex:1;min-width:140px"><label class="f-label" for="etArea" title="Used when the task has no project">Group</label><select class="f-select" id="etArea">' + areaOpts + '</select></div>' +
+    '<div style="flex:1;min-width:140px"><label class="f-label" for="etDue">Due date</label><input class="f-input" id="etDue" type="date" value="' + (t.due || '') + '"></div>' +
+    '</div>' +
+    '<div class="f-row"><span class="f-label">Quadrant</span><div class="pick-row" id="etQuads">' + quadBtns + '</div></div>' +
+    '<div class="f-row"><span class="f-label" title="Your own 1 to 4 ranking, shown in the Priority view">Priority</span><div class="pick-row" id="etPris">' + priBtns + '</div></div>' +
+    '<div class="f-row"><span class="f-label">Status</span><div class="pick-row" id="etStats">' + statBtns + '</div></div>' +
+    '<div class="f-row"><span class="f-label">Today list</span><button class="pick' + (t.focus ? ' on' : '') + '" id="etFocus">' + (t.focus ? '&#9733; In Today focus' : '&#9734; Add to Today focus') + '</button></div>' +
+    '<div class="sheet-actions">' +
+    '<button class="btn-danger" id="etDelete">Delete</button>' +
+    '<button class="btn-quiet" data-close-btn>Cancel</button>' +
+    '<button class="btn-primary" id="etSave">Save</button>' +
+    '</div></div></div>';
+
+  const root = document.getElementById('modalRoot');
+  const local = { quadrant: t.quadrant, status: t.status, focus: t.focus, priority: t.priority, deleteArmed: false };
+
+  root.querySelector('.overlay').addEventListener('click', (e) => {
+    if (e.target.dataset.close !== undefined && e.target.classList.contains('overlay')) closeModal();
+  });
+  root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
+
+  root.querySelector('#etQuads').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-quad]');
+    if (!b) return;
+    local.quadrant = Number(b.dataset.quad) || null;
+    root.querySelectorAll('#etQuads .pick').forEach(x => x.classList.toggle('on', (Number(x.dataset.quad) || null) === local.quadrant));
+  });
+  root.querySelector('#etPris').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pri]');
+    if (!b) return;
+    local.priority = Number(b.dataset.pri) || null;
+    root.querySelectorAll('#etPris .pick').forEach(x => x.classList.toggle('on', (Number(x.dataset.pri) || null) === local.priority));
+  });
+  root.querySelector('#etStats').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-status]');
+    if (!b) return;
+    local.status = b.dataset.status;
+    root.querySelectorAll('#etStats .pick').forEach(x => x.classList.toggle('on', x.dataset.status === local.status));
+  });
+  root.querySelector('#etFocus').addEventListener('click', (e) => {
+    local.focus = !local.focus;
+    e.currentTarget.classList.toggle('on', local.focus);
+    e.currentTarget.innerHTML = local.focus ? '&#9733; In Today focus' : '&#9734; Add to Today focus';
+  });
+  root.querySelector('#etDelete').addEventListener('click', (e) => {
+    if (!local.deleteArmed) {
+      local.deleteArmed = true;
+      e.currentTarget.textContent = 'Really delete?';
+      return;
+    }
+    deleteTask(t.id);
+    closeModal();
+    toast('Task deleted');
+  });
+  root.querySelector('#etSave').addEventListener('click', () => {
+    const title = root.querySelector('#etTitle').value.trim();
+    if (!title) { toast('The task needs a title'); return; }
+    t.title = title;
+    t.notes = root.querySelector('#etNotes').value.trim();
+    t.projectId = root.querySelector('#etProj').value || null;
+    t.areaId = root.querySelector('#etArea').value || null;
+    t.due = root.querySelector('#etDue').value || null;
+    t.quadrant = local.quadrant;
+    t.priority = local.priority;
+    t.focus = local.focus;
+    if (local.status !== t.status) {
+      t.status = local.status;
+      t.completedAt = t.status === 'done' ? Date.now() : null;
+    }
+    save(); closeModal(); render();
+  });
+  root.querySelector('#etTitle').focus();
+}
+
+function openNewProject() {
+  const areaOpts = ['<option value="">No group</option>'].concat(
+    state.areas.map(a => '<option value="' + a.id + '"' + (ui.filterArea === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>')
+  ).join('');
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="overlay" data-close>' +
+    '<div class="sheet" role="dialog" aria-label="New project" style="max-width:380px">' +
+    '<h2>New project</h2>' +
+    '<div class="f-row"><label class="f-label" for="npName">Name</label><input class="f-input" id="npName" placeholder="e.g. Maple Road"></div>' +
+    '<div class="f-row"><label class="f-label" for="npArea">Group</label><select class="f-select" id="npArea">' + areaOpts + '</select></div>' +
+    '<div class="sheet-actions">' +
+    '<button class="btn-quiet" data-close-btn>Cancel</button>' +
+    '<button class="btn-primary" id="npCreate">Create</button>' +
+    '</div></div></div>';
+  const root = document.getElementById('modalRoot');
+  root.querySelector('.overlay').addEventListener('click', (e) => {
+    if (e.target.classList.contains('overlay')) closeModal();
+  });
+  root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
+  const createIt = () => {
+    const name = root.querySelector('#npName').value.trim();
+    if (!name) { toast('Give the project a name'); return; }
+    addProject(name, null, root.querySelector('#npArea').value || null);
+    closeModal(); render();
+    toast('Project created');
+  };
+  root.querySelector('#npCreate').addEventListener('click', createIt);
+  root.querySelector('#npName').addEventListener('keydown', (e) => { if (e.key === 'Enter') createIt(); });
+  root.querySelector('#npName').focus();
+}
+
+function openBulkAdd() {
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="overlay" data-close>' +
+    '<div class="sheet" role="dialog" aria-label="Add several tasks">' +
+    '<h2>Add several tasks</h2>' +
+    '<div class="f-row"><label class="f-label" for="baText">One task per line</label>' +
+    '<textarea class="f-textarea" id="baText" style="min-height:160px" placeholder="Call plumber tomorrow #Office !!\nReview lease friday #Legal !\nOrder tile samples 12/8"></textarea>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:8px">Paste from anywhere, including an Excel column. The same shortcuts work on each line: dates like <b>tomorrow</b> or <b>12/8</b>, <b>#Project</b>, <b>!</b> important, <b>!!</b> urgent and important.</div>' +
+    '</div>' +
+    '<div class="sheet-actions">' +
+    '<button class="btn-quiet" data-close-btn>Cancel</button>' +
+    '<button class="btn-primary" id="baGo">Add tasks</button>' +
+    '</div></div></div>';
+  const root = document.getElementById('modalRoot');
+  root.querySelector('.overlay').addEventListener('click', (e) => {
+    if (e.target.classList.contains('overlay')) closeModal();
+  });
+  root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
+  root.querySelector('#baGo').addEventListener('click', () => {
+    const lines = root.querySelector('#baText').value.split(/\r?\n/);
+    let added = 0, skipped = 0;
+    for (const line of lines) {
+      const clean = line.replace(/\t/g, ' ').replace(/^\s*(?:[-*•]|\d+[.)])\s+/, '').trim();
+      if (!clean) continue;
+      const parsed = parseQuickAdd(clean);
+      if (!parsed.title) { skipped++; continue; }
+      if (!parsed.projectId && !parsed.areaId) {
+        if (ui.filterProject) parsed.projectId = ui.filterProject;
+        else if (ui.filterArea) parsed.areaId = ui.filterArea;
+      }
+      addTask(parsed);
+      added++;
+    }
+    if (!added) { toast(skipped ? 'No task descriptions found on those lines' : 'Nothing to add yet'); return; }
+    closeModal(); render();
+    toast('Added ' + added + ' ' + (added === 1 ? 'task' : 'tasks') + (skipped ? ', skipped ' + skipped : ''));
+  });
+  root.querySelector('#baText').focus();
+}
+
+function openSettings() {
+  const s = state.settings;
+  const areaRows = state.areas.map(a =>
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">' +
+    '<input type="color" value="' + a.colour + '" data-acol="' + a.id + '" style="width:34px;height:30px;border:none;background:none;padding:0;cursor:pointer" aria-label="Group colour">' +
+    '<input class="f-input" style="flex:1" value="' + esc(a.name) + '" data-aname="' + a.id + '" aria-label="Group name">' +
+    '<button class="btn-danger" style="margin:0;padding:6px 10px" data-adel="' + a.id + '">Delete</button>' +
+    '</div>'
+  ).join('');
+  const newAreaRow = '<div style="display:flex;gap:8px;margin-top:8px">' +
+    '<input class="f-input" id="setNewArea" placeholder="New group name" style="flex:1">' +
+    '<button class="btn-quiet" id="setNewAreaGo" style="border:1px solid var(--line)">Add group</button>' +
+    '</div>';
+  const projAreaSel = (p) => '<select class="f-select" style="width:110px;flex:none" data-parea="' + p.id + '" aria-label="Project group">' +
+    '<option value="">No group</option>' +
+    state.areas.map(a => '<option value="' + a.id + '"' + (p.areaId === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>').join('') +
+    '</select>';
+  const projRows = state.projects.map(p =>
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">' +
+    '<input type="color" value="' + p.colour + '" data-pcol="' + p.id + '" style="width:34px;height:30px;border:none;background:none;padding:0;cursor:pointer">' +
+    '<input class="f-input" style="flex:1;min-width:80px" value="' + esc(p.name) + '" data-pname="' + p.id + '">' +
+    projAreaSel(p) +
+    '<button class="btn-danger" style="margin:0;padding:6px 10px" data-pdel="' + p.id + '">Delete</button>' +
+    '</div>'
+  ).join('') || '<div style="color:var(--ink-faint);font-size:13px">No projects yet. Add one with + in the sidebar, or type #NewProject when adding a task.</div>';
+
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="overlay" data-close>' +
+    '<div class="sheet" role="dialog" aria-label="Settings">' +
+    '<h2>Backup &amp; settings</h2>' +
+
+    '<div class="f-row"><span class="f-label">Backup</span>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn-primary" id="setExport">Download backup</button>' +
+    '<button class="btn-quiet" id="setImportBtn">Restore from backup</button>' +
+    '<input type="file" id="setImportFile" accept=".json,application/json" style="display:none">' +
+    '</div>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:8px">Your tasks sync automatically through your account. Backups are an extra safety net, and the way to bring tasks in from the old version of the app.</div>' +
+    '</div>' +
+
+    '<div class="f-row"><span class="f-label">Matrix labels</span>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+    QUADS.map(q => '<input class="f-input" data-qname="' + q + '" value="' + esc(s.quadNames[q - 1]) + '" aria-label="Quadrant ' + q + ' name">').join('') +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">' +
+    '<input class="f-input" data-ax="x0" value="' + esc(s.axisX[0]) + '" aria-label="Left column label">' +
+    '<input class="f-input" data-ax="x1" value="' + esc(s.axisX[1]) + '" aria-label="Right column label">' +
+    '<input class="f-input" data-ax="y0" value="' + esc(s.axisY[0]) + '" aria-label="Top row label">' +
+    '<input class="f-input" data-ax="y1" value="' + esc(s.axisY[1]) + '" aria-label="Bottom row label">' +
+    '</div>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Rename the quadrants and axes to match how you think, e.g. Covey’s quadrants or your own labels.</div>' +
+    '</div>' +
+
+    '<div class="f-row"><span class="f-label">Groups</span>' + areaRows + newAreaRow +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
+    '</div>' +
+    '<div class="f-row"><span class="f-label">Projects</span>' + projRows + '</div>' +
+
+    '<div class="f-row"><span class="f-label">Completed tasks</span>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn-quiet" id="setViewDone" style="border:1px solid var(--line)">View completed tasks</button>' +
+    '<button class="btn-quiet" id="setClearDone" style="border:1px solid var(--line)">Clear completed tasks</button>' +
+    '</div></div>' +
+
+    '<div class="f-row"><span class="f-label">Account</span>' +
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+    '<span style="font-size:13.5px;color:var(--ink-soft)">Signed in as <b>' + esc(sbUser ? (sbUser.email || '') : '') + '</b>. Your tasks sync to every device you sign in on.</span>' +
+    '<button class="btn-quiet" id="setSignOut" style="border:1px solid var(--line)">Sign out</button>' +
+    '</div></div>' +
+    '<div class="sheet-actions">' +
+    '<button class="btn-quiet" data-close-btn>Cancel</button>' +
+    '<button class="btn-primary" id="setSave">Save</button>' +
+    '</div></div></div>';
+
+  const root = document.getElementById('modalRoot');
+  root.querySelector('.overlay').addEventListener('click', (e) => {
+    if (e.target.classList.contains('overlay')) closeModal();
+  });
+  root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
+
+  root.querySelector('#setSignOut').addEventListener('click', signOutNow);
+  root.querySelector('#setExport').addEventListener('click', exportBackup);
+  root.querySelector('#setImportBtn').addEventListener('click', () => root.querySelector('#setImportFile').click());
+  root.querySelector('#setImportFile').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => importBackup(String(reader.result));
+    reader.readAsText(f);
+  });
+
+  root.querySelector('#setViewDone').addEventListener('click', () => {
+    closeModal();
+    ui.view = 'done';
+    render();
+  });
+
+  let clearArmed = false;
+  root.querySelector('#setClearDone').addEventListener('click', (e) => {
+    const n = state.tasks.filter(t => t.status === 'done').length;
+    if (!n) { toast('No completed tasks to clear'); return; }
+    if (!clearArmed) {
+      clearArmed = true;
+      e.currentTarget.textContent = 'Really remove ' + n + ' completed ' + (n === 1 ? 'task' : 'tasks') + '?';
+      return;
+    }
+    state.tasks = state.tasks.filter(t => t.status !== 'done');
+    save(); render(); closeModal();
+    toast('Completed tasks cleared');
+  });
+
+  root.querySelector('#setNewAreaGo').addEventListener('click', () => {
+    const name = root.querySelector('#setNewArea').value.trim();
+    if (!name) { toast('Give the group a name'); return; }
+    addArea(name);
+    render(); openSettings();
+    toast('Group added');
+  });
+
+  const pendingAreaDelete = new Set();
+  root.querySelectorAll('[data-adel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const aid = btn.dataset.adel;
+      if (!pendingAreaDelete.has(aid)) {
+        pendingAreaDelete.add(aid);
+        btn.textContent = 'Really?';
+        return;
+      }
+      state.areas = state.areas.filter(a => a.id !== aid);
+      state.projects.forEach(p => { if (p.areaId === aid) p.areaId = null; });
+      state.tasks.forEach(t => { if (t.areaId === aid) t.areaId = null; });
+      state.settings.collapsed = (state.settings.collapsed || []).filter(x => x !== aid);
+      if (ui.filterArea === aid) ui.filterArea = null;
+      save(); render(); openSettings();
+    });
+  });
+
+  const pendingDelete = new Set();
+  root.querySelectorAll('[data-pdel]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pid = btn.dataset.pdel;
+      if (!pendingDelete.has(pid)) {
+        pendingDelete.add(pid);
+        btn.textContent = 'Really?';
+        return;
+      }
+      state.projects = state.projects.filter(p => p.id !== pid);
+      state.tasks.forEach(t => { if (t.projectId === pid) t.projectId = null; });
+      if (ui.filterProject === pid) ui.filterProject = null;
+      save(); render(); openSettings();
+    });
+  });
+
+  root.querySelector('#setSave').addEventListener('click', () => {
+    QUADS.forEach(q => {
+      const v = root.querySelector('[data-qname="' + q + '"]').value.trim();
+      if (v) state.settings.quadNames[q - 1] = v;
+    });
+    const ax = (k) => root.querySelector('[data-ax="' + k + '"]').value.trim();
+    if (ax('x0')) state.settings.axisX[0] = ax('x0');
+    if (ax('x1')) state.settings.axisX[1] = ax('x1');
+    if (ax('y0')) state.settings.axisY[0] = ax('y0');
+    if (ax('y1')) state.settings.axisY[1] = ax('y1');
+    root.querySelectorAll('[data-pname]').forEach(inp => {
+      const p = state.projects.find(p => p.id === inp.dataset.pname);
+      if (p && inp.value.trim()) p.name = inp.value.trim();
+    });
+    root.querySelectorAll('[data-pcol]').forEach(inp => {
+      const p = state.projects.find(p => p.id === inp.dataset.pcol);
+      if (p) p.colour = inp.value;
+    });
+    root.querySelectorAll('[data-parea]').forEach(sel => {
+      const p = state.projects.find(p => p.id === sel.dataset.parea);
+      if (p) p.areaId = sel.value || null;
+    });
+    root.querySelectorAll('[data-aname]').forEach(inp => {
+      const a = state.areas.find(a => a.id === inp.dataset.aname);
+      if (a && inp.value.trim()) a.name = inp.value.trim();
+    });
+    root.querySelectorAll('[data-acol]').forEach(inp => {
+      const a = state.areas.find(a => a.id === inp.dataset.acol);
+      if (a) a.colour = inp.value;
+    });
+    save(); render(); closeModal();
+    toast('Settings saved');
+  });
+}
+
+/* ================= Backup ================= */
+
+function backupPayload() {
+  return JSON.stringify({ app: 'Sorted', v: 1, exportedAt: new Date().toISOString(), tasks: state.tasks, projects: state.projects, areas: state.areas, settings: state.settings }, null, 2);
+}
+
+async function exportBackup() {
+  const filename = 'sorted-backup-' + todayISO() + '.json';
+  const data = backupPayload();
+  if (window.claude && window.claude.downloads) {
+    try {
+      await window.claude.downloads.save({ filename, data });
+      toast('Backup saved');
+      return;
+    } catch (err) {
+      if (err && err.code === 'declined') return;
+      if (err && err.code === 'rate_limited') { toast('One moment, then try again'); return; }
+      /* fall through to plain download */
+    }
+  }
+  try {
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast('Backup downloaded');
+  } catch (e) {
+    toast('Could not create the backup file');
+  }
+}
+
+function importBackup(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { toast('That file is not a valid backup'); return; }
+  if (!data || !Array.isArray(data.tasks)) { toast('That file is not a Sorted backup'); return; }
+  // Merge: keep existing tasks, add any from the backup not already present
+  const existingIds = new Set(state.tasks.map(t => t.id));
+  let added = 0;
+  for (const t of data.tasks) {
+    if (t && t.id && !existingIds.has(t.id) && t.title) { state.tasks.push(t); added++; }
+  }
+  const existingProj = new Set(state.projects.map(p => p.id));
+  for (const p of (data.projects || [])) {
+    if (p && p.id && !existingProj.has(p.id) && !state.projects.some(x => x.name.toLowerCase() === p.name.toLowerCase())) state.projects.push(p);
+  }
+  const existingArea = new Set(state.areas.map(a => a.id));
+  for (const a of (data.areas || [])) {
+    if (a && a.id && !existingArea.has(a.id) && !state.areas.some(x => x.name.toLowerCase() === a.name.toLowerCase())) state.areas.push(a);
+  }
+  if (data.settings && state.tasks.length === added) state.settings = Object.assign(defaultSettings(), data.settings);
+  save(); render(); closeModal();
+  toast(added ? ('Restored ' + added + ' ' + (added === 1 ? 'task' : 'tasks')) : 'Nothing new to restore; your list already has these tasks');
+}
+
+/* ================= Toast ================= */
+
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ================= Events ================= */
+
+function setView(v) {
+  ui.view = v;
+  render();
+}
+
+function applyProjectFilter(id) {
+  ui.filterProject = (ui.filterProject === id) ? null : id;
+  ui.filterArea = null;
+  if (ui.filterProject && ui.view === 'today') ui.view = 'list';
+  render();
+}
+
+function applyAreaFilter(id) {
+  ui.filterArea = (ui.filterArea === id) ? null : id;
+  ui.filterProject = null;
+  if (ui.filterArea && ui.view === 'today') ui.view = 'list';
+  render();
+}
+
+document.getElementById('sidebar').addEventListener('click', (e) => {
+  const nav = e.target.closest('[data-view]');
+  if (nav) { setView(nav.dataset.view); return; }
+  const caret = e.target.closest('[data-caret]');
+  if (caret) {
+    const id = caret.dataset.caret;
+    const c = state.settings.collapsed || (state.settings.collapsed = []);
+    const i = c.indexOf(id);
+    if (i === -1) c.push(id); else c.splice(i, 1);
+    save(); render();
+    return;
+  }
+  const area = e.target.closest('[data-area]');
+  if (area) { applyAreaFilter(area.dataset.area); return; }
+  const proj = e.target.closest('[data-proj]');
+  if (proj) { applyProjectFilter(proj.dataset.proj); return; }
+  if (e.target.closest('[data-addproj]')) { openNewProject(); return; }
+  if (e.target.closest('[data-openset]')) openSettings();
+});
+
+document.getElementById('chipbar').addEventListener('click', (e) => {
+  if (e.target.closest('[data-all]')) { ui.filterProject = null; ui.filterArea = null; render(); return; }
+  const area = e.target.closest('[data-area]');
+  if (area) { applyAreaFilter(area.dataset.area); return; }
+  const proj = e.target.closest('[data-proj]');
+  if (proj) { applyProjectFilter(proj.dataset.proj); return; }
+});
+
+document.getElementById('tabbar').addEventListener('click', (e) => {
+  const nav = e.target.closest('[data-view]');
+  if (nav) { setView(nav.dataset.view); return; }
+  if (e.target.closest('[data-openset]')) openSettings();
+});
+
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+
+function doQuickAdd() {
+  const inp = document.getElementById('quickAdd');
+  const text = inp.value.trim();
+  if (!text) return;
+  const parsed = parseQuickAdd(text);
+  if (!parsed.title) { toast('The task needs a few words of description'); return; }
+  if (!parsed.projectId && !parsed.areaId) {
+    if (ui.filterProject) parsed.projectId = ui.filterProject;
+    else if (ui.filterArea) parsed.areaId = ui.filterArea;
+  }
+  addTask(parsed);
+  inp.value = '';
+  render();
+}
+document.getElementById('quickAddGo').addEventListener('click', doQuickAdd);
+document.getElementById('bulkAddBtn').addEventListener('click', openBulkAdd);
+document.getElementById('quickAdd').addEventListener('keydown', (e) => { if (e.key === 'Enter') doQuickAdd(); });
+
+let searchTimer = null;
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { ui.search = e.target.value; render(); }, 180);
+});
+
+document.getElementById('content').addEventListener('click', (e) => {
+  const groupBtn = e.target.closest('[data-group]');
+  if (groupBtn) { ui.groupBy = groupBtn.dataset.group; render(); return; }
+  if (e.target.closest('[data-toggledone]')) { ui.showDone = !ui.showDone; render(); return; }
+  if (e.target.closest('[data-clearproj]')) { ui.filterProject = null; render(); return; }
+  const row = e.target.closest('[data-task]');
+  if (!row) return;
+  const id = row.dataset.task;
+  const act = e.target.closest('[data-act]');
+  if (act && act.dataset.act === 'done') { toggleDone(id); return; }
+  if (act && act.dataset.act === 'focus') { toggleFocus(id); return; }
+  openEdit(id);
+});
+document.getElementById('content').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const row = e.target.closest && e.target.closest('[data-task]');
+  if (row && e.target === row) { e.preventDefault(); openEdit(row.dataset.task); }
+});
+
+/* Drag and drop */
+let dragId = null;
+document.getElementById('content').addEventListener('dragstart', (e) => {
+  const row = e.target.closest('[data-task]');
+  if (!row) return;
+  dragId = row.dataset.task;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
+});
+document.getElementById('content').addEventListener('dragover', (e) => {
+  const zone = e.target.closest('[data-quad], [data-status]');
+  if (!zone) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  zone.classList.add('drag-over');
+});
+document.getElementById('content').addEventListener('dragleave', (e) => {
+  const zone = e.target.closest('[data-quad], [data-status]');
+  if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
+});
+document.getElementById('content').addEventListener('drop', (e) => {
+  const zone = e.target.closest('[data-quad], [data-status]');
+  if (!zone || !dragId) return;
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  const t = getTask(dragId);
+  dragId = null;
+  if (!t) return;
+  if (zone.dataset.quad !== undefined) {
+    t.quadrant = Number(zone.dataset.quad) || null;
+  } else if (zone.dataset.status) {
+    const st = zone.dataset.status;
+    if (st !== t.status) {
+      t.status = st;
+      t.completedAt = st === 'done' ? Date.now() : null;
+    }
+  }
+  save(); render();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ================= Auth & boot ================= */
+
+let authMode = 'signin';
+
+function showAuth() {
+  document.getElementById('shell').style.display = 'none';
+  document.getElementById('tabbar').style.display = '';
+  document.getElementById('authWrap').style.display = 'flex';
+}
+
+function showShell() {
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('shell').style.display = 'flex';
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  document.getElementById('authGo').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+  document.getElementById('authSub').textContent = mode === 'signin'
+    ? 'Sign in to see your tasks on any device.'
+    : 'Choose the email and password you will use on every device.';
+  document.getElementById('authAlt').innerHTML = mode === 'signin'
+    ? 'First time here? <button id="authToggle">Create your account</button>'
+    : 'Already set up? <button id="authToggle">Sign in instead</button>';
+  document.getElementById('authToggle').addEventListener('click', () => setAuthMode(authMode === 'signin' ? 'signup' : 'signin'));
+  document.getElementById('authErr').textContent = '';
+}
+
+async function doAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass = document.getElementById('authPass').value;
+  const err = document.getElementById('authErr');
+  if (!email || !pass) { err.textContent = 'Enter your email and password.'; return; }
+  if (authMode === 'signup' && pass.length < 8) { err.textContent = 'Use a password of at least 8 characters.'; return; }
+  const btn = document.getElementById('authGo');
+  btn.disabled = true; err.textContent = '';
+  try {
+    const fn = authMode === 'signin'
+      ? sb.auth.signInWithPassword({ email, password: pass })
+      : sb.auth.signUp({ email, password: pass });
+    const { error } = await fn;
+    if (error) {
+      err.textContent = /invalid/i.test(error.message) ? 'Email or password not recognised.' :
+        /already registered/i.test(error.message) ? 'That email already has an account. Sign in instead.' :
+        /signups not allowed/i.test(error.message) ? 'New accounts are switched off for this app.' :
+        error.message;
+    }
+  } catch (e) {
+    err.textContent = 'Could not reach the server. Check your connection and try again.';
+  }
+  btn.disabled = false;
+}
+
+async function enterApp(session) {
+  sbUser = session.user;
+  showShell();
+  if (loadCache()) render();
+  await fullLoad();
+  render();
+  subscribeRealtime();
+}
+
+async function signOutNow() {
+  try { await sb.auth.signOut(); } catch (e) {}
+  localStorage.removeItem(STORE_KEY);
+  state.tasks = []; state.projects = []; state.areas = []; state.settings = defaultSettings();
+  sbUser = null;
+  closeModal();
+  showAuth();
+}
+
+document.getElementById('authGo').addEventListener('click', doAuth);
+document.getElementById('authPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') doAuth(); });
+document.getElementById('authToggle').addEventListener('click', () => setAuthMode('signup'));
+
+(async function boot() {
+  if (!window.supabase) {
+    document.getElementById('authWrap').style.display = 'flex';
+    document.getElementById('authErr').textContent = 'Could not load the sync library. Check your connection and refresh.';
+    return;
+  }
+  sb = window.supabase.createClient(SB_URL, SB_ANON);
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session && !sbUser) enterApp(session);
+    if (event === 'SIGNED_OUT') { sbUser = null; showAuth(); }
+  });
+  const { data } = await sb.auth.getSession();
+  if (data && data.session) enterApp(data.session);
+  else showAuth();
+})();
+</script>
+
+</body>
+</html>
