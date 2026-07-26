@@ -137,6 +137,16 @@
   .caret { padding: 4px 7px; color: var(--ink-faint); font-size: 10px; border-radius: 6px; }
   .caret:hover { background: var(--surface-2); color: var(--ink); }
   .proj-btn.indent { padding-left: 28px; }
+  .kebab { padding: 4px 5px; color: var(--ink-faint); font-size: 14px; border-radius: 6px; opacity: 0; transition: opacity 0.12s; }
+  .area-row:hover .kebab, .kebab:focus-visible { opacity: 1; }
+  .kebab:hover { background: var(--surface-2); color: var(--ink); }
+  .swatch-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bg-swatch {
+    width: 44px; height: 34px; border-radius: 8px;
+    border: 2px solid var(--line);
+    color: var(--ink-faint); font-size: 15px;
+  }
+  .bg-swatch.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
   .brand {
     font-family: var(--serif);
     font-size: 26px; font-weight: 700;
@@ -705,9 +715,43 @@ const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', proj
 const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
-const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0 });
-const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0 });
+const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '' });
+const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '' });
 function sortAreas() { state.areas.sort((a, b) => (a.position || 0) - (b.position || 0)); }
+
+/* Group backdrops: token stored in area.bg */
+const BG_PRESETS = {
+  g1: ['Forest', 'linear-gradient(160deg,#1E5B4A26,#3E5F8A1F)'],
+  g2: ['Terracotta', 'linear-gradient(160deg,#B5443026,#A1720E1F)'],
+  g3: ['Harvest', 'linear-gradient(160deg,#A1720E26,#1E5B4A1A)'],
+  g4: ['Slate', 'linear-gradient(160deg,#3E5F8A26,#66716B1F)'],
+  g5: ['Plum', 'linear-gradient(160deg,#7A4E8A26,#B544301A)'],
+  g6: ['Sea', 'linear-gradient(160deg,#2E6E8E26,#1E5B4A1F)'],
+  g7: ['Sand', 'linear-gradient(160deg,#A9803D26,#B5443014)'],
+  g8: ['Moss', 'linear-gradient(160deg,#4E7A5626,#A1720E1A)'],
+};
+function resolveAreaBg(area) {
+  if (!area || !area.bg) return '';
+  const v = area.bg;
+  if (v === 'wash') return 'linear-gradient(' + area.colour + '2E,' + area.colour + '1A)';
+  if (BG_PRESETS[v]) return BG_PRESETS[v][1];
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) return 'linear-gradient(' + v + '2E,' + v + '1A)';
+  if (v.startsWith('url:')) {
+    const u = v.slice(4).replace(/["'()\\\s]/g, '');
+    if (/^https?:\/\//.test(u)) {
+      return 'linear-gradient(color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 86%, transparent)), url("' + u + '") center/cover no-repeat';
+    }
+  }
+  return '';
+}
+function activeAreaForBg() {
+  if (ui.filterArea) return areaOf(ui.filterArea);
+  if (ui.filterProject) {
+    const p = state.projects.find(p => p.id === ui.filterProject);
+    if (p && p.areaId) return areaOf(p.areaId);
+  }
+  return null;
+}
 
 function snapshotBaseline() {
   baseline.tasks = {}; baseline.projects = {}; baseline.areas = {};
@@ -1110,7 +1154,7 @@ function taskRowHTML(t, opts) {
   let tint = '';
   if (state.settings.groupTint) {
     const tintArea = areaOf(taskAreaId(t));
-    if (tintArea) tint = ' style="border-left:3px solid ' + tintArea.colour + ';background-image:linear-gradient(' + tintArea.colour + '10,' + tintArea.colour + '10)"';
+    if (tintArea) tint = ' style="border-left:3px solid ' + tintArea.colour + ';background-image:linear-gradient(' + tintArea.colour + '1F,' + tintArea.colour + '1F)"';
   }
   return '<div class="task-row' + doneCls + '"' + tint + ' draggable="true" data-task="' + t.id + '" role="button" tabindex="0">' +
     '<button class="check' + (t.status === 'done' ? ' checked' : '') + '" data-act="done" aria-label="Mark complete">' + ICONS.tick + '</button>' +
@@ -1166,6 +1210,7 @@ function renderSidebar() {
       '<button class="proj-btn' + (ui.filterArea === a.id ? ' active' : '') + '" data-area="' + a.id + '">' +
       '<span class="proj-dot" style="background:' + a.colour + '"></span><span class="proj-name">' + esc(a.name) + '</span>' +
       (c ? '<span class="nav-count">' + c + '</span>' : '') + '</button>' +
+      '<button class="kebab" data-astyle="' + a.id + '" title="Group backdrop" aria-label="Backdrop for ' + esc(a.name) + '">&#8943;</button>' +
       '<button class="caret" data-caret="' + a.id + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + esc(a.name) + '">' + (isCollapsed ? '&#9656;' : '&#9662;') + '</button>' +
       '</div>';
     if (!isCollapsed) {
@@ -1240,6 +1285,7 @@ function render() {
   const dateStr = new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   titleEl.innerHTML = viewTitle() + (ui.view === 'today' && !ui.filterProject ? '<span class="view-sub">' + dateStr + '</span>' : '');
   const el = document.getElementById('content');
+  el.style.background = resolveAreaBg(activeAreaForBg());
   if (ui.view === 'today') el.innerHTML = renderToday();
   else if (ui.view === 'list') el.innerHTML = renderList();
   else if (ui.view === 'matrix') el.innerHTML = renderMatrix();
@@ -1392,7 +1438,8 @@ function renderList() {
     html += '<div class="board" style="grid-template-columns:repeat(' + cols.length + ',minmax(250px,1fr))">';
     for (const c of cols) {
       const items = open.filter(t => taskAreaId(t) === c.id).sort(listSort());
-      html += '<div class="col">' +
+      const colBg = c.id ? resolveAreaBg(areaOf(c.id)) : '';
+      html += '<div class="col"' + (colBg ? ' style="background:' + (colBg + ' var(--surface-2)').replace(/"/g, '&quot;') + '"' : '') + '>' +
         '<div class="col-head">' + (c.colour ? '<span class="g-dot" style="background:' + c.colour + ';width:10px;height:10px;border-radius:50%"></span>' : '') + esc(c.name) +
         '<span class="q-count">' + items.length + '</span></div>' +
         rowsHTML(items, { hideArea: true }) +
@@ -1723,6 +1770,53 @@ function openBulkAdd() {
   root.querySelector('#baText').focus();
 }
 
+function openAreaStyle(areaId) {
+  const area = areaOf(areaId);
+  if (!area) return;
+  const sw = (token, label) => {
+    const bgCss = token === '' ? 'var(--surface-2)' : resolveAreaBg(Object.assign({}, area, { bg: token })) + ' var(--surface)';
+    return '<button class="bg-swatch' + (area.bg === token ? ' on' : '') + '" data-bg="' + token + '" title="' + esc(label) + '" aria-label="' + esc(label) + '" style="background:' + bgCss.replace(/"/g, '&quot;') + '">' + (token === '' ? '&times;' : '') + '</button>';
+  };
+  const isCustomColour = /^#[0-9a-fA-F]{6}$/.test(area.bg || '');
+  const isImage = (area.bg || '').startsWith('url:');
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="overlay" data-close>' +
+    '<div class="sheet" role="dialog" aria-label="Group style" style="max-width:420px">' +
+    '<h2>' + esc(area.name) + ': backdrop</h2>' +
+    '<div style="font-size:13px;color:var(--ink-faint);margin-bottom:12px">Shown behind this group&rsquo;s column and whenever you are working inside the group. Changes apply immediately.</div>' +
+    '<div class="f-row"><span class="f-label">Choose</span><div class="swatch-grid">' +
+    sw('', 'None') + sw('wash', 'Group colour') +
+    Object.keys(BG_PRESETS).map(k => sw(k, BG_PRESETS[k][0])).join('') +
+    '</div></div>' +
+    '<div class="f-row"><span class="f-label">Your own colour</span><div style="display:flex;gap:8px;align-items:center">' +
+    '<input type="color" id="asColour" value="' + (isCustomColour ? area.bg : area.colour) + '" style="width:44px;height:34px;border:none;background:none;padding:0;cursor:pointer">' +
+    '<button class="pick" id="asColourUse">Use this colour</button></div></div>' +
+    '<div class="f-row"><label class="f-label" for="asImage">Your own image (web address)</label>' +
+    '<div style="display:flex;gap:8px"><input class="f-input" id="asImage" placeholder="https://..." value="' + (isImage ? esc(area.bg.slice(4)) : '') + '" style="flex:1">' +
+    '<button class="pick" id="asImageUse">Use</button></div>' +
+    '<div style="font-size:12px;color:var(--ink-faint);margin-top:5px">Paste a link to any picture, e.g. from a photo you have put online. It is softened so tasks stay readable.</div></div>' +
+    '<div class="sheet-actions"><button class="btn-primary" data-close-btn>Done</button></div>' +
+    '</div></div>';
+  const root = document.getElementById('modalRoot');
+  root.querySelector('.overlay').addEventListener('click', (e) => {
+    if (e.target.classList.contains('overlay')) closeModal();
+  });
+  root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
+  const setBg = (token) => {
+    area.bg = token;
+    save(); render();
+    root.querySelectorAll('.bg-swatch').forEach(b => b.classList.toggle('on', b.dataset.bg === token));
+  };
+  root.querySelectorAll('.bg-swatch').forEach(b => b.addEventListener('click', () => setBg(b.dataset.bg)));
+  root.querySelector('#asColourUse').addEventListener('click', () => setBg(root.querySelector('#asColour').value));
+  root.querySelector('#asImageUse').addEventListener('click', () => {
+    const u = root.querySelector('#asImage').value.trim();
+    if (!/^https?:\/\//.test(u)) { toast('The image needs a full web address starting with https'); return; }
+    setBg('url:' + u);
+    toast('Image applied');
+  });
+}
+
 function openSettings() {
   const s = state.settings;
   const areaRows = state.areas.map((a, i) =>
@@ -1731,6 +1825,7 @@ function openSettings() {
     '<button class="icon-btn" data-adown="' + a.id + '" title="Move down" aria-label="Move ' + esc(a.name) + ' down"' + (i === state.areas.length - 1 ? ' disabled style="opacity:0.3"' : '') + '>&#9660;</button>' +
     '<input type="color" value="' + a.colour + '" data-acol="' + a.id + '" style="width:34px;height:30px;border:none;background:none;padding:0;cursor:pointer" aria-label="Group colour">' +
     '<input class="f-input" style="flex:1;min-width:80px" value="' + esc(a.name) + '" data-aname="' + a.id + '" aria-label="Group name">' +
+    '<button class="btn-quiet" style="border:1px solid var(--line);padding:6px 10px" data-asty="' + a.id + '">Backdrop</button>' +
     '<button class="btn-danger" style="margin:0;padding:6px 10px" data-adel="' + a.id + '">Delete</button>' +
     '</div>'
   ).join('');
@@ -1868,6 +1963,7 @@ function openSettings() {
   };
   root.querySelectorAll('[data-aup]').forEach(btn => btn.addEventListener('click', () => moveArea(btn.dataset.aup, -1)));
   root.querySelectorAll('[data-adown]').forEach(btn => btn.addEventListener('click', () => moveArea(btn.dataset.adown, 1)));
+  root.querySelectorAll('[data-asty]').forEach(btn => btn.addEventListener('click', () => { closeModal(); openAreaStyle(btn.dataset.asty); }));
 
   const pendingAreaDelete = new Set();
   root.querySelectorAll('[data-adel]').forEach(btn => {
@@ -2039,6 +2135,8 @@ document.getElementById('sidebar').addEventListener('click', (e) => {
     save(); render();
     return;
   }
+  const styleBtn = e.target.closest('[data-astyle]');
+  if (styleBtn) { openAreaStyle(styleBtn.dataset.astyle); return; }
   const area = e.target.closest('[data-area]');
   if (area) { applyAreaFilter(area.dataset.area); return; }
   const proj = e.target.closest('[data-proj]');
