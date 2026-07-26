@@ -254,6 +254,8 @@
     transition: box-shadow 0.12s, border-color 0.12s;
   }
   .task-row:hover { border-color: var(--line); box-shadow: var(--shadow); }
+  .task-row.drop-above { box-shadow: 0 -3px 0 0 var(--accent); }
+  .task-row.drop-below { box-shadow: 0 3px 0 0 var(--accent); }
   .task-row.done-row { opacity: 0.6; }
   .task-row.done-row .t-title { text-decoration: line-through; }
   .check {
@@ -638,7 +640,20 @@ const defaultSettings = () => ({
   axisY: ['Important', 'Not important'],
   collapsed: [],
   groupTint: true,
+  listPrefs: null,
 });
+
+function persistListPrefs() {
+  state.settings.listPrefs = { groupBy: ui.groupBy, sortBy: ui.sortBy, layout: ui.layout };
+  save();
+}
+function applyListPrefs() {
+  const lp = state.settings.listPrefs;
+  if (!lp) return;
+  if (lp.groupBy) ui.groupBy = lp.groupBy;
+  if (lp.sortBy) ui.sortBy = lp.sortBy;
+  if (lp.layout) ui.layout = lp.layout;
+}
 
 function seedAreas() {
   return [
@@ -711,8 +726,8 @@ function save() {
 
 const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
 
-const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], created_at: t.createdAt || 0, completed_at: t.completedAt || null });
-const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
+const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
 const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '' });
@@ -1024,10 +1039,11 @@ function addArea(name) {
 }
 
 function addTask(fields) {
+  const minOrder = state.tasks.length ? Math.min.apply(null, state.tasks.map(t => t.sortOrder || 0)) : 1;
   const t = Object.assign({
     id: uid(), title: '', notes: '', projectId: null, areaId: null, due: null,
     quadrant: null, priority: null, status: 'todo', focus: false, steps: [],
-    createdAt: Date.now(), completedAt: null,
+    sortOrder: minOrder - 1, createdAt: Date.now(), completedAt: null,
   }, fields);
   if (!t.title.trim()) return null;
   state.tasks.unshift(t);
@@ -1089,7 +1105,33 @@ function sortByDue(a, b) {
   return a.createdAt - b.createdAt;
 }
 function sortByAdded(a, b) { return b.createdAt - a.createdAt; }
-function listSort() { return ui.sortBy === 'added' ? sortByAdded : sortByDue; }
+function sortByManual(a, b) { return (a.sortOrder || 0) - (b.sortOrder || 0); }
+function listSort() { return ui.sortBy === 'added' ? sortByAdded : ui.sortBy === 'manual' ? sortByManual : sortByDue; }
+
+function moveTaskRelative(movedId, targetId, before) {
+  const moved = getTask(movedId);
+  const target = getTask(targetId);
+  if (!moved || !target || moved.id === target.id) return;
+  const ordered = state.tasks.filter(t => t.id !== movedId).sort(sortByManual);
+  let idx = ordered.findIndex(t => t.id === targetId);
+  if (idx === -1) return;
+  if (!before) idx += 1;
+  const prev = idx > 0 ? (ordered[idx - 1].sortOrder || 0) : null;
+  const next = idx < ordered.length ? (ordered[idx].sortOrder || 0) : null;
+  let val;
+  if (prev === null && next === null) val = 0;
+  else if (prev === null) val = next - 1;
+  else if (next === null) val = prev + 1;
+  else val = (prev + next) / 2;
+  if ((prev !== null && val === prev) || (next !== null && val === next)) {
+    // No numeric room left between neighbours: renumber everything cleanly
+    ordered.splice(idx, 0, moved);
+    ordered.forEach((t, i) => { t.sortOrder = i + 1; });
+  } else {
+    moved.sortOrder = val;
+  }
+  save(); render();
+}
 
 /* ================= Rendering helpers ================= */
 
@@ -1403,7 +1445,8 @@ function renderList() {
     ).join('') + '</div>') +
     '<span class="tool-label">Sort</span><div class="seg">' +
     '<button class="' + (ui.sortBy === 'due' ? 'on' : '') + '" data-sort="due">Due date</button>' +
-    '<button class="' + (ui.sortBy === 'added' ? 'on' : '') + '" data-sort="added">Newest</button></div>' +
+    '<button class="' + (ui.sortBy === 'added' ? 'on' : '') + '" data-sort="added">Newest</button>' +
+    '<button class="' + (ui.sortBy === 'manual' ? 'on' : '') + '" data-sort="manual">My order</button></div>' +
     '<div class="seg">' +
     '<button class="' + (ui.layout === 'rows' ? 'on' : '') + '" data-layout="rows">Rows</button>' +
     '<button class="' + (ui.layout === 'tiles' ? 'on' : '') + '" data-layout="tiles">Tiles</button>' +
@@ -1421,6 +1464,9 @@ function renderList() {
     STATUSES.filter(st => st.key !== 'done').map(st => '<option value="' + st.key + '"' + (ui.fStatus === st.key ? ' selected' : '') + '>' + st.name + '</option>').join('') + '</select>' +
     (filtersOn ? '<button class="link-btn" data-clearfilters>Clear filters</button>' : '') +
     '</div>';
+  if (ui.sortBy === 'manual') {
+    html += '<div class="drag-hint">' + (window.matchMedia('(pointer: coarse)').matches ? 'Your own arrangement. Drag on a computer to change it; the order follows you here.' : 'Drag tasks up or down to arrange your own order.') + '</div>';
+  }
 
   if (!open.length && !done.length) {
     return html + '<div class="empty"><div class="e-big">' + (filtersOn ? 'Nothing matches those filters.' : 'Nothing here yet.') + '</div>' + (filtersOn ? 'Loosen or clear the filters above.' : 'Add your first task in the bar above. Use #Project to file it as you go.') + '</div>';
@@ -2192,11 +2238,11 @@ document.getElementById('content').addEventListener('change', (e) => {
 
 document.getElementById('content').addEventListener('click', (e) => {
   const groupBtn = e.target.closest('[data-group]');
-  if (groupBtn) { ui.groupBy = groupBtn.dataset.group; render(); return; }
+  if (groupBtn) { ui.groupBy = groupBtn.dataset.group; persistListPrefs(); render(); return; }
   const sortBtn = e.target.closest('[data-sort]');
-  if (sortBtn) { ui.sortBy = sortBtn.dataset.sort; render(); return; }
+  if (sortBtn) { ui.sortBy = sortBtn.dataset.sort; persistListPrefs(); render(); return; }
   const layoutBtn = e.target.closest('[data-layout]');
-  if (layoutBtn) { ui.layout = layoutBtn.dataset.layout; render(); return; }
+  if (layoutBtn) { ui.layout = layoutBtn.dataset.layout; persistListPrefs(); render(); return; }
   if (e.target.closest('[data-clearfilters]')) { ui.fQuad = ''; ui.fPri = ''; ui.fStatus = ''; render(); return; }
   if (e.target.closest('[data-toggledone]')) { ui.showDone = !ui.showDone; render(); return; }
   if (e.target.closest('[data-clearproj]')) { ui.filterProject = null; render(); return; }
@@ -2223,7 +2269,26 @@ document.getElementById('content').addEventListener('dragstart', (e) => {
   e.dataTransfer.effectAllowed = 'move';
   try { e.dataTransfer.setData('text/plain', dragId); } catch (err) {}
 });
+function clearDropMarks() {
+  document.querySelectorAll('.drop-above, .drop-below').forEach(el => el.classList.remove('drop-above', 'drop-below'));
+}
+
+function manualReorderActive() { return ui.view === 'list' && ui.sortBy === 'manual'; }
+
 document.getElementById('content').addEventListener('dragover', (e) => {
+  if (manualReorderActive()) {
+    const row = e.target.closest('.task-row[data-task]');
+    if (row && row.dataset.task !== dragId) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const r = row.getBoundingClientRect();
+      const before = (e.clientY - r.top) < r.height / 2;
+      clearDropMarks();
+      row.classList.add(before ? 'drop-above' : 'drop-below');
+      return;
+    }
+    return;
+  }
   const zone = e.target.closest('[data-quad], [data-status]');
   if (!zone) return;
   e.preventDefault();
@@ -2231,10 +2296,28 @@ document.getElementById('content').addEventListener('dragover', (e) => {
   zone.classList.add('drag-over');
 });
 document.getElementById('content').addEventListener('dragleave', (e) => {
+  if (manualReorderActive()) {
+    const row = e.target.closest('.task-row[data-task]');
+    if (row && !row.contains(e.relatedTarget)) row.classList.remove('drop-above', 'drop-below');
+    return;
+  }
   const zone = e.target.closest('[data-quad], [data-status]');
   if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('drag-over');
 });
+document.getElementById('content').addEventListener('dragend', clearDropMarks);
 document.getElementById('content').addEventListener('drop', (e) => {
+  if (manualReorderActive()) {
+    const row = e.target.closest('.task-row[data-task]');
+    if (row && dragId && row.dataset.task !== dragId) {
+      e.preventDefault();
+      const r = row.getBoundingClientRect();
+      const before = (e.clientY - r.top) < r.height / 2;
+      clearDropMarks();
+      moveTaskRelative(dragId, row.dataset.task, before);
+      dragId = null;
+    }
+    return;
+  }
   const zone = e.target.closest('[data-quad], [data-status]');
   if (!zone || !dragId) return;
   e.preventDefault();
@@ -2314,8 +2397,9 @@ async function doAuth() {
 async function enterApp(session) {
   sbUser = session.user;
   showShell();
-  if (loadCache()) render();
+  if (loadCache()) { applyListPrefs(); render(); }
   await fullLoad();
+  applyListPrefs();
   render();
   subscribeRealtime();
 }
