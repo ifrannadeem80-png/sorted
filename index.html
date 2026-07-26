@@ -627,6 +627,7 @@ const defaultSettings = () => ({
   axisX: ['Urgent', 'Not urgent'],
   axisY: ['Important', 'Not important'],
   collapsed: [],
+  groupTint: true,
 });
 
 function seedAreas() {
@@ -1106,7 +1107,12 @@ function taskRowHTML(t, opts) {
     meta.push('<span title="Has notes">&#9998;</span>');
   }
   const doneCls = t.status === 'done' ? ' done-row' : '';
-  return '<div class="task-row' + doneCls + '" draggable="true" data-task="' + t.id + '" role="button" tabindex="0">' +
+  let tint = '';
+  if (state.settings.groupTint) {
+    const tintArea = areaOf(taskAreaId(t));
+    if (tintArea) tint = ' style="border-left:3px solid ' + tintArea.colour + ';background-image:linear-gradient(' + tintArea.colour + '10,' + tintArea.colour + '10)"';
+  }
+  return '<div class="task-row' + doneCls + '"' + tint + ' draggable="true" data-task="' + t.id + '" role="button" tabindex="0">' +
     '<button class="check' + (t.status === 'done' ? ' checked' : '') + '" data-act="done" aria-label="Mark complete">' + ICONS.tick + '</button>' +
     '<div class="t-body"><div class="t-title">' + esc(t.title) + '</div>' +
     (meta.length ? '<div class="t-meta">' + meta.join('') + '</div>' : '') +
@@ -1343,16 +1349,19 @@ function renderList() {
   const done = doneTasks();
   const s = state.settings;
   const filtersOn = ui.fQuad !== '' || ui.fPri !== '' || ui.fStatus !== '';
-  let html = '<div class="toolbar"><span class="tool-label">Group by</span><div class="seg">' +
+  const inColumns = ui.layout === 'columns';
+  let html = '<div class="toolbar">' +
+    (inColumns ? '' : '<span class="tool-label">Group by</span><div class="seg">' +
     ['project', 'due', 'quadrant'].map(g =>
       '<button class="' + (ui.groupBy === g ? 'on' : '') + '" data-group="' + g + '">' + (g === 'project' ? 'Project' : g === 'due' ? 'Due date' : 'Quadrant') + '</button>'
-    ).join('') + '</div>' +
+    ).join('') + '</div>') +
     '<span class="tool-label">Sort</span><div class="seg">' +
     '<button class="' + (ui.sortBy === 'due' ? 'on' : '') + '" data-sort="due">Due date</button>' +
     '<button class="' + (ui.sortBy === 'added' ? 'on' : '') + '" data-sort="added">Newest</button></div>' +
     '<div class="seg">' +
     '<button class="' + (ui.layout === 'rows' ? 'on' : '') + '" data-layout="rows">Rows</button>' +
-    '<button class="' + (ui.layout === 'tiles' ? 'on' : '') + '" data-layout="tiles">Tiles</button></div>';
+    '<button class="' + (ui.layout === 'tiles' ? 'on' : '') + '" data-layout="tiles">Tiles</button>' +
+    '<button class="' + (inColumns ? 'on' : '') + '" data-layout="columns">Columns</button></div>';
   if (ui.filterProject) html += '<button class="link-btn" data-clearproj>Show all projects</button>';
   html += '</div>';
   html += '<div class="toolbar"><span class="tool-label">Filter</span>' +
@@ -1375,6 +1384,28 @@ function renderList() {
     const inner = rowsHTML([...items].sort(listSort()), opts);
     return ui.layout === 'tiles' ? '<div class="tile-grid">' + inner + '</div>' : inner;
   };
+
+  if (inColumns) {
+    const cols = state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour }));
+    const otherItems = open.filter(t => !taskAreaId(t));
+    if (otherItems.length) cols.push({ id: null, name: 'Other', colour: null });
+    html += '<div class="board" style="grid-template-columns:repeat(' + cols.length + ',minmax(250px,1fr))">';
+    for (const c of cols) {
+      const items = open.filter(t => taskAreaId(t) === c.id).sort(listSort());
+      html += '<div class="col">' +
+        '<div class="col-head">' + (c.colour ? '<span class="g-dot" style="background:' + c.colour + ';width:10px;height:10px;border-radius:50%"></span>' : '') + esc(c.name) +
+        '<span class="q-count">' + items.length + '</span></div>' +
+        rowsHTML(items, { hideArea: true }) +
+        (items.length ? '' : '<div class="empty" style="padding:16px 8px;font-size:13px">Nothing here</div>') +
+        '</div>';
+    }
+    html += '</div>';
+    if (done.length) {
+      html += '<div class="toolbar" style="margin-top:18px"><button class="link-btn" data-toggledone>' + (ui.showDone ? 'Hide' : 'Show') + ' completed (' + done.length + ')</button></div>';
+      if (ui.showDone) html += rowsHTML(done.slice(0, 100));
+    }
+    return html;
+  }
 
   if (ui.groupBy === 'project') {
     for (const a of [...state.areas, null]) {
@@ -1754,6 +1785,10 @@ function openSettings() {
     '<div style="margin-top:8px"><button class="btn-quiet" id="setNewProject" style="border:1px solid var(--line)">Add a project</button></div>' +
     '</div>' +
 
+    '<div class="f-row"><span class="f-label">Appearance</span>' +
+    '<button class="pick' + (s.groupTint ? ' on' : '') + '" id="setTint">' + (s.groupTint ? 'Group colours on tasks: on' : 'Group colours on tasks: off') + '</button>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Adds a subtle stripe and wash of the group&rsquo;s colour to every task card, helpful when many tasks share the screen.</div>' +
+    '</div>' +
     '<div class="f-row"><span class="f-label">Completed tasks</span>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
     '<button class="btn-quiet" id="setViewDone" style="border:1px solid var(--line)">View completed tasks</button>' +
@@ -1778,6 +1813,12 @@ function openSettings() {
 
   root.querySelector('#setSignOut').addEventListener('click', signOutNow);
   root.querySelector('#setNewProject').addEventListener('click', () => { closeModal(); openNewProject(); });
+  let localTint = !!s.groupTint;
+  root.querySelector('#setTint').addEventListener('click', (e) => {
+    localTint = !localTint;
+    e.currentTarget.classList.toggle('on', localTint);
+    e.currentTarget.textContent = localTint ? 'Group colours on tasks: on' : 'Group colours on tasks: off';
+  });
   root.querySelector('#setExport').addEventListener('click', exportBackup);
   root.querySelector('#setImportBtn').addEventListener('click', () => root.querySelector('#setImportFile').click());
   root.querySelector('#setImportFile').addEventListener('change', (e) => {
@@ -1863,6 +1904,7 @@ function openSettings() {
   });
 
   root.querySelector('#setSave').addEventListener('click', () => {
+    state.settings.groupTint = localTint;
     QUADS.forEach(q => {
       const v = root.querySelector('[data-qname="' + q + '"]').value.trim();
       if (v) state.settings.quadNames[q - 1] = v;
