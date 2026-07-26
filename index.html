@@ -28,10 +28,10 @@
     --accent: #1E5B4A;
     --accent-ink: #FFFFFF;
     --accent-soft: #E2EDE8;
-    --q1: #B54430; --q1-soft: #F6E3DE;
-    --q2: #1E5B4A; --q2-soft: #E2EDE8;
-    --q3: #A1720E; --q3-soft: #F4EAD3;
-    --q4: #66716B; --q4-soft: #E9ECE9;
+    --q1: #B54430; --q1-soft: #F6E3DE; --q1-tint: #FAF1EE;
+    --q2: #1E5B4A; --q2-soft: #E2EDE8; --q2-tint: #F0F6F3;
+    --q3: #A1720E; --q3-soft: #F4EAD3; --q3-tint: #F9F4E7;
+    --q4: #66716B; --q4-soft: #E9ECE9; --q4-tint: #F1F3F1;
     --danger: #B3402E;
     --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 4px 16px rgba(27,36,32,0.07);
     --shadow-lift: 0 2px 6px rgba(27,36,32,0.10), 0 10px 30px rgba(27,36,32,0.14);
@@ -52,10 +52,10 @@
       --accent: #62A98E;
       --accent-ink: #10201A;
       --accent-soft: #22362E;
-      --q1: #D9765F; --q1-soft: #3A2620;
-      --q2: #62A98E; --q2-soft: #22362E;
-      --q3: #CFA045; --q3-soft: #38301B;
-      --q4: #90998F; --q4-soft: #2A322D;
+      --q1: #D9765F; --q1-soft: #3A2620; --q1-tint: #221B18;
+      --q2: #62A98E; --q2-soft: #22362E; --q2-tint: #18221E;
+      --q3: #CFA045; --q3-soft: #38301B; --q3-tint: #211E15;
+      --q4: #90998F; --q4-soft: #2A322D; --q4-tint: #1D211F;
       --danger: #D9765F;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
       --shadow-lift: 0 2px 6px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.45);
@@ -73,10 +73,10 @@
     --accent: #62A98E;
     --accent-ink: #10201A;
     --accent-soft: #22362E;
-    --q1: #D9765F; --q1-soft: #3A2620;
-    --q2: #62A98E; --q2-soft: #22362E;
-    --q3: #CFA045; --q3-soft: #38301B;
-    --q4: #90998F; --q4-soft: #2A322D;
+    --q1: #D9765F; --q1-soft: #3A2620; --q1-tint: #221B18;
+    --q2: #62A98E; --q2-soft: #22362E; --q2-tint: #18221E;
+    --q3: #CFA045; --q3-soft: #38301B; --q3-tint: #211E15;
+    --q4: #90998F; --q4-soft: #2A322D; --q4-tint: #1D211F;
     --danger: #D9765F;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
     --shadow-lift: 0 2px 6px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.45);
@@ -93,10 +93,10 @@
     --accent: #1E5B4A;
     --accent-ink: #FFFFFF;
     --accent-soft: #E2EDE8;
-    --q1: #B54430; --q1-soft: #F6E3DE;
-    --q2: #1E5B4A; --q2-soft: #E2EDE8;
-    --q3: #A1720E; --q3-soft: #F4EAD3;
-    --q4: #66716B; --q4-soft: #E9ECE9;
+    --q1: #B54430; --q1-soft: #F6E3DE; --q1-tint: #FAF1EE;
+    --q2: #1E5B4A; --q2-soft: #E2EDE8; --q2-tint: #F0F6F3;
+    --q3: #A1720E; --q3-soft: #F4EAD3; --q3-tint: #F9F4E7;
+    --q4: #66716B; --q4-soft: #E9ECE9; --q4-tint: #F1F3F1;
     --danger: #B3402E;
     --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 4px 16px rgba(27,36,32,0.07);
     --shadow-lift: 0 2px 6px rgba(27,36,32,0.10), 0 10px 30px rgba(27,36,32,0.14);
@@ -332,6 +332,22 @@
   .pri-4 { background: var(--q4-soft); color: var(--q4); }
   .chip.pri { background: var(--surface-2); color: var(--ink-soft); }
 
+  /* ---------- Tiles, filters, steps ---------- */
+  .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin-bottom: 7px; }
+  .tile-grid .task-row { margin-bottom: 0; align-items: flex-start; }
+  .mini-select {
+    padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--surface); font-size: 13px; color: var(--ink-soft); outline: none;
+  }
+  .mini-select:focus { border-color: var(--accent); }
+  .step-row { display: flex; align-items: center; gap: 9px; padding: 5px 0; }
+  .step-row .check { width: 17px; height: 17px; margin-top: 0; }
+  .step-title { flex: 1; font-size: 14px; overflow-wrap: anywhere; }
+  .step-row.done .step-title { text-decoration: line-through; color: var(--ink-faint); }
+  .step-del { color: var(--ink-faint); font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+  .step-del:hover { color: var(--danger); background: var(--q1-soft); }
+
+
   /* ---------- Matrix ---------- */
   .matrix-wrap { display: grid; grid-template-columns: 26px 1fr 1fr; grid-template-rows: 24px 1fr 1fr; gap: 8px; min-height: 60vh; }
   .ax {
@@ -349,6 +365,12 @@
     min-height: 170px;
     transition: border-color 0.12s, background 0.12s;
   }
+  .quad.qc1 { background: var(--q1-tint); border-color: var(--q1-soft); }
+  .quad.qc2 { background: var(--q2-tint); border-color: var(--q2-soft); }
+  .quad.qc3 { background: var(--q3-tint); border-color: var(--q3-soft); }
+  .quad.qc4 { background: var(--q4-tint); border-color: var(--q4-soft); }
+  .quad .task-row { background: var(--surface); }
+  .q-axes { display: none; font-size: 11px; font-weight: 500; color: var(--ink-faint); margin-left: 4px; }
   .quad.drag-over { border-color: var(--accent); background: var(--accent-soft); }
   .quad-head {
     display: flex; align-items: center; gap: 8px;
@@ -448,6 +470,17 @@
   }
   .toast.show { opacity: 1; }
 
+  /* Desktop: sheets slide in as a right-hand panel (must come after base .sheet rules) */
+  @media (min-width: 881px) {
+    .overlay { justify-content: flex-end; align-items: stretch; padding: 0; }
+    .overlay .sheet {
+      max-width: 480px; max-height: none; height: 100%;
+      border-radius: 0; border-left: 1px solid var(--line);
+      animation: slide-in 0.18s ease-out;
+    }
+  }
+  @keyframes slide-in { from { transform: translateX(30px); opacity: 0.5; } to { transform: none; opacity: 1; } }
+
   /* ---------- Auth ---------- */
   .auth-wrap {
     position: fixed; inset: 0; z-index: 100;
@@ -502,6 +535,8 @@
     .quickadd-hint { display: none; }
     .chipbar { display: flex; gap: 6px; overflow-x: auto; padding: 0 14px 10px; scrollbar-width: none; }
     .chipbar::-webkit-scrollbar { display: none; }
+    .q-axes { display: inline; }
+    .tile-grid { grid-template-columns: 1fr; }
     .content { padding: 4px 14px 130px; }
     .searchbar input { width: 130px; }
     .view-title { font-size: 21px; }
@@ -596,10 +631,10 @@ const defaultSettings = () => ({
 
 function seedAreas() {
   return [
-    { id: uid(), name: 'Property', colour: '#1E5B4A' },
-    { id: uid(), name: 'China (Orders)', colour: '#B54430' },
-    { id: uid(), name: 'Tiling Smart', colour: '#A1720E' },
-    { id: uid(), name: 'AI System Development', colour: '#3E5F8A' },
+    { id: uid(), name: 'Property', colour: '#1E5B4A', position: 0 },
+    { id: uid(), name: 'China (Orders)', colour: '#B54430', position: 1 },
+    { id: uid(), name: 'Tiling Smart', colour: '#A1720E', position: 2 },
+    { id: uid(), name: 'AI System Development', colour: '#3E5F8A', position: 3 },
   ];
 }
 
@@ -611,8 +646,11 @@ let state = {
 };
 
 let ui = {
-  view: 'today',           // today | list | matrix | board
+  view: 'today',           // today | list | matrix | board | priority | done
   groupBy: 'project',      // project | due | quadrant
+  sortBy: 'due',           // due | added
+  layout: 'rows',          // rows | tiles (list view)
+  fQuad: '', fPri: '', fStatus: '',   // list view filters ('' = any)
   filterProject: null,     // project id or null
   filterArea: null,        // area (group) id or null
   search: '',
@@ -632,8 +670,10 @@ function loadCache() {
     const data = JSON.parse(raw);
     if (!data || !Array.isArray(data.tasks)) return false;
     state.tasks = data.tasks;
+    state.tasks.forEach(t => { if (!Array.isArray(t.steps)) t.steps = []; });
     state.projects = Array.isArray(data.projects) ? data.projects : [];
     state.areas = Array.isArray(data.areas) ? data.areas : [];
+    sortAreas();
     state.settings = Object.assign(defaultSettings(), data.settings || {});
     return true;
   } catch (e) { return false; }
@@ -660,12 +700,13 @@ function save() {
 
 const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
 
-const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
-const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
+const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], created_at: t.createdAt || 0, completed_at: t.completedAt || null });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
-const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour });
-const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour });
+const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0 });
+const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0 });
+function sortAreas() { state.areas.sort((a, b) => (a.position || 0) - (b.position || 0)); }
 
 function snapshotBaseline() {
   baseline.tasks = {}; baseline.projects = {}; baseline.areas = {};
@@ -752,6 +793,7 @@ async function fullLoad() {
   state.tasks = t.data.map(rowToTask);
   state.projects = p.data.map(rowToProj);
   state.areas = a.data.map(rowToArea);
+  sortAreas();
   state.settings = Object.assign(defaultSettings(), (s.data && s.data.data) || {});
   snapshotBaseline();
   if (!state.tasks.length && !state.projects.length && !state.areas.length && !s.data) {
@@ -771,15 +813,18 @@ function subscribeRealtime() {
     if (payload.eventType === 'DELETE') {
       const id = payload.old && payload.old.id;
       if (!id) return;
+      if (!(id in baseline[table]) && !list.some(x => x.id === id)) return; // echo of our own delete
       state[listKey] = list.filter(x => x.id !== id);
       delete baseline[table][id];
     } else {
       const item = rowToX(payload.new);
-      const js = JSON.stringify(payload.new ? (table === 'tasks' ? taskToRow(item) : table === 'projects' ? projToRow(item) : areaToRow(item)) : null);
+      const js = JSON.stringify(table === 'tasks' ? taskToRow(item) : table === 'projects' ? projToRow(item) : areaToRow(item));
+      if (baseline[table][item.id] === js) return; // echo of our own write: local state is newer or identical
       const i = list.findIndex(x => x.id === item.id);
       if (i === -1) list.unshift(item); else list[i] = item;
       baseline[table][item.id] = js;
     }
+    if (table === 'areas') sortAreas();
     saveCache();
     render();
   };
@@ -789,7 +834,9 @@ function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'areas', filter: 'user_id=eq.' + sbUser.id }, apply('areas', rowToArea, 'areas'))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: 'user_id=eq.' + sbUser.id }, (payload) => {
       if (payload.new && payload.new.data) {
-        state.settings = Object.assign(defaultSettings(), payload.new.data);
+        const incoming = Object.assign(defaultSettings(), payload.new.data);
+        if (JSON.stringify(incoming) === baseline.settings) return; // echo of our own write
+        state.settings = incoming;
         baseline.settings = JSON.stringify(state.settings);
         saveCache(); render();
       }
@@ -925,7 +972,7 @@ function addArea(name) {
   const existing = state.areas.find(a => a.name.toLowerCase() === name.toLowerCase());
   if (existing) return existing;
   const colours = ['#1E5B4A', '#B54430', '#A1720E', '#3E5F8A', '#7A4E8A', '#4E7A56', '#8A5B3E'];
-  const area = { id: uid(), name: name, colour: colours[state.areas.length % colours.length] };
+  const area = { id: uid(), name: name, colour: colours[state.areas.length % colours.length], position: state.areas.length };
   state.areas.push(area);
   save();
   return area;
@@ -934,7 +981,7 @@ function addArea(name) {
 function addTask(fields) {
   const t = Object.assign({
     id: uid(), title: '', notes: '', projectId: null, areaId: null, due: null,
-    quadrant: null, priority: null, status: 'todo', focus: false,
+    quadrant: null, priority: null, status: 'todo', focus: false, steps: [],
     createdAt: Date.now(), completedAt: null,
   }, fields);
   if (!t.title.trim()) return null;
@@ -996,6 +1043,8 @@ function sortByDue(a, b) {
   if (!a.due && b.due) return 1;
   return a.createdAt - b.createdAt;
 }
+function sortByAdded(a, b) { return b.createdAt - a.createdAt; }
+function listSort() { return ui.sortBy === 'added' ? sortByAdded : sortByDue; }
 
 /* ================= Rendering helpers ================= */
 
@@ -1047,6 +1096,11 @@ function taskRowHTML(t, opts) {
   }
   if (!opts.hideStatus && (t.status === 'doing' || t.status === 'waiting')) {
     meta.push('<span class="chip st">' + esc(statusName(t.status)) + '</span>');
+  }
+  const stepTotal = (t.steps || []).length;
+  if (stepTotal) {
+    const stepDone = t.steps.filter(s => s.done).length;
+    meta.push('<span title="Steps">' + stepDone + ' of ' + stepTotal + '</span>');
   }
   if (t.notes) {
     meta.push('<span title="Has notes">&#9998;</span>');
@@ -1276,27 +1330,59 @@ function renderToday() {
 
 /* ----- List ----- */
 
+function applyListFilters(list) {
+  let out = list;
+  if (ui.fQuad !== '') out = out.filter(t => ui.fQuad === '0' ? !t.quadrant : t.quadrant === Number(ui.fQuad));
+  if (ui.fPri !== '') out = out.filter(t => ui.fPri === '0' ? !t.priority : t.priority === Number(ui.fPri));
+  if (ui.fStatus !== '') out = out.filter(t => t.status === ui.fStatus);
+  return out;
+}
+
 function renderList() {
-  const open = openTasks();
+  const open = applyListFilters(openTasks());
   const done = doneTasks();
+  const s = state.settings;
+  const filtersOn = ui.fQuad !== '' || ui.fPri !== '' || ui.fStatus !== '';
   let html = '<div class="toolbar"><span class="tool-label">Group by</span><div class="seg">' +
     ['project', 'due', 'quadrant'].map(g =>
       '<button class="' + (ui.groupBy === g ? 'on' : '') + '" data-group="' + g + '">' + (g === 'project' ? 'Project' : g === 'due' ? 'Due date' : 'Quadrant') + '</button>'
-    ).join('') + '</div>';
+    ).join('') + '</div>' +
+    '<span class="tool-label">Sort</span><div class="seg">' +
+    '<button class="' + (ui.sortBy === 'due' ? 'on' : '') + '" data-sort="due">Due date</button>' +
+    '<button class="' + (ui.sortBy === 'added' ? 'on' : '') + '" data-sort="added">Newest</button></div>' +
+    '<div class="seg">' +
+    '<button class="' + (ui.layout === 'rows' ? 'on' : '') + '" data-layout="rows">Rows</button>' +
+    '<button class="' + (ui.layout === 'tiles' ? 'on' : '') + '" data-layout="tiles">Tiles</button></div>';
   if (ui.filterProject) html += '<button class="link-btn" data-clearproj>Show all projects</button>';
   html += '</div>';
+  html += '<div class="toolbar"><span class="tool-label">Filter</span>' +
+    '<select class="mini-select" data-f="fQuad" aria-label="Filter by quadrant"><option value="">Any quadrant</option>' +
+    QUADS.map(q => '<option value="' + q + '"' + (ui.fQuad === String(q) ? ' selected' : '') + '>' + esc(s.quadNames[q - 1]) + '</option>').join('') +
+    '<option value="0"' + (ui.fQuad === '0' ? ' selected' : '') + '>Unsorted</option></select>' +
+    '<select class="mini-select" data-f="fPri" aria-label="Filter by priority"><option value="">Any priority</option>' +
+    [1, 2, 3, 4].map(p => '<option value="' + p + '"' + (ui.fPri === String(p) ? ' selected' : '') + '>P' + p + '</option>').join('') +
+    '<option value="0"' + (ui.fPri === '0' ? ' selected' : '') + '>No priority</option></select>' +
+    '<select class="mini-select" data-f="fStatus" aria-label="Filter by status"><option value="">Any status</option>' +
+    STATUSES.filter(st => st.key !== 'done').map(st => '<option value="' + st.key + '"' + (ui.fStatus === st.key ? ' selected' : '') + '>' + st.name + '</option>').join('') + '</select>' +
+    (filtersOn ? '<button class="link-btn" data-clearfilters>Clear filters</button>' : '') +
+    '</div>';
 
   if (!open.length && !done.length) {
-    return html + '<div class="empty"><div class="e-big">Nothing here yet.</div>Add your first task in the bar above. Use #Project to file it as you go.</div>';
+    return html + '<div class="empty"><div class="e-big">' + (filtersOn ? 'Nothing matches those filters.' : 'Nothing here yet.') + '</div>' + (filtersOn ? 'Loosen or clear the filters above.' : 'Add your first task in the bar above. Use #Project to file it as you go.') + '</div>';
   }
+
+  const wrap = (items, opts) => {
+    const inner = rowsHTML([...items].sort(listSort()), opts);
+    return ui.layout === 'tiles' ? '<div class="tile-grid">' + inner + '</div>' : inner;
+  };
 
   if (ui.groupBy === 'project') {
     for (const a of [...state.areas, null]) {
       const aid = a ? a.id : null;
-      const direct = open.filter(t => !t.projectId && (t.areaId || null) === aid).sort(sortByDue);
+      const direct = open.filter(t => !t.projectId && (t.areaId || null) === aid);
       const blocks = [];
       for (const p of state.projects.filter(p => (p.areaId || null) === aid)) {
-        const items = open.filter(t => t.projectId === p.id).sort(sortByDue);
+        const items = open.filter(t => t.projectId === p.id);
         if (items.length) blocks.push({ p, items });
       }
       if (!blocks.length && !direct.length) continue;
@@ -1304,9 +1390,9 @@ function renderList() {
       html += '<div class="group-head">' +
         (a ? '<span class="g-dot" style="background:' + a.colour + '"></span>' + esc(a.name) : 'Other') +
         ' <span class="g-count">' + total + '</span></div>';
-      if (direct.length) html += rowsHTML(direct, { hideProject: true, hideArea: true });
+      if (direct.length) html += wrap(direct, { hideProject: true, hideArea: true });
       for (const b of blocks) {
-        html += '<div class="sub-head"><span class="g-dot" style="background:' + b.p.colour + '"></span>' + esc(b.p.name) + ' <span class="g-count">' + b.items.length + '</span></div>' + rowsHTML(b.items, { hideProject: true });
+        html += '<div class="sub-head"><span class="g-dot" style="background:' + b.p.colour + '"></span>' + esc(b.p.name) + ' <span class="g-count">' + b.items.length + '</span></div>' + wrap(b.items, { hideProject: true });
       }
     }
   } else if (ui.groupBy === 'due') {
@@ -1320,24 +1406,24 @@ function renderList() {
       ['No date', x => !x.due],
     ];
     for (const [name, fn] of buckets) {
-      const items = open.filter(fn).sort(sortByDue);
+      const items = open.filter(fn);
       if (!items.length) continue;
       const style = name === 'Overdue' ? ' style="color:var(--q1)"' : '';
-      html += '<div class="group-head"' + style + '>' + name + ' <span class="g-count">' + items.length + '</span></div>' + rowsHTML(items);
+      html += '<div class="group-head"' + style + '>' + name + ' <span class="g-count">' + items.length + '</span></div>' + wrap(items);
     }
   } else {
     for (const q of QUADS) {
-      const items = open.filter(x => x.quadrant === q).sort(sortByDue);
+      const items = open.filter(x => x.quadrant === q);
       if (!items.length) continue;
-      html += '<div class="group-head"><span class="g-dot" style="background:var(--q' + q + ')"></span>' + esc(state.settings.quadNames[q - 1]) + ' <span class="g-count">' + items.length + '</span></div>' + rowsHTML(items, { hideQuad: true });
+      html += '<div class="group-head"><span class="g-dot" style="background:var(--q' + q + ')"></span>' + esc(state.settings.quadNames[q - 1]) + ' <span class="g-count">' + items.length + '</span></div>' + wrap(items, { hideQuad: true });
     }
-    const unsorted = open.filter(x => !x.quadrant).sort(sortByDue);
-    if (unsorted.length) html += '<div class="group-head">Not yet sorted <span class="g-count">' + unsorted.length + '</span></div>' + rowsHTML(unsorted);
+    const unsorted = open.filter(x => !x.quadrant);
+    if (unsorted.length) html += '<div class="group-head">Not yet sorted <span class="g-count">' + unsorted.length + '</span></div>' + wrap(unsorted);
   }
 
   if (done.length) {
     html += '<div class="toolbar" style="margin-top:18px"><button class="link-btn" data-toggledone>' + (ui.showDone ? 'Hide' : 'Show') + ' completed (' + done.length + ')</button></div>';
-    if (ui.showDone) html += rowsHTML(done.slice(0, 100));
+    if (ui.showDone) html += ui.layout === 'tiles' ? '<div class="tile-grid">' + rowsHTML(done.slice(0, 100)) + '</div>' : rowsHTML(done.slice(0, 100));
   }
   return html;
 }
@@ -1356,11 +1442,13 @@ function renderMatrix() {
     { q: 1, axis: s.axisY[0] }, { q: 2, axis: null },
     { q: 3, axis: s.axisY[1] }, { q: 4, axis: null },
   ];
+  const axesFor = (q) => esc(s.axisX[q === 1 || q === 3 ? 0 : 1]) + ' &middot; ' + esc(s.axisY[q <= 2 ? 0 : 1]);
   for (const c of cells) {
     if (c.axis !== null) html += '<div class="ax vert">' + esc(c.axis) + '</div>';
     const items = open.filter(t => t.quadrant === c.q).sort(sortByDue);
-    html += '<div class="quad" data-quad="' + c.q + '">' +
+    html += '<div class="quad qc' + c.q + '" data-quad="' + c.q + '">' +
       '<div class="quad-head"><span class="q-mark" style="background:var(--q' + c.q + ')"></span>' + esc(s.quadNames[c.q - 1]) +
+      '<span class="q-axes">' + axesFor(c.q) + '</span>' +
       '<span class="q-count">' + items.length + '</span></div>' +
       '<div class="quad-body">' + rowsHTML(items, { hideQuad: true }) +
       (items.length ? '' : '<div class="empty" style="padding:18px 8px;font-size:13px">Drop tasks here</div>') +
@@ -1423,6 +1511,8 @@ function openEdit(id) {
     '<div class="sheet" role="dialog" aria-label="Edit task">' +
     '<h2>Edit task</h2>' +
     '<div class="f-row"><label class="f-label" for="etTitle">Task</label><input class="f-input" id="etTitle" value="' + esc(t.title) + '"></div>' +
+    '<div class="f-row"><span class="f-label">Steps</span><div id="etSteps"></div>' +
+    '<div style="display:flex;gap:6px;margin-top:4px"><input class="f-input" id="etStepNew" placeholder="Break the task into steps"><button class="pick" id="etStepAdd">Add</button></div></div>' +
     '<div class="f-row"><label class="f-label" for="etNotes">Notes</label><textarea class="f-textarea" id="etNotes">' + esc(t.notes || '') + '</textarea></div>' +
     '<div class="f-row" style="display:flex;gap:10px;flex-wrap:wrap">' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etProj">Project</label><select class="f-select" id="etProj">' + projOpts + '</select></div>' +
@@ -1440,7 +1530,37 @@ function openEdit(id) {
     '</div></div></div>';
 
   const root = document.getElementById('modalRoot');
-  const local = { quadrant: t.quadrant, status: t.status, focus: t.focus, priority: t.priority, deleteArmed: false };
+  const local = { quadrant: t.quadrant, status: t.status, focus: t.focus, priority: t.priority, deleteArmed: false,
+    steps: (t.steps || []).map(s => ({ id: s.id || uid(), title: s.title, done: !!s.done })) };
+
+  const renderSteps = () => {
+    const box = root.querySelector('#etSteps');
+    box.innerHTML = local.steps.map(s =>
+      '<div class="step-row' + (s.done ? ' done' : '') + '" data-sid="' + s.id + '">' +
+      '<button class="check' + (s.done ? ' checked' : '') + '" data-stoggle aria-label="Toggle step">' + ICONS.tick + '</button>' +
+      '<span class="step-title">' + esc(s.title) + '</span>' +
+      '<button class="step-del" data-sdel aria-label="Remove step">&times;</button></div>'
+    ).join('') || '<div style="font-size:13px;color:var(--ink-faint);padding:2px 0">No steps yet. Steps let one task hold its sub-activities.</div>';
+  };
+  renderSteps();
+  root.querySelector('#etSteps').addEventListener('click', (e) => {
+    const row = e.target.closest('[data-sid]');
+    if (!row) return;
+    const s = local.steps.find(x => x.id === row.dataset.sid);
+    if (!s) return;
+    if (e.target.closest('[data-stoggle]')) { s.done = !s.done; renderSteps(); }
+    if (e.target.closest('[data-sdel]')) { local.steps = local.steps.filter(x => x.id !== s.id); renderSteps(); }
+  });
+  const addStep = () => {
+    const inp = root.querySelector('#etStepNew');
+    const v = inp.value.trim();
+    if (!v) return;
+    local.steps.push({ id: uid(), title: v, done: false });
+    inp.value = ''; inp.focus();
+    renderSteps();
+  };
+  root.querySelector('#etStepAdd').addEventListener('click', addStep);
+  root.querySelector('#etStepNew').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addStep(); } });
 
   root.querySelector('.overlay').addEventListener('click', (e) => {
     if (e.target.dataset.close !== undefined && e.target.classList.contains('overlay')) closeModal();
@@ -1491,6 +1611,7 @@ function openEdit(id) {
     t.quadrant = local.quadrant;
     t.priority = local.priority;
     t.focus = local.focus;
+    t.steps = local.steps;
     if (local.status !== t.status) {
       t.status = local.status;
       t.completedAt = t.status === 'done' ? Date.now() : null;
@@ -1573,10 +1694,12 @@ function openBulkAdd() {
 
 function openSettings() {
   const s = state.settings;
-  const areaRows = state.areas.map(a =>
+  const areaRows = state.areas.map((a, i) =>
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">' +
+    '<button class="icon-btn" data-aup="' + a.id + '" title="Move up" aria-label="Move ' + esc(a.name) + ' up"' + (i === 0 ? ' disabled style="opacity:0.3"' : '') + '>&#9650;</button>' +
+    '<button class="icon-btn" data-adown="' + a.id + '" title="Move down" aria-label="Move ' + esc(a.name) + ' down"' + (i === state.areas.length - 1 ? ' disabled style="opacity:0.3"' : '') + '>&#9660;</button>' +
     '<input type="color" value="' + a.colour + '" data-acol="' + a.id + '" style="width:34px;height:30px;border:none;background:none;padding:0;cursor:pointer" aria-label="Group colour">' +
-    '<input class="f-input" style="flex:1" value="' + esc(a.name) + '" data-aname="' + a.id + '" aria-label="Group name">' +
+    '<input class="f-input" style="flex:1;min-width:80px" value="' + esc(a.name) + '" data-aname="' + a.id + '" aria-label="Group name">' +
     '<button class="btn-danger" style="margin:0;padding:6px 10px" data-adel="' + a.id + '">Delete</button>' +
     '</div>'
   ).join('');
@@ -1627,7 +1750,9 @@ function openSettings() {
     '<div class="f-row"><span class="f-label">Groups</span>' + areaRows + newAreaRow +
     '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
     '</div>' +
-    '<div class="f-row"><span class="f-label">Projects</span>' + projRows + '</div>' +
+    '<div class="f-row"><span class="f-label">Projects</span>' + projRows +
+    '<div style="margin-top:8px"><button class="btn-quiet" id="setNewProject" style="border:1px solid var(--line)">Add a project</button></div>' +
+    '</div>' +
 
     '<div class="f-row"><span class="f-label">Completed tasks</span>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
@@ -1652,6 +1777,7 @@ function openSettings() {
   root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
 
   root.querySelector('#setSignOut').addEventListener('click', signOutNow);
+  root.querySelector('#setNewProject').addEventListener('click', () => { closeModal(); openNewProject(); });
   root.querySelector('#setExport').addEventListener('click', exportBackup);
   root.querySelector('#setImportBtn').addEventListener('click', () => root.querySelector('#setImportFile').click());
   root.querySelector('#setImportFile').addEventListener('change', (e) => {
@@ -1689,6 +1815,18 @@ function openSettings() {
     render(); openSettings();
     toast('Group added');
   });
+
+  const moveArea = (id, dir) => {
+    const i = state.areas.findIndex(a => a.id === id);
+    const j = i + dir;
+    if (i === -1 || j < 0 || j >= state.areas.length) return;
+    const [moved] = state.areas.splice(i, 1);
+    state.areas.splice(j, 0, moved);
+    state.areas.forEach((a, idx) => { a.position = idx; });
+    save(); render(); openSettings();
+  };
+  root.querySelectorAll('[data-aup]').forEach(btn => btn.addEventListener('click', () => moveArea(btn.dataset.aup, -1)));
+  root.querySelectorAll('[data-adown]').forEach(btn => btn.addEventListener('click', () => moveArea(btn.dataset.adown, 1)));
 
   const pendingAreaDelete = new Set();
   root.querySelectorAll('[data-adel]').forEach(btn => {
@@ -1907,9 +2045,19 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
   searchTimer = setTimeout(() => { ui.search = e.target.value; render(); }, 180);
 });
 
+document.getElementById('content').addEventListener('change', (e) => {
+  const sel = e.target.closest('[data-f]');
+  if (sel) { ui[sel.dataset.f] = sel.value; render(); }
+});
+
 document.getElementById('content').addEventListener('click', (e) => {
   const groupBtn = e.target.closest('[data-group]');
   if (groupBtn) { ui.groupBy = groupBtn.dataset.group; render(); return; }
+  const sortBtn = e.target.closest('[data-sort]');
+  if (sortBtn) { ui.sortBy = sortBtn.dataset.sort; render(); return; }
+  const layoutBtn = e.target.closest('[data-layout]');
+  if (layoutBtn) { ui.layout = layoutBtn.dataset.layout; render(); return; }
+  if (e.target.closest('[data-clearfilters]')) { ui.fQuad = ''; ui.fPri = ''; ui.fStatus = ''; render(); return; }
   if (e.target.closest('[data-toggledone]')) { ui.showDone = !ui.showDone; render(); return; }
   if (e.target.closest('[data-clearproj]')) { ui.filterProject = null; render(); return; }
   const row = e.target.closest('[data-task]');
