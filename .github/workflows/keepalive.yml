@@ -1,0 +1,34 @@
+name: Keep database awake
+
+# Pings the Sorted app database twice a week so the Supabase free tier
+# never pauses it for inactivity. The key below is the app public key,
+# the same one already published in index.html.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1,4"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ping database
+        env:
+          ANON: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNub3V2c2hhb3JhbWRta2NqY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NDkwMDIsImV4cCI6MjEwMDUyNTAwMn0.W641moclFovb-I9lQqmG4sLWN3jGCtVOWAaoeGdpkJw
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://cnouvshaoramdmkcjcxe.supabase.co/rest/v1/tasks?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON")
+          echo "Database answered with HTTP $CODE"
+          test "$CODE" = "200"
+      - name: Record ping so this schedule never goes stale
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .last-ping
+          git config user.name "sorted-keepalive"
+          git config user.email "keepalive@users.noreply.github.com"
+          git add .last-ping
+          git commit -m "Keep-alive ping" || exit 0
+          git push
