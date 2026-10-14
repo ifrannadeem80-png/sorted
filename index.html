@@ -521,6 +521,11 @@
   .map-node .n-meta { fill: var(--ink-faint); font-size: 10.5px; }
   .map-node.done rect { opacity: 0.55; }
   .map-node.done .n-title { text-decoration: line-through; fill: var(--ink-faint); }
+  .map-node.root-node rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+  .map-node.root-node text { font-family: var(--serif); font-size: 16px; font-weight: 700; fill: var(--accent); }
+  .map-node .zi { fill: var(--accent); opacity: 0; pointer-events: none; }
+  .map-node.rz-top .zi-top { opacity: 1; }
+  .map-node.rz-bottom .zi-bottom { opacity: 1; }
   .map-node.step-node rect { fill: var(--surface-2); stroke: var(--line-soft); }
   .map-node.step-node text { font-size: 12px; fill: var(--ink-soft); }
   .map-node.step-node.done text { text-decoration: line-through; fill: var(--ink-faint); }
@@ -707,6 +712,9 @@ const defaultSettings = () => ({
   mapHiddenProjects: [],
   mapCollapsed: [],
   mapShowDone: false,
+  mapLayout: 'centred',
+  mapRootLabel: 'My Projects',
+  mapSides: {},
 });
 
 function persistListPrefs() {
@@ -1751,9 +1759,9 @@ function mapForest() {
   return roots;
 }
 
-const MAP_DIM = { area: { w: 180, h: 38 }, project: { w: 180, h: 34 }, task: { w: 230, h: 36 }, step: { w: 190, h: 28 }, gapX: 54, gapY: 10 };
+const MAP_DIM = { root: { w: 200, h: 46 }, area: { w: 180, h: 38 }, project: { w: 180, h: 34 }, task: { w: 230, h: 36 }, step: { w: 190, h: 28 }, gapX: 54, gapY: 10 };
 
-function layoutMapTree(roots) {
+function layoutMapTree(roots, startX, mirror) {
   const flat = [];
   const colW = [];
   const depthOf = (node, d) => {
@@ -1763,9 +1771,9 @@ function layoutMapTree(roots) {
   };
   roots.forEach(r => depthOf(r, 0));
   const colX = [];
-  let acc = 20;
+  let acc = startX;
   for (let i = 0; i < colW.length; i++) { colX[i] = acc; acc += colW[i] + MAP_DIM.gapX; }
-  let cursorY = 20;
+  let cursorY = 0;
   const place = (node) => {
     const dim = MAP_DIM[node.kind];
     node.w = dim.w; node.h = dim.h; node.x = colX[node.depth];
@@ -1780,7 +1788,8 @@ function layoutMapTree(roots) {
     flat.push(node);
   };
   roots.forEach((r, i) => { if (i > 0) cursorY += 14; place(r); });
-  return flat;
+  if (mirror) flat.forEach(n => { n.x = -(n.x + n.w); });
+  return { flat, height: cursorY };
 }
 
 function escAttr(s) { return esc(s); }
@@ -1801,7 +1810,37 @@ function renderMap(el) {
   if (mapView.inputActive) { mapView.pendingRender = true; return; }
   const s = state.settings;
   const roots = mapForest();
-  const flat = layoutMapTree(roots);
+  const centred = (s.mapLayout || 'centred') !== 'tree';
+  let flat = [];
+  if (!centred) {
+    const T = layoutMapTree(roots, 20, false);
+    flat = T.flat;
+    flat.forEach(n => { n.side = 'right'; });
+  } else {
+    const weight = (n) => { let w = 1; n.children.forEach(c => { w += weight(c); }); return w; };
+    const sides = s.mapSides || {};
+    const left = [], right = [];
+    let lw = 0, rw = 0;
+    for (const r of roots) {
+      const key = r.areaId || '__other';
+      const w = weight(r);
+      let side = sides[key];
+      if (side !== 'left' && side !== 'right') side = (lw < rw) ? 'left' : 'right';
+      if (side === 'left') { left.push(r); lw += w; } else { right.push(r); rw += w; }
+    }
+    const rd = MAP_DIM.root;
+    const startX = rd.w / 2 + MAP_DIM.gapX;
+    const R = layoutMapTree(right, startX, false);
+    const L = layoutMapTree(left, startX, true);
+    R.flat.forEach(n => { n.side = 'right'; n.y -= R.height / 2; });
+    L.flat.forEach(n => { n.side = 'left'; n.y -= L.height / 2; });
+    const rootNode = {
+      kind: 'root', id: '__root', label: s.mapRootLabel || 'My Projects', colour: '#1E5B4A',
+      x: -rd.w / 2, y: -rd.h / 2, w: rd.w, h: rd.h, side: 'right',
+      children: [...right, ...left], childCount: roots.length,
+    };
+    flat = [...R.flat, ...L.flat, rootNode];
+  }
   const byId = {}; flat.forEach(n => { byId[n.id] = n; });
   if (mapView.sel && !byId[mapView.sel]) mapView.sel = null;
 
@@ -1809,11 +1848,21 @@ function renderMap(el) {
   for (const n of flat) {
     const col = nodeColour(n, roots);
     for (const c of n.children) {
-      edges += '<path class="map-edge" stroke="' + col + '" d="M' + (n.x + n.w) + ' ' + (n.y + n.h / 2) +
-        ' C' + (n.x + n.w + MAP_DIM.gapX / 2) + ' ' + (n.y + n.h / 2) + ' ' +
-        (c.x - MAP_DIM.gapX / 2) + ' ' + (c.y + c.h / 2) + ' ' + c.x + ' ' + (c.y + c.h / 2) + '"></path>';
+      const ccol = nodeColour(c, roots);
+      const pcy = n.y + n.h / 2, ccy = c.y + c.h / 2;
+      let d;
+      if (c.side === 'left') {
+        d = 'M' + n.x + ' ' + pcy +
+          ' C' + (n.x - MAP_DIM.gapX / 2) + ' ' + pcy + ' ' +
+          (c.x + c.w + MAP_DIM.gapX / 2) + ' ' + ccy + ' ' + (c.x + c.w) + ' ' + ccy;
+      } else {
+        d = 'M' + (n.x + n.w) + ' ' + pcy +
+          ' C' + (n.x + n.w + MAP_DIM.gapX / 2) + ' ' + pcy + ' ' +
+          (c.x - MAP_DIM.gapX / 2) + ' ' + ccy + ' ' + c.x + ' ' + ccy;
+      }
+      edges += '<path class="map-edge" stroke="' + ccol + '" d="' + d + '"></path>';
     }
-    const cls = ['map-node', n.kind === 'step' ? 'step-node' : '', n.done ? 'done' : '', mapView.sel === n.id ? 'sel' : ''].filter(Boolean).join(' ');
+    const cls = ['map-node', n.kind === 'step' ? 'step-node' : '', n.kind === 'root' ? 'root-node' : '', n.done ? 'done' : '', mapView.sel === n.id ? 'sel' : ''].filter(Boolean).join(' ');
     let metaStr = '';
     if (n.kind === 'task' && n.task) {
       const bits = [];
@@ -1824,16 +1873,20 @@ function renderMap(el) {
     }
     const fill = n.kind === 'area' ? ' style="fill:' + col + '22"' : (n.kind === 'project' ? ' style="fill:' + col + '14"' : '');
     const fw = (n.kind === 'area' || n.kind === 'project') ? ' font-weight="700"' : '';
+    const titleX = n.kind === 'root' ? n.w / 2 : 12;
+    const anchor = n.kind === 'root' ? ' text-anchor="middle"' : '';
     shapes += '<g class="' + cls + '" data-node="' + escAttr(n.id) + '" data-kind="' + n.kind + '" transform="translate(' + n.x + ',' + n.y + ')">' +
-      '<rect width="' + n.w + '" height="' + n.h + '" rx="9"' + fill + '></rect>' +
-      '<rect width="4" height="' + n.h + '" rx="2" fill="' + col + '"></rect>' +
-      '<text class="n-title" x="12" y="' + (metaStr ? n.h / 2 - 1 : n.h / 2 + 4.5) + '"' + fw + '>' + esc(truncLabel(n.label || '(untitled)', n.w)) + '</text>' +
+      '<rect width="' + n.w + '" height="' + n.h + '" rx="' + (n.kind === 'root' ? 14 : 9) + '"' + fill + '></rect>' +
+      (n.kind === 'root' ? '' : '<rect width="4" height="' + n.h + '" rx="2" fill="' + col + '"></rect>') +
+      (n.kind === 'task' ? '<rect class="zi zi-top" x="2" y="0" width="' + (n.w - 4) + '" height="3" rx="1.5"></rect><rect class="zi zi-bottom" x="2" y="' + (n.h - 3) + '" width="' + (n.w - 4) + '" height="3" rx="1.5"></rect>' : '') +
+      '<text class="n-title" x="' + titleX + '" y="' + (metaStr ? n.h / 2 - 1 : n.h / 2 + 4.5) + '"' + fw + anchor + '>' + esc(truncLabel(n.label || '(untitled)', n.w)) + '</text>' +
       (metaStr ? '<text class="n-meta" x="12" y="' + (n.h - 6) + '">' + esc(metaStr) + '</text>' : '') +
       '<title>' + esc(n.label || '') + '</title>' +
       '</g>';
-    if (n.childCount) {
+    if (n.childCount && n.kind !== 'root') {
       const collapsed = !n.children.length;
-      shapes += '<g class="map-collapse" data-collapse="' + escAttr(n.id) + '" transform="translate(' + (n.x + n.w) + ',' + (n.y + n.h / 2) + ')">' +
+      const cx = n.side === 'left' ? n.x : n.x + n.w;
+      shapes += '<g class="map-collapse" data-collapse="' + escAttr(n.id) + '" transform="translate(' + cx + ',' + (n.y + n.h / 2) + ')">' +
         '<circle r="8"></circle><text y="3.5">' + (collapsed ? n.childCount : '−') + '</text></g>';
     }
   }
@@ -1841,9 +1894,12 @@ function renderMap(el) {
   const scopeCount = (s.mapHiddenAreas || []).length + (s.mapHiddenProjects || []).length;
   el.innerHTML =
     '<div class="map-toolbar">' +
+    '<div class="seg">' +
+    '<button class="' + (centred ? 'on' : '') + '" data-maplayout="centred">Centred</button>' +
+    '<button class="' + (!centred ? 'on' : '') + '" data-maplayout="tree">Tree</button></div>' +
     '<button class="link-btn" data-mapscope>Scope' + (scopeCount ? ' (' + scopeCount + ' hidden)' : '') + '</button>' +
     '<button class="link-btn" data-mapdone>' + (s.mapShowDone ? 'Hide completed' : 'Show completed') + '</button>' +
-    '<span class="tool-label">Click to select · double-click to edit · Tab adds a sub-task · Enter adds a sibling · drag a task onto another node to move it</span>' +
+    '<span class="tool-label">Drag the background to pan · wheel or pinch to zoom · double-click to edit · Tab adds a sub-task, Enter a sibling · drag a task onto a node’s middle to nest it, onto its edge to reorder' + (centred ? ' · drag a group across the centre to swap sides · double-click the centre to rename it' : '') + '</span>' +
     '</div>' +
     '<div class="map-wrap" id="mapWrap">' +
     '<div class="map-actions">' +
@@ -1891,7 +1947,7 @@ function renderMap(el) {
       if (!selNode) return false;
       if (a === 'child') return selNode.kind !== 'step';
       if (a === 'sibling') return selNode.kind === 'task';
-      if (a === 'edit') return selNode.kind === 'task';
+      if (a === 'edit') return selNode.kind === 'task' || selNode.kind === 'root';
       if (a === 'done') return selNode.kind === 'task' || selNode.kind === 'step';
       return false;
     };
@@ -1900,24 +1956,17 @@ function renderMap(el) {
   updateSel();
 
   /* ---- inline capture ---- */
-  const openInline = (mode) => {
-    const selNode = mapView.sel ? byId[mapView.sel] : null;
-    if (!selNode) return;
-    let target; // {parentId, projectId, areaId, anchor}
-    if (mode === 'child' && selNode.kind === 'area') target = { parentId: null, projectId: null, areaId: selNode.areaId, anchor: selNode };
-    else if (mode === 'child' && selNode.kind === 'project') target = { parentId: null, projectId: selNode.id, areaId: null, anchor: selNode };
-    else if (mode === 'child' && selNode.kind === 'task') target = { parentId: selNode.id, projectId: selNode.task.projectId, areaId: selNode.task.areaId, anchor: selNode };
-    else if (mode === 'sibling' && selNode.kind === 'task') target = { parentId: selNode.task.parentId, projectId: selNode.task.projectId, areaId: selNode.task.areaId, anchor: selNode };
-    else return;
-    // uncollapse the anchor so the new node is visible
-    state.settings.mapCollapsed = (state.settings.mapCollapsed || []).filter(x => x !== (selNode.kind === 'area' ? (selNode.areaId || '__other') : selNode.id));
+  const floatInput = (anchor, placeholder, initial, onCommit) => {
     const r = wrap.getBoundingClientRect();
-    let px = mapView.t.x + (target.anchor.x + target.anchor.w + 30) * mapView.t.s;
-    let py = mapView.t.y + (target.anchor.y) * mapView.t.s;
+    let px = anchor.side === 'left'
+      ? mapView.t.x + anchor.x * mapView.t.s - 215
+      : mapView.t.x + (anchor.x + anchor.w + 30) * mapView.t.s;
+    let py = mapView.t.y + anchor.y * mapView.t.s;
     px = Math.max(8, Math.min(px, r.width - 200)); py = Math.max(8, Math.min(py, r.height - 44));
     const inp = document.createElement('input');
     inp.className = 'map-inline-input';
-    inp.placeholder = mode === 'child' ? 'New sub-task of "' + truncLabel(selNode.label, 160) + '"' : 'New sibling task';
+    inp.placeholder = placeholder;
+    if (initial) inp.value = initial;
     inp.style.left = px + 'px'; inp.style.top = py + 'px';
     wrap.appendChild(inp);
     mapView.inputActive = true;
@@ -1932,13 +1981,49 @@ function renderMap(el) {
       if (e.key === 'Enter') {
         const v = inp.value.trim();
         if (!v) { close(false); return; }
-        const nt = addTask({ title: v, parentId: target.parentId, projectId: target.projectId, areaId: target.areaId });
-        if (nt) mapView.sel = nt.id;
+        onCommit(v);
         close(true);
       }
     });
     inp.addEventListener('blur', () => { if (mapView.inputActive) close(false); });
     setTimeout(() => inp.focus(), 30);
+  };
+
+  const openRootRename = () => {
+    const rootNode = byId['__root'];
+    if (!rootNode) return;
+    floatInput(rootNode, 'Name the centre', state.settings.mapRootLabel || 'My Projects', (v) => {
+      state.settings.mapRootLabel = v;
+      save();
+    });
+  };
+  mapView.openRootRename = openRootRename;
+
+  const openInline = (mode) => {
+    const selNode = mapView.sel ? byId[mapView.sel] : null;
+    if (!selNode) return;
+    if (mode === 'child' && selNode.kind === 'root') {
+      floatInput(selNode, 'New group', '', (v) => {
+        const a = addArea(v);
+        mapView.sel = a.id;
+      });
+      return;
+    }
+    let target; // {parentId, projectId, areaId, anchor}
+    if (mode === 'child' && selNode.kind === 'area') target = { parentId: null, projectId: null, areaId: selNode.areaId, anchor: selNode };
+    else if (mode === 'child' && selNode.kind === 'project') target = { parentId: null, projectId: selNode.id, areaId: null, anchor: selNode };
+    else if (mode === 'child' && selNode.kind === 'task') target = { parentId: selNode.id, projectId: selNode.task.projectId, areaId: selNode.task.areaId, anchor: selNode };
+    else if (mode === 'sibling' && selNode.kind === 'task') target = { parentId: selNode.task.parentId, projectId: selNode.task.projectId, areaId: selNode.task.areaId, anchor: selNode };
+    else return;
+    // uncollapse the anchor so the new node is visible
+    state.settings.mapCollapsed = (state.settings.mapCollapsed || []).filter(x => x !== (selNode.kind === 'area' ? (selNode.areaId || '__other') : selNode.id));
+    floatInput(target.anchor,
+      mode === 'child' ? 'New sub-task of "' + truncLabel(selNode.label, 160) + '"' : 'New sibling task',
+      '',
+      (v) => {
+        const nt = addTask({ title: v, parentId: target.parentId, projectId: target.projectId, areaId: target.areaId });
+        if (nt) mapView.sel = nt.id;
+      });
   };
   mapView.openInline = openInline;
 
@@ -1950,6 +2035,7 @@ function renderMap(el) {
     if (!selNode) return;
     const a = b.dataset.mact;
     if (a === 'child' || a === 'sibling') openInline(a);
+    else if (a === 'edit' && selNode.kind === 'root') openRootRename();
     else if (a === 'edit' && selNode.kind === 'task') openEdit(selNode.id);
     else if (a === 'done') {
       if (selNode.kind === 'task') toggleDone(selNode.id);
@@ -1961,6 +2047,11 @@ function renderMap(el) {
     }
   });
 
+  el.querySelectorAll('[data-maplayout]').forEach(b => b.addEventListener('click', () => {
+    state.settings.mapLayout = b.dataset.maplayout;
+    mapView.firstFit = true;
+    save(); render();
+  }));
   el.querySelector('[data-mapscope]').addEventListener('click', openMapScope);
   el.querySelector('[data-mapdone]').addEventListener('click', () => { state.settings.mapShowDone = !state.settings.mapShowDone; save(); render(); });
   wrap.querySelector('.map-zoom').addEventListener('click', (e) => {
@@ -1998,7 +2089,7 @@ function renderMap(el) {
     if (collapseBtn) { panStart = null; dragNode = null; return; }
     if (g) {
       const n = byId[g.dataset.node];
-      dragNode = (n && n.kind === 'task') ? n : null;
+      dragNode = (n && (n.kind === 'task' || (n.kind === 'area' && centred && n.areaId))) ? n : null;
       dragMoved = false;
       dragStart = { x: e.clientX, y: e.clientY };
       panStart = null;
@@ -2028,11 +2119,21 @@ function renderMap(el) {
     } else if (dragNode) {
       if (!dragMoved && dragStart && Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) < 7) return;
       dragMoved = true;
-      svg.querySelectorAll('.droptgt').forEach(x => x.classList.remove('droptgt'));
+      svg.querySelectorAll('.droptgt, .rz-top, .rz-bottom').forEach(x => x.classList.remove('droptgt', 'rz-top', 'rz-bottom'));
+      if (dragNode.kind !== 'task') return; // group drags only swap sides, no drop target
       const over = nodeAt(e.clientX, e.clientY);
-      if (over && over.id !== dragNode.id && over.kind !== 'step' && !isDescendantTask(over.kind === 'task' ? over.id : '', dragNode.id)) {
+      if (over && over.id !== dragNode.id && over.kind !== 'step' && !(over.kind === 'task' && isDescendantTask(over.id, dragNode.id))) {
         const g = svg.querySelector('[data-node="' + CSS.escape(over.id) + '"]');
-        if (g && !(over.kind === 'task' && isDescendantTask(over.id, dragNode.id))) g.classList.add('droptgt');
+        if (!g) return;
+        if (over.kind === 'task') {
+          const r = g.getBoundingClientRect();
+          const rel = (e.clientY - r.top) / Math.max(1, r.height);
+          if (rel < 0.3) g.classList.add('rz-top');
+          else if (rel > 0.7) g.classList.add('rz-bottom');
+          else g.classList.add('droptgt');
+        } else {
+          g.classList.add('droptgt');
+        }
       }
     }
   });
@@ -2050,10 +2151,36 @@ function renderMap(el) {
       return;
     }
     if (dragNode && dragMoved) {
+      svg.querySelectorAll('.droptgt, .rz-top, .rz-bottom').forEach(x => x.classList.remove('droptgt', 'rz-top', 'rz-bottom'));
+      if (dragNode.kind === 'area') {
+        // group drag in centred layout: crossing the centre swaps the branch side
+        const r = wrap.getBoundingClientRect();
+        const mapX = (e.clientX - r.left - mapView.t.x) / mapView.t.s;
+        const newSide = mapX < 0 ? 'left' : 'right';
+        const sidesMap = state.settings.mapSides || (state.settings.mapSides = {});
+        if (sidesMap[dragNode.areaId] !== newSide) {
+          sidesMap[dragNode.areaId] = newSide;
+          save(); toast('Branch moved to the ' + newSide);
+        }
+        dragNode = null; dragMoved = false;
+        render();
+        return;
+      }
       const over = nodeAt(e.clientX, e.clientY);
       const t = getTask(dragNode.id);
       if (over && t && over.id !== dragNode.id) {
         if (over.kind === 'task' && !isDescendantTask(over.id, dragNode.id)) {
+          const g = svg.querySelector('[data-node="' + CSS.escape(over.id) + '"]');
+          const r = g ? g.getBoundingClientRect() : null;
+          const rel = r ? (e.clientY - r.top) / Math.max(1, r.height) : 0.5;
+          if (rel < 0.3 || rel > 0.7) {
+            // reorder: slot before or after the target, adopting its place in the tree
+            t.parentId = over.task.parentId; t.projectId = over.task.projectId; t.areaId = over.task.areaId;
+            dragNode = null; dragMoved = false;
+            moveTaskRelative(t.id, over.id, rel < 0.3);
+            toast('Reordered');
+            return;
+          }
           t.parentId = over.id; t.projectId = over.task.projectId; t.areaId = over.task.areaId;
           save(); toast('Moved under "' + truncLabel(over.label, 180) + '"');
         } else if (over.kind === 'project') {
@@ -2062,6 +2189,9 @@ function renderMap(el) {
         } else if (over.kind === 'area') {
           t.parentId = null; t.projectId = null; t.areaId = over.areaId;
           save(); toast('Moved to group "' + truncLabel(over.label, 180) + '"');
+        } else if (over.kind === 'root') {
+          t.parentId = null; t.projectId = null; t.areaId = null;
+          save(); toast('Moved out of all groups');
         }
       }
       dragNode = null; dragMoved = false;
@@ -2077,7 +2207,8 @@ function renderMap(el) {
     const g = e.target.closest('[data-node]');
     if (!g) return;
     const n = byId[g.dataset.node];
-    if (n && n.kind === 'task') openEdit(n.id);
+    if (n && n.kind === 'root') openRootRename();
+    else if (n && n.kind === 'task') openEdit(n.id);
     else if (n && n.kind === 'step') {
       const t = getTask(n.taskId);
       const st = (t.steps || []).find(x => x.id === n.stepId);
