@@ -482,6 +482,68 @@
   }
   .toast.show { opacity: 1; }
 
+  /* ---------- Mind map ---------- */
+  .map-wrap {
+    position: relative;
+    height: calc(100vh - 215px); height: calc(100dvh - 215px);
+    min-height: 320px;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+    touch-action: none;
+  }
+  .map-svg { width: 100%; height: 100%; display: block; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .map-svg.panning { cursor: grabbing; }
+  .map-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 2px 0 8px; }
+  .map-actions {
+    position: absolute; top: 10px; left: 10px; z-index: 5;
+    display: flex; gap: 6px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 9px; padding: 5px; box-shadow: var(--shadow);
+  }
+  .map-actions button { padding: 5px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+  .map-actions button:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+  .map-actions button:disabled { opacity: 0.35; cursor: default; }
+  .map-zoom {
+    position: absolute; bottom: 10px; right: 10px; z-index: 5;
+    display: flex; gap: 4px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 9px; padding: 4px; box-shadow: var(--shadow);
+  }
+  .map-zoom button { width: 30px; height: 28px; border-radius: 6px; font-weight: 700; color: var(--ink-soft); }
+  .map-zoom button:hover { background: var(--surface-2); color: var(--ink); }
+  .map-node { cursor: pointer; }
+  .map-node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+  .map-node.sel rect { stroke: var(--accent); stroke-width: 2.2; }
+  .map-node.droptgt rect { stroke: var(--accent); stroke-width: 2.2; stroke-dasharray: 4 3; }
+  .map-node text { fill: var(--ink); font-size: 13px; font-family: var(--sans); }
+  .map-node .n-meta { fill: var(--ink-faint); font-size: 10.5px; }
+  .map-node.done rect { opacity: 0.55; }
+  .map-node.done .n-title { text-decoration: line-through; fill: var(--ink-faint); }
+  .map-node.step-node rect { fill: var(--surface-2); stroke: var(--line-soft); }
+  .map-node.step-node text { font-size: 12px; fill: var(--ink-soft); }
+  .map-node.step-node.done text { text-decoration: line-through; fill: var(--ink-faint); }
+  .map-edge { fill: none; stroke-width: 1.6; opacity: 0.55; }
+  .map-collapse { cursor: pointer; }
+  .map-collapse circle { fill: var(--surface); stroke: var(--ink-faint); stroke-width: 1.2; }
+  .map-collapse text { fill: var(--ink-soft); font-size: 10px; font-weight: 700; text-anchor: middle; }
+  .map-inline-input {
+    position: absolute; z-index: 6;
+    border: 2px solid var(--accent); border-radius: 7px;
+    background: var(--surface); color: var(--ink);
+    padding: 6px 9px; font-size: 13px; outline: none;
+    box-shadow: var(--shadow-lift);
+    min-width: 180px;
+  }
+  @media (max-width: 880px) {
+    .map-wrap { height: calc(100vh - 300px); height: calc(100dvh - 300px); }
+  }
+
+  /* Children indented under their parent in list rows */
+  .task-row.child-row { margin-left: 26px; }
+  .tile-grid .task-row.child-row { margin-left: 0; }
+
   /* Desktop: sheets slide in as a right-hand panel (must come after base .sheet rules) */
   @media (min-width: 881px) {
     .overlay { justify-content: flex-end; align-items: stretch; padding: 0; }
@@ -641,6 +703,10 @@ const defaultSettings = () => ({
   collapsed: [],
   groupTint: true,
   listPrefs: null,
+  mapHiddenAreas: [],
+  mapHiddenProjects: [],
+  mapCollapsed: [],
+  mapShowDone: false,
 });
 
 function persistListPrefs() {
@@ -696,7 +762,10 @@ function loadCache() {
     const data = JSON.parse(raw);
     if (!data || !Array.isArray(data.tasks)) return false;
     state.tasks = data.tasks;
-    state.tasks.forEach(t => { if (!Array.isArray(t.steps)) t.steps = []; });
+    state.tasks.forEach(t => {
+      if (!Array.isArray(t.steps)) t.steps = [];
+      if (t.parentId === undefined) t.parentId = null;
+    });
     state.projects = Array.isArray(data.projects) ? data.projects : [];
     state.areas = Array.isArray(data.areas) ? data.areas : [];
     sortAreas();
@@ -726,8 +795,8 @@ function save() {
 
 const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
 
-const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
-const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
+const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, parent_id: t.parentId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
 const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '' });
@@ -1041,7 +1110,7 @@ function addArea(name) {
 function addTask(fields) {
   const minOrder = state.tasks.length ? Math.min.apply(null, state.tasks.map(t => t.sortOrder || 0)) : 1;
   const t = Object.assign({
-    id: uid(), title: '', notes: '', projectId: null, areaId: null, due: null,
+    id: uid(), title: '', notes: '', projectId: null, areaId: null, parentId: null, due: null,
     quadrant: null, priority: null, status: 'todo', focus: false, steps: [],
     sortOrder: minOrder - 1, createdAt: Date.now(), completedAt: null,
   }, fields);
@@ -1073,7 +1142,23 @@ function toggleFocus(id) {
 
 function deleteTask(id) {
   state.tasks = state.tasks.filter(t => t.id !== id);
+  // Children of a deleted task become top-level rather than disappearing
+  state.tasks.forEach(t => { if (t.parentId === id) t.parentId = null; });
   save(); render();
+}
+
+function childTasksOf(id) {
+  return state.tasks.filter(t => t.parentId === id);
+}
+
+function isDescendantTask(candidateId, ancestorId) {
+  let t = getTask(candidateId);
+  let guard = 0;
+  while (t && t.parentId && guard++ < 100) {
+    if (t.parentId === ancestorId) return true;
+    t = getTask(t.parentId);
+  }
+  return false;
 }
 
 function projectOf(t) { return state.projects.find(p => p.id === t.projectId) || null; }
@@ -1144,6 +1229,7 @@ const ICONS = {
   list: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"></path><circle cx="3.5" cy="6" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none"></circle><circle cx="3.5" cy="18" r="1.2" fill="currentColor" stroke="none"></circle></svg>',
   matrix: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>',
   priority: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"></path><path d="M4 4h14l-3.5 4.5L18 13H4"></path></svg>',
+  map: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="2.2"></circle><circle cx="18" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="18" cy="19" r="2.2"></circle><path d="M7 11 15.8 5.8M7.2 12h9.6M7 13l8.8 5.2"></path></svg>',
   done: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 5-5"></path></svg>',
   board: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="5" height="18" rx="1.5"></rect><rect x="10" y="3" width="5" height="12" rx="1.5"></rect><rect x="17" y="3" width="5" height="8" rx="1.5"></rect></svg>',
   star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>',
@@ -1193,12 +1279,15 @@ function taskRowHTML(t, opts) {
     meta.push('<span title="Has notes">&#9998;</span>');
   }
   const doneCls = t.status === 'done' ? ' done-row' : '';
-  let tint = '';
+  const extraCls = opts.indent ? ' child-row' : '';
+  const styleParts = [];
   if (state.settings.groupTint) {
     const tintArea = areaOf(taskAreaId(t));
-    if (tintArea) tint = ' style="border-left:3px solid ' + tintArea.colour + ';background-image:linear-gradient(' + tintArea.colour + '1F,' + tintArea.colour + '1F)"';
+    if (tintArea) styleParts.push('border-left:3px solid ' + tintArea.colour, 'background-image:linear-gradient(' + tintArea.colour + '1F,' + tintArea.colour + '1F)');
   }
-  return '<div class="task-row' + doneCls + '"' + tint + ' draggable="true" data-task="' + t.id + '" role="button" tabindex="0">' +
+  if (opts.indent && opts.indent > 1) styleParts.push('margin-left:' + (opts.indent * 26) + 'px');
+  const tint = styleParts.length ? ' style="' + styleParts.join(';') + '"' : '';
+  return '<div class="task-row' + doneCls + extraCls + '"' + tint + ' draggable="true" data-task="' + t.id + '" role="button" tabindex="0">' +
     '<button class="check' + (t.status === 'done' ? ' checked' : '') + '" data-act="done" aria-label="Mark complete">' + ICONS.tick + '</button>' +
     '<div class="t-body"><div class="t-title">' + esc(t.title) + '</div>' +
     (meta.length ? '<div class="t-meta">' + meta.join('') + '</div>' : '') +
@@ -1217,6 +1306,7 @@ const VIEWS = [
   { key: 'matrix', name: 'Matrix' },
   { key: 'board', name: 'Board' },
   { key: 'priority', name: 'Priority' },
+  { key: 'map', name: 'Map' },
 ];
 
 function renderSidebar() {
@@ -1333,6 +1423,7 @@ function render() {
   else if (ui.view === 'matrix') el.innerHTML = renderMatrix();
   else if (ui.view === 'priority') el.innerHTML = renderPriority();
   else if (ui.view === 'done') el.innerHTML = renderArchive();
+  else if (ui.view === 'map') { renderMap(el); }
   else el.innerHTML = renderBoard();
 }
 
@@ -1472,9 +1563,21 @@ function renderList() {
     return html + '<div class="empty"><div class="e-big">' + (filtersOn ? 'Nothing matches those filters.' : 'Nothing here yet.') + '</div>' + (filtersOn ? 'Loosen or clear the filters above.' : 'Add your first task in the bar above. Use #Project to file it as you go.') + '</div>';
   }
 
+  const openIds = new Set(open.map(t => t.id));
+  const rowPlusKids = (t, opts, depth) => {
+    let out = taskRowHTML(t, Object.assign({}, opts, { indent: depth }));
+    if (ui.layout !== 'tiles') {
+      for (const c of childTasksOf(t.id).filter(c => openIds.has(c.id)).sort(listSort())) {
+        out += rowPlusKids(c, opts, (depth || 0) + 1);
+      }
+    }
+    return out;
+  };
   const wrap = (items, opts) => {
-    const inner = rowsHTML([...items].sort(listSort()), opts);
-    return ui.layout === 'tiles' ? '<div class="tile-grid">' + inner + '</div>' : inner;
+    if (ui.layout === 'tiles') return '<div class="tile-grid">' + rowsHTML([...items].sort(listSort()), opts) + '</div>';
+    // children render indented under their parent, not as separate top-level rows
+    const tops = [...items].filter(t => !(t.parentId && openIds.has(t.parentId))).sort(listSort());
+    return tops.map(t => rowPlusKids(t, opts || {}, 0)).join('');
   };
 
   if (inColumns) {
@@ -1488,7 +1591,7 @@ function renderList() {
       html += '<div class="col"' + (colBg ? ' style="background:' + (colBg + ' var(--surface-2)').replace(/"/g, '&quot;') + '"' : '') + '>' +
         '<div class="col-head">' + (c.colour ? '<span class="g-dot" style="background:' + c.colour + ';width:10px;height:10px;border-radius:50%"></span>' : '') + esc(c.name) +
         '<span class="q-count">' + items.length + '</span></div>' +
-        rowsHTML(items, { hideArea: true }) +
+        wrap(items, { hideArea: true }) +
         (items.length ? '' : '<div class="empty" style="padding:16px 8px;font-size:13px">Nothing here</div>') +
         '</div>';
     }
@@ -1603,6 +1706,437 @@ function renderBoard() {
   return html;
 }
 
+/* ================= Mind map ================= */
+
+const mapView = { t: null, sel: null, inputActive: false, pendingRender: false, firstFit: true };
+
+function mapForest() {
+  const s = state.settings;
+  const hiddenA = new Set(s.mapHiddenAreas || []);
+  const hiddenP = new Set(s.mapHiddenProjects || []);
+  const showDone = !!s.mapShowDone;
+  const include = (t) => showDone || t.status !== 'done';
+  const taskNode = (t) => ({
+    kind: 'task', id: t.id, label: t.title, done: t.status === 'done', task: t,
+    children: (state.settings.mapCollapsed || []).includes(t.id) ? [] : [
+      ...childTasksOf(t.id).filter(include).sort(sortByManual).map(taskNode),
+      ...(t.steps || []).map(st => ({ kind: 'step', id: t.id + '::' + st.id, label: st.title, done: !!st.done, taskId: t.id, stepId: st.id, children: [] })),
+    ],
+    childCount: childTasksOf(t.id).filter(include).length + (t.steps || []).length,
+  });
+  const collapsedSet = new Set(state.settings.mapCollapsed || []);
+  const roots = [];
+  const areasPlus = [...state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour, real: true })), { id: null, name: 'Other', colour: '#66716B', real: false }];
+  for (const a of areasPlus) {
+    if (a.real && hiddenA.has(a.id)) continue;
+    const projs = state.projects.filter(p => (p.areaId || null) === a.id && !hiddenP.has(p.id));
+    const direct = state.tasks.filter(t => !t.projectId && (t.areaId || null) === a.id && !t.parentId && include(t)).sort(sortByManual);
+    const projNodes = [];
+    for (const p of projs) {
+      const items = state.tasks.filter(t => t.projectId === p.id && !t.parentId && include(t)).sort(sortByManual);
+      projNodes.push({
+        kind: 'project', id: p.id, label: p.name, colour: p.colour, project: p,
+        children: collapsedSet.has(p.id) ? [] : items.map(taskNode),
+        childCount: items.length,
+      });
+    }
+    if (!projNodes.length && !direct.length && a.real && (hiddenA.size || hiddenP.size)) continue;
+    if (!projNodes.length && !direct.length && !a.real) continue;
+    roots.push({
+      kind: 'area', id: a.id || '__other', areaId: a.id, label: a.name, colour: a.colour,
+      children: collapsedSet.has(a.id || '__other') ? [] : [...projNodes, ...direct.map(taskNode)],
+      childCount: projNodes.length + direct.length,
+    });
+  }
+  return roots;
+}
+
+const MAP_DIM = { area: { w: 180, h: 38 }, project: { w: 180, h: 34 }, task: { w: 230, h: 36 }, step: { w: 190, h: 28 }, gapX: 54, gapY: 10 };
+
+function layoutMapTree(roots) {
+  const flat = [];
+  const colW = [];
+  const depthOf = (node, d) => {
+    colW[d] = Math.max(colW[d] || 0, MAP_DIM[node.kind].w);
+    node.depth = d;
+    node.children.forEach(c => depthOf(c, d + 1));
+  };
+  roots.forEach(r => depthOf(r, 0));
+  const colX = [];
+  let acc = 20;
+  for (let i = 0; i < colW.length; i++) { colX[i] = acc; acc += colW[i] + MAP_DIM.gapX; }
+  let cursorY = 20;
+  const place = (node) => {
+    const dim = MAP_DIM[node.kind];
+    node.w = dim.w; node.h = dim.h; node.x = colX[node.depth];
+    if (!node.children.length) {
+      node.y = cursorY;
+      cursorY += dim.h + MAP_DIM.gapY;
+    } else {
+      node.children.forEach(place);
+      const first = node.children[0], last = node.children[node.children.length - 1];
+      node.y = (first.y + last.y + last.h) / 2 - dim.h / 2;
+    }
+    flat.push(node);
+  };
+  roots.forEach((r, i) => { if (i > 0) cursorY += 14; place(r); });
+  return flat;
+}
+
+function escAttr(s) { return esc(s); }
+function truncLabel(s, w) {
+  const maxChars = Math.floor((w - 48) / 6.4);
+  return s.length > maxChars ? s.slice(0, maxChars - 1) + '…' : s;
+}
+
+function nodeColour(node, roots) {
+  if (node.kind === 'area') return node.colour;
+  if (node.kind === 'project') return node.colour;
+  const t = node.task;
+  if (t) { const a = areaOf(taskAreaId(t)); if (a) return a.colour; }
+  return '#66716B';
+}
+
+function renderMap(el) {
+  if (mapView.inputActive) { mapView.pendingRender = true; return; }
+  const s = state.settings;
+  const roots = mapForest();
+  const flat = layoutMapTree(roots);
+  const byId = {}; flat.forEach(n => { byId[n.id] = n; });
+  if (mapView.sel && !byId[mapView.sel]) mapView.sel = null;
+
+  let shapes = '', edges = '';
+  for (const n of flat) {
+    const col = nodeColour(n, roots);
+    for (const c of n.children) {
+      edges += '<path class="map-edge" stroke="' + col + '" d="M' + (n.x + n.w) + ' ' + (n.y + n.h / 2) +
+        ' C' + (n.x + n.w + MAP_DIM.gapX / 2) + ' ' + (n.y + n.h / 2) + ' ' +
+        (c.x - MAP_DIM.gapX / 2) + ' ' + (c.y + c.h / 2) + ' ' + c.x + ' ' + (c.y + c.h / 2) + '"></path>';
+    }
+    const cls = ['map-node', n.kind === 'step' ? 'step-node' : '', n.done ? 'done' : '', mapView.sel === n.id ? 'sel' : ''].filter(Boolean).join(' ');
+    let metaStr = '';
+    if (n.kind === 'task' && n.task) {
+      const bits = [];
+      if (n.task.priority) bits.push('P' + n.task.priority);
+      if (n.task.due) bits.push(fmtDue(n.task.due));
+      if ((n.task.steps || []).length) bits.push(n.task.steps.filter(x => x.done).length + '/' + n.task.steps.length);
+      metaStr = bits.join(' · ');
+    }
+    const fill = n.kind === 'area' ? ' style="fill:' + col + '22"' : (n.kind === 'project' ? ' style="fill:' + col + '14"' : '');
+    const fw = (n.kind === 'area' || n.kind === 'project') ? ' font-weight="700"' : '';
+    shapes += '<g class="' + cls + '" data-node="' + escAttr(n.id) + '" data-kind="' + n.kind + '" transform="translate(' + n.x + ',' + n.y + ')">' +
+      '<rect width="' + n.w + '" height="' + n.h + '" rx="9"' + fill + '></rect>' +
+      '<rect width="4" height="' + n.h + '" rx="2" fill="' + col + '"></rect>' +
+      '<text class="n-title" x="12" y="' + (metaStr ? n.h / 2 - 1 : n.h / 2 + 4.5) + '"' + fw + '>' + esc(truncLabel(n.label || '(untitled)', n.w)) + '</text>' +
+      (metaStr ? '<text class="n-meta" x="12" y="' + (n.h - 6) + '">' + esc(metaStr) + '</text>' : '') +
+      '<title>' + esc(n.label || '') + '</title>' +
+      '</g>';
+    if (n.childCount) {
+      const collapsed = !n.children.length;
+      shapes += '<g class="map-collapse" data-collapse="' + escAttr(n.id) + '" transform="translate(' + (n.x + n.w) + ',' + (n.y + n.h / 2) + ')">' +
+        '<circle r="8"></circle><text y="3.5">' + (collapsed ? n.childCount : '−') + '</text></g>';
+    }
+  }
+
+  const scopeCount = (s.mapHiddenAreas || []).length + (s.mapHiddenProjects || []).length;
+  el.innerHTML =
+    '<div class="map-toolbar">' +
+    '<button class="link-btn" data-mapscope>Scope' + (scopeCount ? ' (' + scopeCount + ' hidden)' : '') + '</button>' +
+    '<button class="link-btn" data-mapdone>' + (s.mapShowDone ? 'Hide completed' : 'Show completed') + '</button>' +
+    '<span class="tool-label">Click to select · double-click to edit · Tab adds a sub-task · Enter adds a sibling · drag a task onto another node to move it</span>' +
+    '</div>' +
+    '<div class="map-wrap" id="mapWrap">' +
+    '<div class="map-actions">' +
+    '<button data-mact="child">+ Sub-task</button>' +
+    '<button data-mact="sibling">+ Sibling</button>' +
+    '<button data-mact="edit">Edit</button>' +
+    '<button data-mact="done">Complete</button>' +
+    '</div>' +
+    '<svg class="map-svg" id="mapSvg"><g id="mapPane">' + edges + shapes + '</g></svg>' +
+    '<div class="map-zoom">' +
+    '<button data-mzoom="out" aria-label="Zoom out">−</button>' +
+    '<button data-mzoom="fit" aria-label="Fit to screen" style="width:auto;padding:0 10px;font-size:12px">Fit</button>' +
+    '<button data-mzoom="in" aria-label="Zoom in">+</button>' +
+    '</div></div>';
+
+  const svg = document.getElementById('mapSvg');
+  const pane = document.getElementById('mapPane');
+  const wrap = document.getElementById('mapWrap');
+
+  const bbox = flat.length ? {
+    x: Math.min.apply(null, flat.map(n => n.x)) - 20,
+    y: Math.min.apply(null, flat.map(n => n.y)) - 20,
+    x2: Math.max.apply(null, flat.map(n => n.x + n.w)) + 30,
+    y2: Math.max.apply(null, flat.map(n => n.y + n.h)) + 30,
+  } : { x: 0, y: 0, x2: 100, y2: 100 };
+
+  const applyT = () => { pane.setAttribute('transform', 'translate(' + mapView.t.x + ',' + mapView.t.y + ') scale(' + mapView.t.s + ')'); };
+  const fit = () => {
+    const r = wrap.getBoundingClientRect();
+    const cw = bbox.x2 - bbox.x, ch = bbox.y2 - bbox.y;
+    const sc = Math.min(1.4, Math.max(0.2, Math.min(r.width / cw, r.height / ch)));
+    mapView.t = { s: sc, x: (r.width - cw * sc) / 2 - bbox.x * sc, y: (r.height - ch * sc) / 2 - bbox.y * sc };
+    applyT();
+  };
+  if (!mapView.t || mapView.firstFit) { fit(); mapView.firstFit = false; } else applyT();
+
+  if (!flat.length) {
+    wrap.insertAdjacentHTML('beforeend', '<div class="empty" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center"><div class="e-big">Nothing in scope.</div>Loosen the Scope filter above, or add tasks first.</div>');
+  }
+
+  const updateSel = () => {
+    svg.querySelectorAll('.map-node').forEach(g => g.classList.toggle('sel', g.dataset.node === mapView.sel));
+    const selNode = mapView.sel ? byId[mapView.sel] : null;
+    const can = (a) => {
+      if (!selNode) return false;
+      if (a === 'child') return selNode.kind !== 'step';
+      if (a === 'sibling') return selNode.kind === 'task';
+      if (a === 'edit') return selNode.kind === 'task';
+      if (a === 'done') return selNode.kind === 'task' || selNode.kind === 'step';
+      return false;
+    };
+    wrap.querySelectorAll('[data-mact]').forEach(b => { b.disabled = !can(b.dataset.mact); });
+  };
+  updateSel();
+
+  /* ---- inline capture ---- */
+  const openInline = (mode) => {
+    const selNode = mapView.sel ? byId[mapView.sel] : null;
+    if (!selNode) return;
+    let target; // {parentId, projectId, areaId, anchor}
+    if (mode === 'child' && selNode.kind === 'area') target = { parentId: null, projectId: null, areaId: selNode.areaId, anchor: selNode };
+    else if (mode === 'child' && selNode.kind === 'project') target = { parentId: null, projectId: selNode.id, areaId: null, anchor: selNode };
+    else if (mode === 'child' && selNode.kind === 'task') target = { parentId: selNode.id, projectId: selNode.task.projectId, areaId: selNode.task.areaId, anchor: selNode };
+    else if (mode === 'sibling' && selNode.kind === 'task') target = { parentId: selNode.task.parentId, projectId: selNode.task.projectId, areaId: selNode.task.areaId, anchor: selNode };
+    else return;
+    // uncollapse the anchor so the new node is visible
+    state.settings.mapCollapsed = (state.settings.mapCollapsed || []).filter(x => x !== (selNode.kind === 'area' ? (selNode.areaId || '__other') : selNode.id));
+    const r = wrap.getBoundingClientRect();
+    let px = mapView.t.x + (target.anchor.x + target.anchor.w + 30) * mapView.t.s;
+    let py = mapView.t.y + (target.anchor.y) * mapView.t.s;
+    px = Math.max(8, Math.min(px, r.width - 200)); py = Math.max(8, Math.min(py, r.height - 44));
+    const inp = document.createElement('input');
+    inp.className = 'map-inline-input';
+    inp.placeholder = mode === 'child' ? 'New sub-task of "' + truncLabel(selNode.label, 160) + '"' : 'New sibling task';
+    inp.style.left = px + 'px'; inp.style.top = py + 'px';
+    wrap.appendChild(inp);
+    mapView.inputActive = true;
+    const close = (rerender) => {
+      mapView.inputActive = false;
+      inp.remove();
+      if (rerender || mapView.pendingRender) { mapView.pendingRender = false; render(); }
+    };
+    inp.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { close(false); return; }
+      if (e.key === 'Enter') {
+        const v = inp.value.trim();
+        if (!v) { close(false); return; }
+        const nt = addTask({ title: v, parentId: target.parentId, projectId: target.projectId, areaId: target.areaId });
+        if (nt) mapView.sel = nt.id;
+        close(true);
+      }
+    });
+    inp.addEventListener('blur', () => { if (mapView.inputActive) close(false); });
+    setTimeout(() => inp.focus(), 30);
+  };
+  mapView.openInline = openInline;
+
+  /* ---- toolbar actions ---- */
+  wrap.querySelector('.map-actions').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mact]');
+    if (!b || b.disabled) return;
+    const selNode = byId[mapView.sel];
+    if (!selNode) return;
+    const a = b.dataset.mact;
+    if (a === 'child' || a === 'sibling') openInline(a);
+    else if (a === 'edit' && selNode.kind === 'task') openEdit(selNode.id);
+    else if (a === 'done') {
+      if (selNode.kind === 'task') toggleDone(selNode.id);
+      else if (selNode.kind === 'step') {
+        const t = getTask(selNode.taskId);
+        const st = (t.steps || []).find(x => x.id === selNode.stepId);
+        if (st) { st.done = !st.done; save(); render(); }
+      }
+    }
+  });
+
+  el.querySelector('[data-mapscope]').addEventListener('click', openMapScope);
+  el.querySelector('[data-mapdone]').addEventListener('click', () => { state.settings.mapShowDone = !state.settings.mapShowDone; save(); render(); });
+  wrap.querySelector('.map-zoom').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mzoom]');
+    if (!b) return;
+    if (b.dataset.mzoom === 'fit') { fit(); return; }
+    const r = wrap.getBoundingClientRect();
+    const f = b.dataset.mzoom === 'in' ? 1.25 : 0.8;
+    const ns = Math.max(0.2, Math.min(2.5, mapView.t.s * f));
+    const cx = r.width / 2, cy = r.height / 2;
+    mapView.t.x = cx - (cx - mapView.t.x) * (ns / mapView.t.s);
+    mapView.t.y = cy - (cy - mapView.t.y) * (ns / mapView.t.s);
+    mapView.t.s = ns;
+    applyT();
+  });
+
+  /* ---- pointer interactions: pan, select, drag to re-parent, pinch ---- */
+  let pts = new Map(), panStart = null, dragNode = null, dragMoved = false, dragStart = null, pinchBase = null;
+  const nodeAt = (clientX, clientY) => {
+    const elm = document.elementFromPoint(clientX, clientY);
+    const g = elm && elm.closest ? elm.closest('[data-node]') : null;
+    return g ? byId[g.dataset.node] : null;
+  };
+  svg.addEventListener('pointerdown', (e) => {
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()];
+      pinchBase = { d: Math.hypot(a.x - b.x, a.y - b.y), s: mapView.t.s, cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, tx: mapView.t.x, ty: mapView.t.y };
+      dragNode = null; panStart = null;
+      return;
+    }
+    const g = e.target.closest('[data-node]');
+    const collapseBtn = e.target.closest('[data-collapse]');
+    if (collapseBtn) { panStart = null; dragNode = null; return; }
+    if (g) {
+      const n = byId[g.dataset.node];
+      dragNode = (n && n.kind === 'task') ? n : null;
+      dragMoved = false;
+      dragStart = { x: e.clientX, y: e.clientY };
+      panStart = null;
+    } else {
+      panStart = { x: e.clientX, y: e.clientY, tx: mapView.t.x, ty: mapView.t.y };
+      svg.classList.add('panning');
+    }
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinchBase && pts.size === 2) {
+      const [a, b] = [...pts.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      const ns = Math.max(0.2, Math.min(2.5, pinchBase.s * (d / pinchBase.d)));
+      const r = wrap.getBoundingClientRect();
+      const cx = pinchBase.cx - r.left, cy = pinchBase.cy - r.top;
+      mapView.t.x = cx - (cx - pinchBase.tx) * (ns / pinchBase.s);
+      mapView.t.y = cy - (cy - pinchBase.ty) * (ns / pinchBase.s);
+      mapView.t.s = ns;
+      applyT();
+      return;
+    }
+    if (panStart) {
+      mapView.t.x = panStart.tx + (e.clientX - panStart.x);
+      mapView.t.y = panStart.ty + (e.clientY - panStart.y);
+      applyT();
+    } else if (dragNode) {
+      if (!dragMoved && dragStart && Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y) < 7) return;
+      dragMoved = true;
+      svg.querySelectorAll('.droptgt').forEach(x => x.classList.remove('droptgt'));
+      const over = nodeAt(e.clientX, e.clientY);
+      if (over && over.id !== dragNode.id && over.kind !== 'step' && !isDescendantTask(over.kind === 'task' ? over.id : '', dragNode.id)) {
+        const g = svg.querySelector('[data-node="' + CSS.escape(over.id) + '"]');
+        if (g && !(over.kind === 'task' && isDescendantTask(over.id, dragNode.id))) g.classList.add('droptgt');
+      }
+    }
+  });
+  svg.addEventListener('pointerup', (e) => {
+    pts.delete(e.pointerId);
+    if (pinchBase) { if (pts.size < 2) pinchBase = null; return; }
+    if (panStart) { panStart = null; svg.classList.remove('panning'); return; }
+    const collapseBtn = e.target.closest('[data-collapse]');
+    if (collapseBtn) {
+      const id = collapseBtn.dataset.collapse;
+      const c = state.settings.mapCollapsed || (state.settings.mapCollapsed = []);
+      const i = c.indexOf(id);
+      if (i === -1) c.push(id); else c.splice(i, 1);
+      save(); render();
+      return;
+    }
+    if (dragNode && dragMoved) {
+      const over = nodeAt(e.clientX, e.clientY);
+      const t = getTask(dragNode.id);
+      if (over && t && over.id !== dragNode.id) {
+        if (over.kind === 'task' && !isDescendantTask(over.id, dragNode.id)) {
+          t.parentId = over.id; t.projectId = over.task.projectId; t.areaId = over.task.areaId;
+          save(); toast('Moved under "' + truncLabel(over.label, 180) + '"');
+        } else if (over.kind === 'project') {
+          t.parentId = null; t.projectId = over.id; t.areaId = null;
+          save(); toast('Moved to project "' + truncLabel(over.label, 180) + '"');
+        } else if (over.kind === 'area') {
+          t.parentId = null; t.projectId = null; t.areaId = over.areaId;
+          save(); toast('Moved to group "' + truncLabel(over.label, 180) + '"');
+        }
+      }
+      dragNode = null; dragMoved = false;
+      render();
+      return;
+    }
+    if (dragNode) { mapView.sel = dragNode.id; dragNode = null; updateSel(); return; }
+    const g = e.target.closest('[data-node]');
+    if (g) { mapView.sel = g.dataset.node; updateSel(); }
+    else { mapView.sel = null; updateSel(); }
+  });
+  svg.addEventListener('dblclick', (e) => {
+    const g = e.target.closest('[data-node]');
+    if (!g) return;
+    const n = byId[g.dataset.node];
+    if (n && n.kind === 'task') openEdit(n.id);
+    else if (n && n.kind === 'step') {
+      const t = getTask(n.taskId);
+      const st = (t.steps || []).find(x => x.id === n.stepId);
+      if (st) { st.done = !st.done; save(); render(); }
+    }
+  });
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const r = wrap.getBoundingClientRect();
+    const f = Math.pow(1.0015, -e.deltaY);
+    const ns = Math.max(0.2, Math.min(2.5, mapView.t.s * f));
+    const cx = e.clientX - r.left, cy = e.clientY - r.top;
+    mapView.t.x = cx - (cx - mapView.t.x) * (ns / mapView.t.s);
+    mapView.t.y = cy - (cy - mapView.t.y) * (ns / mapView.t.s);
+    mapView.t.s = ns;
+    applyT();
+  }, { passive: false });
+}
+
+function openMapScope() {
+  const s = state.settings;
+  const hiddenA = new Set(s.mapHiddenAreas || []);
+  const hiddenP = new Set(s.mapHiddenProjects || []);
+  const rows = state.areas.map(a => {
+    const projs = state.projects.filter(p => p.areaId === a.id);
+    return '<div style="margin-bottom:10px">' +
+      '<label style="display:flex;gap:9px;align-items:center;font-weight:600;cursor:pointer">' +
+      '<input type="checkbox" data-sca="' + a.id + '"' + (hiddenA.has(a.id) ? '' : ' checked') + '>' +
+      '<span class="proj-dot" style="background:' + a.colour + '"></span>' + esc(a.name) + '</label>' +
+      projs.map(p => '<label style="display:flex;gap:9px;align-items:center;margin:5px 0 0 26px;color:var(--ink-soft);cursor:pointer">' +
+        '<input type="checkbox" data-scp="' + p.id + '"' + (hiddenP.has(p.id) ? '' : ' checked') + '>' + esc(p.name) + '</label>').join('') +
+      '</div>';
+  }).join('');
+  document.getElementById('modalRoot').innerHTML =
+    '<div class="overlay" data-close><div class="sheet" role="dialog" aria-label="Map scope" style="max-width:400px">' +
+    '<h2>Map scope</h2>' +
+    '<div style="font-size:13px;color:var(--ink-faint);margin-bottom:12px">Untick anything you do not want on the map. The choice is remembered.</div>' +
+    '<div class="f-row">' + rows + '</div>' +
+    '<div class="sheet-actions"><button class="btn-quiet" data-close-btn>Cancel</button><button class="btn-primary" id="scApply">Apply</button></div>' +
+    '</div></div>';
+  const root = document.getElementById('modalRoot');
+  root.querySelector('.overlay').addEventListener('click', (e) => { if (e.target.classList.contains('overlay')) closeModal(); });
+  root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
+  root.querySelector('#scApply').addEventListener('click', () => {
+    state.settings.mapHiddenAreas = [...root.querySelectorAll('[data-sca]')].filter(c => !c.checked).map(c => c.dataset.sca);
+    state.settings.mapHiddenProjects = [...root.querySelectorAll('[data-scp]')].filter(c => !c.checked).map(c => c.dataset.scp);
+    save(); closeModal(); render();
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (ui.view !== 'map' || mapView.inputActive) return;
+  if (document.querySelector('.sheet')) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === 'Tab') { e.preventDefault(); if (mapView.sel && mapView.openInline) mapView.openInline('child'); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (mapView.sel && mapView.openInline) mapView.openInline('sibling'); }
+});
+
 /* ================= Modals ================= */
 
 function closeModal() {
@@ -1634,6 +2168,9 @@ function openEdit(id) {
     '<div class="overlay" data-close>' +
     '<div class="sheet" role="dialog" aria-label="Edit task">' +
     '<h2>Edit task</h2>' +
+    (t.parentId && getTask(t.parentId) ?
+      '<div class="f-row" style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft)">Sub-task of <b>' + esc(getTask(t.parentId).title) + '</b>' +
+      '<button class="pick" id="etDetach">Make top-level</button></div>' : '') +
     '<div class="f-row"><label class="f-label" for="etTitle">Task</label><input class="f-input" id="etTitle" value="' + esc(t.title) + '"></div>' +
     '<div class="f-row"><span class="f-label">Steps</span><div id="etSteps"></div>' +
     '<div style="display:flex;gap:6px;margin-top:4px"><input class="f-input" id="etStepNew" placeholder="Break the task into steps"><button class="pick" id="etStepAdd">Add</button></div></div>' +
@@ -1655,7 +2192,16 @@ function openEdit(id) {
 
   const root = document.getElementById('modalRoot');
   const local = { quadrant: t.quadrant, status: t.status, focus: t.focus, priority: t.priority, deleteArmed: false,
+    parentId: t.parentId || null,
     steps: (t.steps || []).map(s => ({ id: s.id || uid(), title: s.title, done: !!s.done })) };
+  const detachBtn = root => {
+    const b = root.querySelector('#etDetach');
+    if (b) b.addEventListener('click', (e) => {
+      local.parentId = local.parentId ? null : t.parentId;
+      e.currentTarget.textContent = local.parentId ? 'Make top-level' : 'Will become top-level on save';
+      e.currentTarget.classList.toggle('on', !local.parentId);
+    });
+  };
 
   const renderSteps = () => {
     const box = root.querySelector('#etSteps');
@@ -1667,6 +2213,7 @@ function openEdit(id) {
     ).join('') || '<div style="font-size:13px;color:var(--ink-faint);padding:2px 0">No steps yet. Steps let one task hold its sub-activities.</div>';
   };
   renderSteps();
+  detachBtn(root);
   root.querySelector('#etSteps').addEventListener('click', (e) => {
     const row = e.target.closest('[data-sid]');
     if (!row) return;
@@ -1736,6 +2283,7 @@ function openEdit(id) {
     t.priority = local.priority;
     t.focus = local.focus;
     t.steps = local.steps;
+    t.parentId = local.parentId;
     if (local.status !== t.status) {
       t.status = local.status;
       t.completedAt = t.status === 'done' ? Date.now() : null;
