@@ -690,8 +690,9 @@
 
 /* ================= Cloud config ================= */
 
-const SB_URL = 'https://cnouvshaoramdmkcjcxe.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNub3V2c2hhb3JhbWRta2NqY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NDkwMDIsImV4cCI6MjEwMDUyNTAwMn0.W641moclFovb-I9lQqmG4sLWN3jGCtVOWAaoeGdpkJw';
+const SB_URL = 'https://fyicijyujhjevlrqlqnq.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aWNpanl1amhqZXZscnFscW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3ODUwMzgsImV4cCI6MjA5NzM2MTAzOH0.46Ls3IunRF21IM0y6Fyku_hroJxz2H1TBL8J3bKnorU';
+const SB_SCHEMA = 'sorted';
 let sb = null;
 let sbUser = null;
 
@@ -966,10 +967,10 @@ function subscribeRealtime() {
     render();
   };
   rtChannel = sb.channel('sorted-sync')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: 'user_id=eq.' + sbUser.id }, apply('tasks', rowToTask, 'tasks'))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: 'user_id=eq.' + sbUser.id }, apply('projects', rowToProj, 'projects'))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'areas', filter: 'user_id=eq.' + sbUser.id }, apply('areas', rowToArea, 'areas'))
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: 'user_id=eq.' + sbUser.id }, (payload) => {
+    .on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: 'tasks', filter: 'user_id=eq.' + sbUser.id }, apply('tasks', rowToTask, 'tasks'))
+    .on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: 'projects', filter: 'user_id=eq.' + sbUser.id }, apply('projects', rowToProj, 'projects'))
+    .on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: 'areas', filter: 'user_id=eq.' + sbUser.id }, apply('areas', rowToArea, 'areas'))
+    .on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: 'settings', filter: 'user_id=eq.' + sbUser.id }, (payload) => {
       if (payload.new && payload.new.data) {
         const incoming = Object.assign(defaultSettings(), payload.new.data);
         if (JSON.stringify(incoming) === baseline.settings) return; // echo of our own write
@@ -3102,7 +3103,7 @@ document.getElementById('authToggle').addEventListener('click', () => setAuthMod
     document.getElementById('authErr').textContent = 'Could not load the sync library. Check your connection and refresh.';
     return;
   }
-  sb = window.supabase.createClient(SB_URL, SB_ANON);
+  sb = window.supabase.createClient(SB_URL, SB_ANON, { db: { schema: SB_SCHEMA } });
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session && !sbUser) enterApp(session);
     if (event === 'SIGNED_OUT') { sbUser = null; showAuth(); }
