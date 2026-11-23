@@ -1,8 +1,10 @@
 name: Keep database awake
 
-# Pings the Sorted app database twice a week so the Supabase free tier
-# never pauses it for inactivity. The key below is the app public key,
-# the same one already published in index.html.
+# Pings the Supabase projects twice a week so the free tier never pauses
+# them for inactivity. Both keys are the public anon keys already published
+# in the app; they grant nothing beyond what the database rules allow.
+#  - fyicijyujhjevlrqlqnq: "Personal Projects", Sorted's home (schema "sorted")
+#  - cnouvshaoramdmkcjcxe: old Sorted project, still hosts Voyage
 
 on:
   schedule:
@@ -17,12 +19,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Ping database
+      - name: Ping Sorted database (Personal Projects, sorted schema)
+        env:
+          ANON: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aWNpanl1amhqZXZscnFscW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3ODUwMzgsImV4cCI6MjA5NzM2MTAzOH0.46Ls3IunRF21IM0y6Fyku_hroJxz2H1TBL8J3bKnorU
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://fyicijyujhjevlrqlqnq.supabase.co/rest/v1/tasks?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON" -H "Accept-Profile: sorted")
+          echo "Sorted database answered with HTTP $CODE"
+          test "$CODE" = "200"
+      - name: Ping old project (still hosts Voyage)
         env:
           ANON: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNub3V2c2hhb3JhbWRta2NqY3hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NDkwMDIsImV4cCI6MjEwMDUyNTAwMn0.W641moclFovb-I9lQqmG4sLWN3jGCtVOWAaoeGdpkJw
         run: |
           CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://cnouvshaoramdmkcjcxe.supabase.co/rest/v1/tasks?select=id&limit=1" -H "apikey: $ANON" -H "Authorization: Bearer $ANON")
-          echo "Database answered with HTTP $CODE"
+          echo "Old project answered with HTTP $CODE"
           test "$CODE" = "200"
       - name: Record ping so this schedule never goes stale
         run: |
