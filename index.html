@@ -19,8 +19,8 @@
 <title>Sorted</title>
 <style>
   /* ---------- Design tokens ---------- */
-  /* Palette, typeface and status colours shared with the Command Centre (sorted/command/).
-     q1-q4 follow its status colours: stuck red, running blue, needs-you amber, idle grey. */
+  /* One palette for the whole app. q1-q4 double as the agent status colours on Home and Agents:
+     stuck red, running blue, needs-you amber, idle grey. */
   :root {
     --bg: #F3F4F7;
     --surface: #FFFFFF;
@@ -650,12 +650,311 @@
     }
     .tab.active { color: var(--accent); }
   }
+  /* ---------- Home, business and Agents pages (formerly the separate Command Centre) ----------
+     Everything here lives inside .cc so it cannot disturb the task views. Colours are
+     aliases of the app tokens above, so these pages follow light and dark mode too. */
+  :root {
+    --panel: var(--surface);
+    --sub: color-mix(in srgb, var(--surface) 55%, var(--bg));
+    --track: var(--surface-2);
+    --ink-2: color-mix(in srgb, var(--ink) 92%, var(--surface));
+    --ink-3: color-mix(in srgb, var(--ink) 80%, var(--surface));
+    --muted: var(--ink-soft);
+    --cos: #7C5CE0;
+    --cos-bg: color-mix(in srgb, var(--cos) 8%, var(--surface));
+    --cos-ink: color-mix(in srgb, var(--cos) 58%, var(--ink));
+    --run-bg: var(--q2-soft); --run-fg: var(--q2); --run-dot: #2563EB;
+    --need-bg: var(--q3-soft); --need-fg: var(--q3); --need-dot: #E39A2B;
+    --stuck-bg: var(--q1-soft); --stuck-fg: var(--q1); --stuck-dot: #D9483B;
+    --idle-bg: var(--q4-soft); --idle-fg: var(--q4); --idle-dot: #9AA0AC;
+  }
+  .cc { position: relative; font-size: 14px; line-height: 1.45; padding-top: 4px; display: flex; flex-direction: column; gap: 14px; }
+  .cc a { color: var(--link); text-decoration: none; }
+  .cc a:hover { text-decoration: underline; }
+  .cc .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .cc .mono { font-family: var(--mono); }
+  .cc .muted { color: var(--muted); }
+  .cc .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+  .cc .panel-pad { padding: 14px 16px; }
+  .cc .panel-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-bottom: 6px; }
+  .cc .panel-head h2 { font-size: 15px; font-weight: 600; flex: 1 1 auto; }
+  .cc .panel-head h2 small { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+  .cc .btn { height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 500; color: var(--ink-3); display: inline-flex; align-items: center; gap: 6px; }
+  .cc .btn:hover { background: var(--sub); text-decoration: none; }
+  .cc .cc-seg { display: flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--track); }
+  .cc .cc-seg button { height: 28px; padding: 0 10px; border-radius: 6px; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .cc .cc-seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgba(17,19,24,0.12); }
+  .cc .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+  .cc .cc-empty { color: var(--muted); font-size: 13px; line-height: 1.5; padding: 8px 2px; }
+  .cc .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+  .cc .badge .bd { width: 6px; height: 6px; border-radius: 50%; }
+  .cc .s-run { background: var(--run-bg); color: var(--run-fg); }
+  .cc .s-need { background: var(--need-bg); color: var(--need-fg); }
+  .cc .s-stuck { background: var(--stuck-bg); color: var(--stuck-fg); }
+  .cc .s-idle { background: var(--idle-bg); color: var(--idle-fg); }
+  .cc .steps { display: flex; gap: 3px; }
+  .cc .steps span { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
+  .cc .chev { transition: transform .15s ease; flex: 0 0 auto; color: var(--muted); }
+  .cc [aria-expanded="true"] > .chev { transform: rotate(90deg); }
+  .cc .banner { padding: 10px 14px; border-radius: 12px; background: var(--stuck-bg); color: var(--stuck-fg); font-size: 13px; }
+  .cc .tlink { color: inherit; text-align: left; font: inherit; overflow-wrap: anywhere; }
+  .cc .tlink:hover { text-decoration: underline; }
+
+  /* Home: Chief of Staff beside the main column */
+  .cc .home { display: grid; grid-template-columns: minmax(240px, 290px) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .cc .home.cos-shut { grid-template-columns: 58px minmax(0, 1fr); }
+  .cc .home-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  .cc .cos { padding: 14px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 4px; max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); overflow-y: auto; }
+  .cc .cos-head { display: flex; align-items: center; gap: 10px; }
+  .cc .cos-av { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #4F5BD5, #7C5CE0); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex: 0 0 auto; }
+  .cc .cos-title { display: flex; flex-direction: column; gap: 1px; flex: 1 1 auto; min-width: 0; }
+  .cc .cos-title b { font-size: 14px; font-weight: 600; }
+  .cc .cos-title span { font-size: 11px; color: var(--muted); }
+  .cc .iconbtn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-3); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .cc .iconbtn:hover { background: var(--sub); }
+  .cc .cos-body { display: flex; flex-direction: column; gap: 14px; }
+  .cc .cos-part h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .cc .cos-part p { font-size: 13px; line-height: 1.55; color: var(--ink-2); white-space: pre-line; }
+  .cc .decision { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--cos-bg); }
+  .cc .decision h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cos-ink); }
+  .cc .decision p { font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+  .cc .decision .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cc .decision .opts button { height: 34px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+  .cc .opt-1 { background: var(--accent); color: var(--accent-ink); }
+  .cc .opt-n { border: 1px solid var(--line); background: var(--panel); color: var(--ink-3); }
+  .cc .decided { font-size: 12px; color: var(--muted); }
+  .cc .sysnote { font-size: 12px; line-height: 1.5; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 6px; }
+  .cc .msgform { display: flex; gap: 6px; align-items: center; }
+  .cc .msgform input { flex: 1 1 auto; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; font-size: 13px; background: var(--sub); outline: none; }
+  .cc .msgform input:focus { border-color: var(--accent); }
+  .cc .msgform input::placeholder { color: var(--ink-faint); }
+  .cc .sqbtn { width: 40px; height: 40px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .cc .sqbtn.ghost { background: var(--panel); border: 1px solid var(--line); color: var(--ink-3); }
+  .cc .sqbtn[aria-pressed="true"] { background: var(--stuck-dot); color: #FFFFFF; border-color: transparent; }
+  .cc .cos-closed { padding: 10px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; position: sticky; top: 4px; }
+  .cc .cos-closed .cos-av { width: 38px; height: 38px; }
+  .cc .cos-closed .lbl { display: none; }
+  .cc .newdot { width: 8px; height: 8px; border-radius: 50%; background: var(--need-dot); }
+
+  .cc .plan-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); }
+  .cc .plan-head .t { display: flex; flex-direction: column; gap: 1px; flex: 1 1 260px; }
+  .cc .plan-head h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .cc .plan-head .t span { font-size: 12px; color: var(--muted); }
+  .cc .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .cc .plan-col { padding: 14px 16px; border-right: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .cc .plan-col:last-child { border-right: 0; }
+  .cc .plan-name { display: flex; flex-direction: column; gap: 3px; color: var(--ink); }
+  .cc .plan-name:hover { text-decoration: none; }
+  .cc .plan-name:hover b { text-decoration: underline; }
+  .cc .plan-name b { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; }
+  .cc .plan-name span { font-size: 11px; color: var(--muted); }
+  .cc .plan-item { display: flex; gap: 8px; align-items: flex-start; padding: 7px 8px; border-radius: 8px; text-align: left; width: 100%; }
+  .cc .plan-item:hover { filter: brightness(0.97); }
+  .cc .plan-item .p { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 4px; background: var(--panel); flex: 0 0 auto; margin-top: 1px; }
+  .cc .plan-item .x { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .cc .plan-item .x b { font-size: 12px; line-height: 1.4; font-weight: 500; overflow-wrap: anywhere; color: var(--ink); }
+  .cc .plan-item .x span { font-size: 11px; }
+  .cc .more { font-size: 12px; font-weight: 500; padding: 2px; }
+
+  .cc .row2 { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+  .cc .fleet { flex: 3 1 420px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .cc .timebox { flex: 2 1 300px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .cc .fgroup { border-top: 1px solid var(--line-soft); }
+  .cc .ghead { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 2px; border-radius: 10px; }
+  .cc .gtoggle { padding: 0; display: flex; align-items: center; }
+  .cc .gtoggle::after { content: ""; position: absolute; inset: 0; border-radius: 10px; }
+  .cc .gtoggle:focus-visible { outline: none; }
+  .cc .gtoggle:focus-visible::after { outline: 2px solid var(--link); outline-offset: -2px; }
+  .cc .ghead:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+  .cc .ghead .nm { position: relative; z-index: 1; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .cc .gpills { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+  .cc .fjobs { display: flex; flex-direction: column; gap: 6px; padding: 0 0 10px 22px; }
+  .cc .fjob { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--sub); }
+  .cc .fjob .in { font-size: 11px; font-weight: 600; color: var(--ink-3); width: 26px; flex: 0 0 auto; }
+  .cc .fjob .jt { font-size: 13px; flex: 1 1 130px; min-width: 0; overflow-wrap: anywhere; }
+  .cc .fjob .badge { min-width: 72px; justify-content: center; }
+
+  .cc .trow { display: grid; grid-template-columns: 100px minmax(0, 1fr) 54px; gap: 10px; align-items: center; }
+  .cc .trow .nm { font-size: 12px; font-weight: 500; }
+  .cc .tbar { display: flex; height: 10px; gap: 2px; border-radius: 5px; overflow: hidden; background: var(--track); }
+  .cc .tbar span { height: 100%; }
+  .cc .trow .hrs { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
+  .cc .legend { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cc .legend span, .cc .legend a { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .cc .legend a:hover { color: var(--ink); }
+  .cc .legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+  .cc .acts { overflow-x: auto; }
+  .cc .acts-in { min-width: 600px; display: flex; flex-direction: column; }
+  .cc .arow { display: grid; grid-template-columns: 64px 120px 130px minmax(0, 1fr) 70px; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line-soft); align-items: center; }
+  .cc .arow .w { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .cc .arow .who { font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+  .cc .arow .biz { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); }
+  .cc .arow .biz a { display: flex; align-items: center; gap: 6px; color: var(--ink-3); }
+  .cc .arow .what { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+  .cc .arow .what .on-task { display: block; font-size: 12px; color: var(--muted); }
+  .cc .arow .what .ctag { color: var(--cos-ink); font-weight: 600; }
+  .cc .arow .took { font-family: var(--mono); font-size: 12px; text-align: right; }
+  .cc .showmore { margin-top: 8px; align-self: flex-start; }
+
+  .cc .house { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 10px 12px; align-items: center; padding: 12px 16px; }
+  .cc .house .lbl { font-size: 12px; font-weight: 600; }
+  .cc .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cc .cc-chip { font-size: 12px; padding: 4px 9px; border-radius: 999px; max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cc .cc-chip:hover { filter: brightness(0.97); }
+  .cc .chip-quiet { background: var(--need-bg); color: var(--need-fg); }
+  .cc .chip-wait { background: var(--track); color: var(--ink-3); }
+
+  /* Business overview (Home with a group chosen) */
+  .cc .biz-head { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .cc .biz-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .cc .biz-top .stile { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .cc .biz-top .stile i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .cc .biz-top .t { display: flex; flex-direction: column; gap: 1px; flex: 1 1 200px; min-width: 0; }
+  .cc .biz-top .t b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .cc .biz-top .t span { font-size: 12px; color: var(--muted); }
+  .cc .note { background: var(--cos-bg); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .cc .note .x { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 auto; }
+  .cc .note .x b { font-size: 12px; font-weight: 600; color: var(--cos-ink); }
+  .cc .note .x p { font-size: 14px; line-height: 1.55; color: var(--ink-2); white-space: pre-line; }
+  .cc .note .x .when { font-size: 12px; color: var(--muted); }
+  .cc .stats { display: flex; flex-wrap: wrap; gap: 10px; }
+  .cc .stat { flex: 1 1 130px; border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .cc .stat span { font-size: 12px; color: var(--muted); }
+  .cc .stat b { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .cc .cols2 { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .cc .cols2 > .lcol { flex: 3 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+  .cc .cols2 > .rcol { flex: 2 1 300px; min-width: 0; }
+  .cc .sec { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .cc .sec > h2 { font-size: 15px; font-weight: 600; }
+  .cc .sec > .sub { font-size: 12px; color: var(--muted); }
+  .cc .sec .task-row { margin-bottom: 0; }
+  .cc .jcard { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); }
+  .cc .jcard .top { display: flex; align-items: center; gap: 10px; }
+  .cc .jcard .in { width: 32px; height: 32px; border-radius: 10px; background: var(--track); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--ink-3); flex: 0 0 auto; }
+  .cc .jcard .an { font-size: 14px; font-weight: 600; flex: 1 1 auto; min-width: 0; }
+  .cc .jcard .jt { font-size: 13px; color: var(--ink-3); overflow-wrap: anywhere; }
+  .cc .jcard .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+  .cc .parked { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cc .pchip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 5px 5px 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--sub); max-width: 100%; }
+  .cc .pchip .tt { font-size: 13px; }
+  .cc .pchip .np { font-size: 11px; font-weight: 500; color: var(--need-fg); background: var(--need-bg); padding: 2px 7px; border-radius: 999px; }
+  .cc .pchip .pb { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--panel); box-shadow: 0 0 0 1px var(--line); font-size: 12px; font-weight: 500; color: var(--ink-3); }
+  .cc .pchip .pb:hover { background: var(--line-soft); }
+  .cc .pchip .pb.pri { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+  .cc .srow { display: flex; gap: 14px; padding: 8px 0; border-top: 1px solid var(--line-soft); align-items: baseline; }
+  .cc .srow .w { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 62px; flex: 0 0 auto; }
+  .cc .srow .x { font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+  .cc .srow .x b { font-weight: 600; }
+  .cc .srow .took { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 0 0 auto; }
+
+  /* Agents page */
+  .cc .agents-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
+  .cc .cos-dark { flex: 3 1 420px; background: #111318; color: #FFFFFF; border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .cc .cos-dark .hd { display: flex; align-items: center; gap: 12px; }
+  .cc .cos-dark .cos-av { width: 44px; height: 44px; font-size: 13px; background: linear-gradient(135deg, #6E79F0, #A68BFF); }
+  .cc .cos-dark .hd .t { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; }
+  .cc .cos-dark .hd .t b { font-size: 16px; font-weight: 600; }
+  .cc .cos-dark .hd .t span { font-size: 12px; color: #B4B9C6; }
+  .cc .cos-dark p { font-size: 15px; line-height: 1.55; color: #E6E8EE; white-space: pre-line; }
+  .cc .cos-dark .q { font-size: 14px; }
+  .cc .cos-dark .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cc .cos-dark .opts button { height: 40px; padding: 0 16px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+  .cc .cos-dark .opts .o1 { background: #FFFFFF; color: #111318; }
+  .cc .cos-dark .opts .on { border: 1px solid #4A505D; color: #FFFFFF; font-weight: 500; }
+  .cc .cos-dark a { color: #C3CBFF; }
+  .cc .cos-dark .decided { color: #B4B9C6; }
+  .cc .counts { flex: 2 1 300px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .cc .count { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .cc .count span { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .cc .count b { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+  .cc .ag-group { border: 1px solid var(--line-soft); border-radius: 12px; }
+  .cc .ag-group .ghead { padding: 10px 12px; gap: 10px; border-radius: 12px; }
+  .cc .ag-group .gtoggle::after { border-radius: 12px; }
+  .cc .ag-rows { display: flex; flex-direction: column; gap: 10px; padding: 4px 12px 12px; }
+  .cc .ag-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px 230px; align-items: center; }
+  .cc .ag-job { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; background: var(--panel); }
+  .cc .ag-job .in { width: 38px; height: 38px; border-radius: 12px; background: var(--track); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--ink-3); flex: 0 0 auto; }
+  .cc .ag-job .who { display: flex; flex-direction: column; gap: 4px; flex: 1 1 200px; min-width: 0; }
+  .cc .ag-job .who .l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .cc .ag-job .who .l1 b { font-size: 14px; font-weight: 600; }
+  .cc .ag-job .who .jt { font-size: 13px; color: var(--ink-3); overflow-wrap: anywhere; }
+  .cc .ag-job .prog { flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px; }
+  .cc .ag-job .prog .m { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+  .cc .ag-arrow { display: flex; justify-content: center; color: var(--ink-faint); }
+  .cc .ag-out { padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--line); display: flex; flex-direction: column; gap: 3px; }
+  .cc .ag-out .l { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .cc .ag-out .v { font-size: 13px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+
+  @media (max-width: 1180px) {
+    .cc .home, .cc .home.cos-shut { grid-template-columns: minmax(0, 1fr); }
+    .cc .cos { position: static; max-height: none; overflow: visible; }
+    .cc .cos-closed { position: static; flex-direction: row; justify-content: flex-start; padding: 8px 12px; }
+    .cc .cos-closed .lbl { display: inline; font-size: 13px; font-weight: 600; }
+    .cc .ag-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .cc .ag-arrow { display: none; }
+  }
+  @media (max-width: 880px) {
+    .cc .plan-col { border-right: 0; border-bottom: 1px solid var(--line-soft); }
+    .cc .plan-col:last-child { border-bottom: 0; }
+  }
+  @media (max-width: 640px) {
+    .cc .acts-in { min-width: 0; }
+    .cc .arow { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "w who took" "what what what" "biz biz biz"; gap: 2px 10px; padding: 10px 0; }
+    .cc .arow .w { grid-area: w; } .cc .arow .who { grid-area: who; } .cc .arow .took { grid-area: took; }
+    .cc .arow .what { grid-area: what; } .cc .arow .biz { grid-area: biz; }
+    .cc .house { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+    .cc .house .lbl:not(:first-child) { margin-top: 8px; }
+    .cc .trow { grid-template-columns: 86px minmax(0, 1fr) 50px; }
+    .cc .fjobs { padding-left: 4px; }
+    .cc .cc-chip { max-width: 100%; }
+  }
+  @media (pointer: coarse) {
+    .cc .btn { min-height: 40px; }
+    .cc .cc-seg button { height: 38px; }
+    .cc .pchip .pb { height: 38px; }
+    .cc .iconbtn { width: 42px; height: 42px; }
+    .cc .ghead { min-height: 46px; }
+  }
+
+  /* ---------- Task history (inside the task sheet, and for archived tasks) ---------- */
+  .hist { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 4px 12px; }
+  .hist-sum { font-size: 12px; color: var(--ink-faint); margin-bottom: 6px; }
+  .h-row { display: flex; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line-soft); align-items: baseline; }
+  .h-row:first-child { border-top: 0; }
+  .h-when { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); width: 86px; flex: none; }
+  .h-body { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+  .h-body b { font-weight: 600; }
+  .h-body .h-min { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); margin-left: 6px; }
+  .h-body p { white-space: pre-line; }
+  .h-body a { color: var(--link); font-weight: 600; text-decoration: none; }
+  .h-body a:hover { text-decoration: underline; }
+  .h-row.sys .h-body { color: var(--ink-faint); }
+  .h-job { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; margin-left: 6px; }
+  .h-job.run { background: var(--q2-soft); color: var(--q2); } .h-job.need { background: var(--q3-soft); color: var(--q3); }
+  .h-job.stuck { background: var(--q1-soft); color: var(--q1); } .h-job.idle { background: var(--q4-soft); color: var(--q4); }
+  .hist-add { display: flex; gap: 6px; margin-top: 8px; align-items: flex-start; flex-wrap: wrap; }
+  .hist-add textarea { flex: 1 1 220px; min-height: 40px; }
+  .hist-add input { width: 78px; flex: none; }
+  .archived-note { background: var(--q4-soft); color: var(--q4); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; margin-bottom: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .archived-note b { font-weight: 600; }
+
+  /* ---------- Shell additions for the single app ---------- */
+  .nav-badge { margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--q3-soft); color: var(--q3); }
+  .nav-btn.active .nav-badge { background: var(--accent-ink); color: var(--accent); }
+  .side-label.first { margin-top: 12px; }
+  .toast button { pointer-events: none; margin-left: 12px; font-weight: 700; text-decoration: underline; color: inherit; }
+  .goto-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .goto-row .pick { display: inline-flex; align-items: center; gap: 7px; }
+  @media (min-width: 881px) { .only-mobile { display: none !important; } }
+  .toast.show button { pointer-events: auto; }
+
 </style>
 
 <div class="auth-wrap" id="authWrap" style="display:none">
   <div class="auth-card">
     <div class="brand">Sorted<span class="dot">.</span></div>
-    <div class="auth-sub" id="authSub">Sign in to see your tasks on any device.</div>
+    <div class="auth-sub" id="authSub">Sign in to see your work on any device.</div>
     <div class="f-row"><label class="f-label" for="authEmail">Email</label><input class="f-input" id="authEmail" type="email" autocomplete="username" inputmode="email"></div>
     <div class="f-row"><label class="f-label" for="authPass">Password</label><input class="f-input" id="authPass" type="password" autocomplete="current-password"></div>
     <button class="auth-btn" id="authGo">Sign in</button>
@@ -678,7 +977,7 @@
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
     </div>
-    <div class="quickadd-wrap">
+    <div class="quickadd-wrap" id="quickWrap">
       <div class="quickadd">
         <input id="quickAdd" type="text" placeholder="Add a task, e.g. Call plumber tomorrow #Office !!" aria-label="Add a task">
         <button class="icon-btn" id="bulkAddBtn" title="Add several tasks at once" aria-label="Add several tasks at once">
@@ -759,7 +1058,7 @@ let state = {
 };
 
 let ui = {
-  view: 'today',           // today | list | matrix | board | priority | done
+  view: 'home',            // home | agents | today | list | matrix | board | priority | map | done
   groupBy: 'project',      // project | due | quadrant
   sortBy: 'due',           // due | added
   layout: 'rows',          // rows | tiles (list view)
@@ -801,7 +1100,9 @@ function saveCache() {
 }
 
 let saveTimer = null;
+let dirtyRev = 0, syncedRev = 0;   // local changes made, and the last of them known to be saved in the cloud
 function save() {
+  dirtyRev++;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     saveCache();
@@ -817,11 +1118,11 @@ function save() {
 const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
 
 const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, parent_id: t.parentId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
-const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at) });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at), updatedAt: r.updated_at || null });
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
-const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '' });
-const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '' });
+const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '', stream: a.stream || null });
+const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '', stream: r.stream || null });
 function sortAreas() { state.areas.sort((a, b) => (a.position || 0) - (b.position || 0)); }
 
 /* Group backdrops: token stored in area.bg */
@@ -876,6 +1177,7 @@ async function runSync() {
   if (!sb || !sbUser) return;
   if (syncInFlight) { scheduleSync(500); return; }
   syncInFlight = true;
+  const rev = dirtyRev;
   try {
     const kinds = [
       ['tasks', state.tasks, taskToRow],
@@ -896,6 +1198,7 @@ async function runSync() {
         const { error } = await sb.from(table).upsert(upserts.map(u => u[1]));
         if (error) throw error;
         upserts.forEach(u => { baseline[table][u[0]] = u[2]; });
+        if (table === 'tasks') { const nowIso = new Date().toISOString(); upserts.forEach(u => { const cur = getTask(u[0]); if (cur) cur.updatedAt = nowIso; }); }
       }
       if (deletions.length) {
         const { error } = await sb.from(table).delete().in('id', deletions);
@@ -909,6 +1212,7 @@ async function runSync() {
       if (error) throw error;
       baseline.settings = sjs;
     }
+    syncedRev = rev;
     if (syncFailedOnce) { syncFailedOnce = false; toast('Back online. Everything saved.'); }
     setSyncIndicator(true);
   } catch (e) {
@@ -949,10 +1253,41 @@ async function fullLoad() {
   if (!state.tasks.length && !state.projects.length && !state.areas.length && !s.data) {
     state.areas = seedAreas();
     state.settings = defaultSettings();
+    dirtyRev++;
     scheduleSync();
   }
   saveCache();
   setSyncIndicator(true);
+}
+
+/* Catch up with changes made elsewhere (another device, the Chief of Staff, an agent) that the
+   live feed may have missed while this device slept. Never runs over unsaved local work. */
+let softRefreshing = false;
+async function softRefresh() {
+  if (!sb || !sbUser || softRefreshing || syncInFlight || dirtyRev !== syncedRev) return;
+  if (document.querySelector('.sheet') || mapView.inputActive || dragId) return;
+  softRefreshing = true;
+  const rev = dirtyRev;
+  try {
+    const [t, p, a, s] = await Promise.all([
+      sb.from('tasks').select('*'),
+      sb.from('projects').select('*'),
+      sb.from('areas').select('*'),
+      sb.from('settings').select('*').maybeSingle(),
+    ]);
+    if (t.error || p.error || a.error || s.error) return;
+    if (rev !== dirtyRev || syncInFlight || document.querySelector('.sheet') || mapView.inputActive || dragId) return;
+    state.tasks = t.data.map(rowToTask);
+    state.projects = p.data.map(rowToProj);
+    state.areas = a.data.map(rowToArea);
+    sortAreas();
+    if (s.data && s.data.data) state.settings = Object.assign(defaultSettings(), s.data.data);
+    snapshotBaseline();
+    saveCache();
+    setSyncIndicator(true);
+    render();
+  } catch (e) { /* offline: the next attempt will catch up */ }
+  finally { softRefreshing = false; }
 }
 
 let rtChannel = null;
@@ -969,7 +1304,10 @@ function subscribeRealtime() {
     } else {
       const item = rowToX(payload.new);
       const js = JSON.stringify(table === 'tasks' ? taskToRow(item) : table === 'projects' ? projToRow(item) : areaToRow(item));
-      if (baseline[table][item.id] === js) return; // echo of our own write: local state is newer or identical
+      if (baseline[table][item.id] === js) { // echo of our own write: local state is newer or identical
+        if (table === 'tasks') { const cur = list.find(x => x.id === item.id); if (cur) cur.updatedAt = item.updatedAt; }
+        return;
+      }
       const i = list.findIndex(x => x.id === item.id);
       if (i === -1) list.unshift(item); else list[i] = item;
       baseline[table][item.id] = js;
@@ -1150,6 +1488,7 @@ function toggleDone(id) {
     t.status = 'todo'; t.completedAt = null;
   } else {
     t.status = 'done'; t.completedAt = Date.now();
+    toast('Completed. It is in the Archive with its history.', { label: 'Undo', fn: () => { const x = getTask(id); if (x && x.status === 'done') toggleDone(id); } });
   }
   save(); render();
 }
@@ -1242,7 +1581,7 @@ function moveTaskRelative(movedId, targetId, before) {
 /* ================= Rendering helpers ================= */
 
 function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 const ICONS = {
@@ -1251,7 +1590,9 @@ const ICONS = {
   matrix: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>',
   priority: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"></path><path d="M4 4h14l-3.5 4.5L18 13H4"></path></svg>',
   map: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="2.2"></circle><circle cx="18" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="18" cy="19" r="2.2"></circle><path d="M7 11 15.8 5.8M7.2 12h9.6M7 13l8.8 5.2"></path></svg>',
-  command: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg>',
+  home: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7"></path><path d="M6 10v10h12V10"></path><path d="M10 20v-5h4v5"></path></svg>',
+  agents: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path><path d="M19 4.5v3M17.5 6h3"></path></svg>',
+  more: '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>',
   done: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 5-5"></path></svg>',
   board: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="5" height="18" rx="1.5"></rect><rect x="10" y="3" width="5" height="12" rx="1.5"></rect><rect x="17" y="3" width="5" height="8" rx="1.5"></rect></svg>',
   star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>',
@@ -1300,6 +1641,8 @@ function taskRowHTML(t, opts) {
   if (t.notes) {
     meta.push('<span title="Has notes">&#9998;</span>');
   }
+  const updCount = actCount(t.id);
+  if (updCount) meta.push('<span title="Updates logged on this task. Open it to read them.">' + updCount + (updCount === 1 ? ' update' : ' updates') + '</span>');
   const doneCls = t.status === 'done' ? ' done-row' : '';
   const extraCls = opts.indent ? ' child-row' : '';
   const styleParts = [];
@@ -1342,6 +1685,11 @@ function renderSidebar() {
   };
   const countLabel = { today: '', list: '', matrix: ' unsorted', board: ' active', priority: ' prioritised' };
   let html = '<div class="brand">Sorted<span class="dot">.</span></div>';
+  const attn = visibleJobs().filter(j => j.status === 'Needs you' || j.status === 'Stuck').length;
+  html += '<button class="nav-btn' + (ui.view === 'home' ? ' active' : '') + '" data-view="home">' + ICONS.home + 'Home</button>' +
+    '<button class="nav-btn' + (ui.view === 'agents' ? ' active' : '') + '" data-view="agents">' + ICONS.agents + 'Agents' +
+    (attn ? '<span class="nav-badge" title="' + attn + (attn === 1 ? ' job needs you or is stuck' : ' jobs need you or are stuck') + '">' + attn + '</span>' : '') + '</button>' +
+    '<div class="side-label first">Tasks</div>';
   for (const v of VIEWS) {
     const c = counts[v.key];
     html += '<button class="nav-btn' + (ui.view === v.key ? ' active' : '') + '" data-view="' + v.key + '">' +
@@ -1349,7 +1697,6 @@ function renderSidebar() {
       (c ? '<span class="nav-count" title="' + c + countLabel[v.key] + '">' + c + '</span>' : '') +
       '</button>';
   }
-  html += '<a class="nav-btn" href="command/">' + ICONS.command + 'Command Centre</a>';
   const projBtn = (p, indent) => {
     const c = state.tasks.filter(t => t.projectId === p.id && t.status !== 'done').length;
     return '<button class="proj-btn' + (indent ? ' indent' : '') + (ui.filterProject === p.id ? ' active' : '') + '" data-proj="' + p.id + '">' +
@@ -1379,7 +1726,7 @@ function renderSidebar() {
   }
   const doneCount = state.tasks.filter(t => t.status === 'done').length;
   html += '<div class="sidebar-foot">' +
-    '<button class="nav-btn' + (ui.view === 'done' ? ' active' : '') + '" data-view="done">' + ICONS.done + 'Completed' +
+    '<button class="nav-btn' + (ui.view === 'done' ? ' active' : '') + '" data-view="done">' + ICONS.done + 'Archive' +
     (doneCount ? '<span class="nav-count">' + doneCount + '</span>' : '') + '</button>' +
     '<button class="nav-btn" data-openset>' +
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path></svg>' +
@@ -1387,12 +1734,14 @@ function renderSidebar() {
   document.getElementById('sidebar').innerHTML = html;
 }
 
+/* Phone tab bar: Home and the four everyday views. Everything else is one tap away under More. */
+const MOBILE_TABS = ['home', 'today', 'list', 'matrix', 'priority'];
 function renderTabbar() {
   let html = '';
-  for (const v of VIEWS) {
+  for (const v of [{ key: 'home', name: 'Home' }].concat(VIEWS.filter(v => MOBILE_TABS.includes(v.key)))) {
     html += '<button class="tab' + (ui.view === v.key ? ' active' : '') + '" data-view="' + v.key + '">' + ICONS[v.key] + v.name + '</button>';
   }
-  html += '<button class="tab" data-openset><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M4 21h16"></path></svg>More</button>';
+  html += '<button class="tab' + (MOBILE_TABS.includes(ui.view) ? '' : ' active') + '" data-openset>' + ICONS.more + 'More</button>';
   document.getElementById('tabbar').innerHTML = html;
 }
 
@@ -1405,7 +1754,9 @@ function viewTitle() {
     const a = areaOf(ui.filterArea);
     if (a) return esc(a.name);
   }
-  if (ui.view === 'done') return 'Completed';
+  if (ui.view === 'done') return 'Archive';
+  if (ui.view === 'home') return 'Home';
+  if (ui.view === 'agents') return 'Agents';
   const v = VIEWS.find(v => v.key === ui.view);
   return v ? v.name : '';
 }
@@ -1434,20 +1785,37 @@ function render() {
   renderSidebar();
   renderTabbar();
   renderChipbar();
+  syncUrl();
   const titleEl = document.getElementById('viewTitle');
   const t = todayISO();
   const [y, m, d] = t.split('-').map(Number);
   const dateStr = new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-  titleEl.innerHTML = viewTitle() + (ui.view === 'today' && !ui.filterProject ? '<span class="view-sub">' + dateStr + '</span>' : '');
+  let sub = '';
+  if (ui.filterArea || ui.filterProject) sub = ui.view === 'home' ? 'Business overview' : ui.view === 'done' ? 'Archive' : '';
+  else if (ui.view === 'today' || ui.view === 'home') sub = dateStr;
+  titleEl.innerHTML = viewTitle() + (sub ? '<span class="view-sub">' + sub + '</span>' : '');
+  document.title = (titleEl.firstChild ? titleEl.firstChild.textContent + ' · ' : '') + 'Sorted';
+  document.getElementById('quickWrap').style.display = (ui.view === 'agents' || ui.view === 'done') ? 'none' : '';
+  document.getElementById('chipbar').style.display = ui.view === 'agents' ? 'none' : '';
   const el = document.getElementById('content');
+  // Re-rendering must not throw away what is being typed (the message box on Home)
+  const active = document.activeElement;
+  const keepId = active && active.id && el.contains(active) ? active.id : null;
+  const caret = keepId && typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null;
   el.style.background = resolveAreaBg(activeAreaForBg());
-  if (ui.view === 'today') el.innerHTML = renderToday();
+  if (ui.view === 'home') el.innerHTML = renderHomeView();
+  else if (ui.view === 'agents') el.innerHTML = renderAgents();
+  else if (ui.view === 'today') el.innerHTML = renderToday();
   else if (ui.view === 'list') el.innerHTML = renderList();
   else if (ui.view === 'matrix') el.innerHTML = renderMatrix();
   else if (ui.view === 'priority') el.innerHTML = renderPriority();
   else if (ui.view === 'done') el.innerHTML = renderArchive();
   else if (ui.view === 'map') { renderMap(el); }
   else el.innerHTML = renderBoard();
+  if (keepId) {
+    const again = document.getElementById(keepId);
+    if (again) { again.focus({ preventScroll: true }); if (caret && again.setSelectionRange) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) {} } }
+  }
 }
 
 /* ----- Priority ----- */
@@ -1492,7 +1860,7 @@ function renderPriority() {
 function renderArchive() {
   const done = doneTasks();
   if (!done.length) {
-    return '<div class="empty"><div class="e-big">Nothing completed yet.</div>Finished tasks are kept here automatically. Tick a task anywhere in the app to complete it.</div>';
+    return '<div class="empty"><div class="e-big">Nothing in the Archive yet.</div>Tick a task anywhere in the app to complete it. It moves here with its full history of updates.</div>';
   }
   const t = todayISO();
   const dayOf = (ms) => {
@@ -1506,7 +1874,7 @@ function renderArchive() {
     ['Past month', x => { const d = dayOf(x.completedAt || 0); return d < addDaysISO(t, -7) && d >= addDaysISO(t, -31); }],
     ['Older', x => dayOf(x.completedAt || 0) < addDaysISO(t, -31)],
   ];
-  let html = '<div class="drag-hint">Everything you finish is kept here. Untick a task to bring it back; use Backup &amp; settings to clear the archive.</div>';
+  let html = '<div class="drag-hint">Everything you finish is kept here with its full history. Open a task to read every update logged on it; untick it to bring it back.</div>';
   for (const [name, fn] of buckets) {
     const items = done.filter(fn);
     if (!items.length) continue;
@@ -2310,10 +2678,16 @@ function openEdit(id) {
   const priBtns = [1, 2, 3, 4].map(p =>
     '<button class="pick' + (t.priority === p ? ' on' : '') + '" data-pri="' + p + '">P' + p + '</button>'
   ).join('') + '<button class="pick' + (!t.priority ? ' on' : '') + '" data-pri="0">None</button>';
+  const archived = t.status === 'done';
+  const histBlock = '<div class="f-row"><span class="f-label">History and updates</span><div id="etHist">' + taskHistoryHTML(t) + '</div>' +
+    '<div class="hist-add"><textarea class="f-textarea" id="etUpd" rows="2" placeholder="Add an update: what was done, decided or found" aria-label="Add an update to this task"></textarea>' +
+    '<input class="f-input" id="etUpdMin" type="number" min="0" step="5" inputmode="numeric" placeholder="min" aria-label="Minutes spent, optional" title="Minutes spent (optional)">' +
+    '<button class="pick" id="etUpdAdd">Add update</button></div></div>';
   document.getElementById('modalRoot').innerHTML =
     '<div class="overlay" data-close>' +
-    '<div class="sheet" role="dialog" aria-label="Edit task">' +
-    '<h2>Edit task</h2>' +
+    '<div class="sheet" role="dialog" aria-label="' + (archived ? 'Archived task' : 'Task') + '">' +
+    '<h2>' + (archived ? 'Archived task' : 'Task') + '</h2>' +
+    (archived ? '<div class="archived-note"><span>Completed <b>' + esc(t.completedAt ? fmtStamp(t.completedAt) : '') + '</b>. To bring it back, set its status to To do and save.</span></div>' + histBlock : '') +
     (t.parentId && getTask(t.parentId) ?
       '<div class="f-row" style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft)">Sub-task of <b>' + esc(getTask(t.parentId).title) + '</b>' +
       '<button class="pick" id="etDetach">Make top-level</button></div>' : '') +
@@ -2321,6 +2695,7 @@ function openEdit(id) {
     '<div class="f-row"><span class="f-label">Steps</span><div id="etSteps"></div>' +
     '<div style="display:flex;gap:6px;margin-top:4px"><input class="f-input" id="etStepNew" placeholder="Break the task into steps"><button class="pick" id="etStepAdd">Add</button></div></div>' +
     '<div class="f-row"><label class="f-label" for="etNotes">Notes</label><textarea class="f-textarea" id="etNotes">' + esc(t.notes || '') + '</textarea></div>' +
+    (archived ? '' : histBlock) +
     '<div class="f-row" style="display:flex;gap:10px;flex-wrap:wrap">' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etProj">Project</label><select class="f-select" id="etProj">' + projOpts + '</select></div>' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etArea" title="Used when the task has no project">Group</label><select class="f-select" id="etArea">' + areaOpts + '</select></div>' +
@@ -2420,23 +2795,33 @@ function openEdit(id) {
   root.querySelector('#etSave').addEventListener('click', () => {
     const title = root.querySelector('#etTitle').value.trim();
     if (!title) { toast('The task needs a title'); return; }
-    t.title = title;
-    t.notes = root.querySelector('#etNotes').value.trim();
-    t.projectId = root.querySelector('#etProj').value || null;
-    t.areaId = root.querySelector('#etArea').value || null;
-    t.due = root.querySelector('#etDue').value || null;
-    t.quadrant = local.quadrant;
-    t.priority = local.priority;
-    t.focus = local.focus;
-    t.steps = local.steps;
-    t.parentId = local.parentId;
-    if (local.status !== t.status) {
-      t.status = local.status;
-      t.completedAt = t.status === 'done' ? Date.now() : null;
+    const cur = getTask(t.id) || t;   // the live copy: a sync may have replaced the object while the sheet was open
+    cur.title = title;
+    cur.notes = root.querySelector('#etNotes').value.trim();
+    cur.projectId = root.querySelector('#etProj').value || null;
+    cur.areaId = root.querySelector('#etArea').value || null;
+    cur.due = root.querySelector('#etDue').value || null;
+    cur.quadrant = local.quadrant;
+    cur.priority = local.priority;
+    cur.focus = local.focus;
+    cur.steps = local.steps;
+    cur.parentId = local.parentId;
+    if (local.status !== cur.status) {
+      cur.status = local.status;
+      cur.completedAt = cur.status === 'done' ? Date.now() : null;
     }
     save(); closeModal(); render();
   });
-  root.querySelector('#etTitle').focus();
+  root.querySelector('#etUpdAdd').addEventListener('click', async () => {
+    const ta = root.querySelector('#etUpd'), mi = root.querySelector('#etUpdMin'), btn = root.querySelector('#etUpdAdd');
+    btn.disabled = true;
+    const ok = await addTaskUpdate(t.id, ta.value, mi.value);
+    btn.disabled = false;
+    if (ok) { ta.value = ''; mi.value = ''; }
+  });
+  loadTaskHistory(t.id);
+  // On a phone, do not pop the keyboard just for opening a task
+  if (!archived && !window.matchMedia('(pointer: coarse)').matches) root.querySelector('#etTitle').focus();
 }
 
 function openNewProject() {
@@ -2560,11 +2945,13 @@ function openAreaStyle(areaId) {
 function openSettings() {
   const s = state.settings;
   const areaRows = state.areas.map((a, i) =>
-    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">' +
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">' +
     '<button class="icon-btn" data-aup="' + a.id + '" title="Move up" aria-label="Move ' + esc(a.name) + ' up"' + (i === 0 ? ' disabled style="opacity:0.3"' : '') + '>&#9650;</button>' +
     '<button class="icon-btn" data-adown="' + a.id + '" title="Move down" aria-label="Move ' + esc(a.name) + ' down"' + (i === state.areas.length - 1 ? ' disabled style="opacity:0.3"' : '') + '>&#9660;</button>' +
     '<input type="color" value="' + a.colour + '" data-acol="' + a.id + '" style="width:34px;height:30px;border:none;background:none;padding:0;cursor:pointer" aria-label="Group colour">' +
     '<input class="f-input" style="flex:1;min-width:80px" value="' + esc(a.name) + '" data-aname="' + a.id + '" aria-label="Group name">' +
+    (D.streams.length ? '<select class="f-select" style="width:116px;flex:none" data-astream="' + a.id + '" aria-label="Business for ' + esc(a.name) + '" title="The business this group belongs to. Briefs and agent work for that business show under this group.">' +
+      '<option value="">No business</option>' + D.streams.map(s => '<option value="' + esc(s.id) + '"' + (a.stream === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select>' : '') +
     '<button class="btn-quiet" style="border:1px solid var(--line);padding:6px 10px" data-asty="' + a.id + '">Backdrop</button>' +
     '<button class="btn-danger" style="margin:0;padding:6px 10px" data-adel="' + a.id + '">Delete</button>' +
     '</div>'
@@ -2591,9 +2978,9 @@ function openSettings() {
     '<div class="sheet" role="dialog" aria-label="Settings">' +
     '<h2>Backup &amp; settings</h2>' +
 
-    '<div class="f-row"><span class="f-label">Command Centre</span>' +
-    '<a class="btn-primary" href="command/" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none">' + ICONS.command + 'Open Command Centre</a>' +
-    '</div>' +
+    '<div class="f-row only-mobile"><span class="f-label">Go to</span><div class="goto-row">' +
+    [['agents', 'Agents'], ['board', 'Board'], ['map', 'Map'], ['done', 'Archive']].map(g => '<button class="pick' + (ui.view === g[0] ? ' on' : '') + '" data-goto="' + g[0] + '">' + ICONS[g[0]] + g[1] + '</button>').join('') +
+    '</div></div>' +
 
     '<div class="f-row"><span class="f-label">Backup</span>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
@@ -2618,7 +3005,7 @@ function openSettings() {
     '</div>' +
 
     '<div class="f-row"><span class="f-label">Groups</span>' + areaRows + newAreaRow +
-    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work, one per business. The business setting ties a group to its briefs and agent work on Home. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
     '</div>' +
     '<div class="f-row"><span class="f-label">Projects</span>' + projRows +
     '<div style="margin-top:8px"><button class="btn-quiet" id="setNewProject" style="border:1px solid var(--line)">Add a project</button></div>' +
@@ -2628,11 +3015,13 @@ function openSettings() {
     '<button class="pick' + (s.groupTint ? ' on' : '') + '" id="setTint">' + (s.groupTint ? 'Group colours on tasks: on' : 'Group colours on tasks: off') + '</button>' +
     '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Adds a subtle stripe and wash of the group&rsquo;s colour to every task card, helpful when many tasks share the screen.</div>' +
     '</div>' +
-    '<div class="f-row"><span class="f-label">Completed tasks</span>' +
+    '<div class="f-row"><span class="f-label">Archive</span>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-    '<button class="btn-quiet" id="setViewDone" style="border:1px solid var(--line)">View completed tasks</button>' +
-    '<button class="btn-quiet" id="setClearDone" style="border:1px solid var(--line)">Clear completed tasks</button>' +
-    '</div></div>' +
+    '<button class="btn-quiet" id="setViewDone" style="border:1px solid var(--line)">Open the Archive</button>' +
+    '<button class="btn-quiet" id="setClearDone" style="border:1px solid var(--line)">Empty the Archive</button>' +
+    '</div>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Completed tasks stay in the Archive with their history. Emptying it deletes those tasks for good.</div>' +
+    '</div>' +
 
     '<div class="f-row"><span class="f-label">Account</span>' +
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
@@ -2650,6 +3039,7 @@ function openSettings() {
   });
   root.querySelector('[data-close-btn]').addEventListener('click', closeModal);
 
+  root.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => { closeModal(); setView(b.dataset.goto); }));
   root.querySelector('#setSignOut').addEventListener('click', signOutNow);
   root.querySelector('#setNewProject').addEventListener('click', () => { closeModal(); openNewProject(); });
   let localTint = !!s.groupTint;
@@ -2670,22 +3060,21 @@ function openSettings() {
 
   root.querySelector('#setViewDone').addEventListener('click', () => {
     closeModal();
-    ui.view = 'done';
-    render();
+    setView('done');
   });
 
   let clearArmed = false;
   root.querySelector('#setClearDone').addEventListener('click', (e) => {
     const n = state.tasks.filter(t => t.status === 'done').length;
-    if (!n) { toast('No completed tasks to clear'); return; }
+    if (!n) { toast('The Archive is already empty'); return; }
     if (!clearArmed) {
       clearArmed = true;
-      e.currentTarget.textContent = 'Really remove ' + n + ' completed ' + (n === 1 ? 'task' : 'tasks') + '?';
+      e.currentTarget.textContent = 'Really delete ' + n + ' archived ' + (n === 1 ? 'task' : 'tasks') + ' for good?';
       return;
     }
     state.tasks = state.tasks.filter(t => t.status !== 'done');
     save(); render(); closeModal();
-    toast('Completed tasks cleared');
+    toast('Archive emptied');
   });
 
   root.querySelector('#setNewAreaGo').addEventListener('click', () => {
@@ -2774,6 +3163,10 @@ function openSettings() {
       const a = state.areas.find(a => a.id === inp.dataset.acol);
       if (a) a.colour = inp.value;
     });
+    root.querySelectorAll('[data-astream]').forEach(sel => {
+      const a = state.areas.find(a => a.id === sel.dataset.astream);
+      if (a) a.stream = sel.value || null;
+    });
     save(); render(); closeModal();
     toast('Settings saved');
   });
@@ -2838,25 +3231,36 @@ function importBackup(text) {
 /* ================= Toast ================= */
 
 let toastTimer = null;
-function toast(msg) {
+function toast(msg, action) {
   const el = document.getElementById('toast');
   el.textContent = msg;
+  if (action) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = action.label;
+    b.addEventListener('click', () => { el.classList.remove('show'); action.fn(); });
+    el.appendChild(b);
+  }
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => el.classList.remove('show'), action ? 6000 : 2600);
 }
 
 /* ================= Events ================= */
 
 function setView(v) {
+  // Home pressed again while on Home, or Agents: back to the whole picture, no group chosen
+  if ((v === 'home' && ui.view === 'home') || v === 'agents') { ui.filterArea = null; ui.filterProject = null; }
+  if (v === 'home') ui.filterProject = null;
   ui.view = v;
   render();
+  document.getElementById('content').scrollTop = 0;
 }
 
 function applyProjectFilter(id) {
   ui.filterProject = (ui.filterProject === id) ? null : id;
   ui.filterArea = null;
-  if (ui.filterProject && ui.view === 'today') ui.view = 'list';
+  if (ui.filterProject && (ui.view === 'today' || ui.view === 'home' || ui.view === 'agents')) ui.view = 'list';
   render();
 }
 
@@ -2864,6 +3268,7 @@ function applyAreaFilter(id) {
   ui.filterArea = (ui.filterArea === id) ? null : id;
   ui.filterProject = null;
   if (ui.filterArea && ui.view === 'today') ui.view = 'list';
+  if (ui.view === 'agents') ui.view = 'home';   // choosing a group from Agents opens that business
   render();
 }
 
@@ -2926,7 +3331,11 @@ document.getElementById('quickAdd').addEventListener('keydown', (e) => { if (e.k
 let searchTimer = null;
 document.getElementById('searchInput').addEventListener('input', (e) => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => { ui.search = e.target.value; render(); }, 180);
+  searchTimer = setTimeout(() => {
+    ui.search = e.target.value;
+    if (ui.search.trim() && (ui.view === 'home' || ui.view === 'agents')) ui.view = 'list';   // results are a task list
+    render();
+  }, 180);
 });
 
 document.getElementById('content').addEventListener('change', (e) => {
@@ -2935,6 +3344,7 @@ document.getElementById('content').addEventListener('change', (e) => {
 });
 
 document.getElementById('content').addEventListener('click', (e) => {
+  if (ccClick(e)) return;
   const groupBtn = e.target.closest('[data-group]');
   if (groupBtn) { ui.groupBy = groupBtn.dataset.group; persistListPrefs(); render(); return; }
   const sortBtn = e.target.closest('[data-sort]');
@@ -3039,6 +3449,724 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
 });
 
+/* ================= Home, business and Agents pages =================
+   These were the separate Command Centre until 24 Nov 2026. They now render inside the
+   app shell from the same task data (state) as every other view. The extra tables they
+   read (streams, agent_jobs, activity, briefs) are loaded into D and refreshed live. */
+
+const QUIET_DAYS = 30;
+const ACTIVITY_PAGE = 40;
+const NONE_COLOUR = '#9AA0AC';
+const STATUS = {
+  'Running':   { key: 'run',   rank: 2, label: 'Running',   lower: 'running',  out: 'Comes back as' },
+  'Needs you': { key: 'need',  rank: 1, label: 'Needs you', lower: 'need you', out: 'Waiting on you' },
+  'Stuck':     { key: 'stuck', rank: 0, label: 'Stuck',     lower: 'stuck',    out: 'Blocked on' },
+  'Idle':      { key: 'idle',  rank: 3, label: 'Idle',      lower: 'idle',     out: 'Could take on' },
+};
+const STATUS_ORDER = ['Running', 'Needs you', 'Stuck', 'Idle'];
+const DOT = { run: '#2563EB', need: '#E39A2B', stuck: '#D9483B', idle: '#9AA0AC' };
+const NAV_VIEWS = ['home', 'agents', 'today', 'list', 'matrix', 'board', 'priority', 'map', 'done'];
+
+const D = { streams: [], jobs: [], activity: [], briefs: [] };
+
+function ccStore(key, val) { try { localStorage.setItem('cc.' + key, JSON.stringify(val)); } catch (e) {} }
+function ccRecall(key, dflt) { try { const v = localStorage.getItem('cc.' + key); return v === null ? dflt : JSON.parse(v); } catch (e) { return dflt; } }
+
+const cc = {
+  loaded: false, error: null,
+  cosOpen: ccRecall('cosOpen', true),
+  planOpen: ccRecall('planOpen', true),
+  homePeriod: 'Week', agentsPeriod: 'Week',
+  actFilter: 'All', actShown: ACTIVITY_PAGE,
+  fleetOpen: null, agentsOpen: null,
+  makeLive: null, msgDraft: '', listening: false,
+  taskActs: {}, actVersion: 0,
+};
+
+/* ---------- Small helpers ---------- */
+function safeUrl(u) {
+  if (!u) return null;
+  try { const x = new URL(String(u)); return (x.protocol === 'https:' || x.protocol === 'http:') ? x.href : null; } catch (e) { return null; }
+}
+function safeColour(c) { return /^#[0-9a-fA-F]{6}$/.test(String(c || '')) ? c : NONE_COLOUR; }
+function paint(name, colour) {
+  const c = safeColour(colour);
+  return {
+    name: name, colour: c,
+    soft: 'color-mix(in srgb, ' + c + ' 9%, var(--surface))',
+    tint: 'color-mix(in srgb, ' + c + ' 14%, var(--surface))',
+    ink: 'color-mix(in srgb, ' + c + ' 62%, var(--ink))',
+  };
+}
+const streamOf = (id) => D.streams.find(s => s.id === id) || null;
+function areaForStream(id) { return id ? (state.areas.find(a => a.stream === id) || null) : null; }
+/* A business takes its name and colour from its group, so the whole app shows one colour per business. */
+function look(streamId) {
+  const a = areaForStream(streamId), s = streamOf(streamId);
+  if (a) return paint(a.name, a.colour);
+  if (s) return paint(s.name, s.colour);
+  return paint('All businesses', NONE_COLOUR);
+}
+function bizHref(streamId) { const a = areaForStream(streamId); return a ? '#/home/g/' + encodeURIComponent(a.id) : null; }
+function taskStream(t) { const a = areaOf(taskAreaId(t)); return a && a.stream ? a.stream : null; }
+/* One entry per business: each group, in the order of the sidebar. */
+function bizList() {
+  return state.areas.map(a => ({ area: a, stream: a.stream && streamOf(a.stream) ? a.stream : null, L: paint(a.name, a.colour), href: '#/home/g/' + encodeURIComponent(a.id) }));
+}
+function bizTasks(b) { return state.tasks.filter(t => taskAreaId(t) === b.area.id || (b.stream && taskStream(t) === b.stream)); }
+
+const DAY = 86400000;
+function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function ms(v) { if (v == null) return null; if (typeof v === 'number') return v; const t = Date.parse(v); return isNaN(t) ? null : t; }
+function dueMs(due) { if (!due) return null; const p = due.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]).getTime(); }
+function fmtShort(t) {
+  if (t == null) return '–';
+  const today = startOfToday();
+  if (t >= today && t < today + DAY) return 'Today';
+  if (t >= today - DAY && t < today) return 'Yesterday';
+  const d = new Date(t);
+  const o = { day: 'numeric', month: 'short' };
+  if (d.getFullYear() !== new Date().getFullYear()) o.year = 'numeric';
+  return d.toLocaleDateString('en-GB', o);
+}
+function fmtClock(t) { return new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
+function fmtWhen(t) { if (t == null) return '–'; return t >= startOfToday() ? fmtClock(t) : fmtShort(t); }
+function fmtStamp(t) { return t == null ? '' : fmtShort(t) + ', ' + fmtClock(t); }
+function fmtMins(m) {
+  m = Math.round(m || 0);
+  if (m <= 0) return '–';
+  if (m < 60) return m + ' min';
+  const h = Math.floor(m / 60), r = m % 60;
+  return r ? h + ' h ' + String(r).padStart(2, '0') : h + ' h';
+}
+function daysAgo(t) { return Math.max(0, Math.floor((Date.now() - t) / DAY)); }
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : (many || one + 's')); }
+function initials(agent) {
+  const base = String(agent || '').split('·')[0].trim();
+  if (/^chief of staff$/i.test(base)) return 'CS';
+  const words = base.split(/\s+/).filter(w => w && !/^(of|the|and|a|an|for)$/i.test(w));
+  return (words.slice(0, 2).map(w => w[0]).join('') || '?').toUpperCase();
+}
+function isCos(who) { return /^chief of staff$/i.test(String(who || '').trim()); }
+function isMe(who) { return /^(ifran|you)$/i.test(String(who || '').trim()); }
+function whoLabel(who) { return isMe(who) ? 'You' : who; }
+/* A task named anywhere on these pages opens its own sheet, in place. */
+function taskBtn(id, html, cls) {
+  return getTask(id) ? '<button type="button" class="tlink' + (cls ? ' ' + cls : '') + '" data-task="' + esc(id) + '" title="Open this task">' + html + '</button>' : html;
+}
+const CHEV = '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
+
+/* ---------- Task rules ---------- */
+const isDone = (t) => t.status === 'done';
+const isLive = (t) => !isDone(t) && ([1, 2, 3].includes(t.priority) || !!t.focus);
+const isParked = (t) => !isDone(t) && !isLive(t);
+const noPriority = (t) => !isDone(t) && !t.priority;
+const inPlan = (t) => isLive(t) && (t.priority === 1 || t.priority === 2 || !!t.focus);
+const isQuiet = (t) => isLive(t) && ms(t.updatedAt) != null && ms(t.updatedAt) < Date.now() - QUIET_DAYS * DAY;
+function planRank(t) { return t.priority === 1 ? 0 : t.priority === 2 ? 1 : 2; }
+function byDueThenOrder(a, b) {
+  const da = dueMs(a.due), db = dueMs(b.due);
+  if (da != null && db != null && da !== db) return da - db;
+  if (da != null && db == null) return -1;
+  if (da == null && db != null) return 1;
+  return (a.sortOrder || 0) - (b.sortOrder || 0);
+}
+function planSort(a, b) { return (planRank(a) - planRank(b)) || byDueThenOrder(a, b); }
+function liveSort(a, b) { return ((a.priority || 9) - (b.priority || 9)) || byDueThenOrder(a, b); }
+
+/* ---------- Agent job rules ---------- */
+// A job is on the board until it is finished, and stays while it still needs Ifran or is stuck.
+const jobVisible = (j) => !j.finished_at || j.status === 'Needs you' || j.status === 'Stuck';
+const visibleJobs = () => D.jobs.filter(jobVisible);
+function jobsForTask(taskId) { return visibleJobs().filter(j => j.task_id === taskId); }
+function statusCounts(jobs) { const c = { 'Running': 0, 'Needs you': 0, 'Stuck': 0, 'Idle': 0 }; jobs.forEach(j => { if (c[j.status] != null) c[j.status]++; }); return c; }
+function jobSort(a, b) { return ((STATUS[a.status] || STATUS.Idle).rank - (STATUS[b.status] || STATUS.Idle).rank) || ((ms(b.updated_at) || 0) - (ms(a.updated_at) || 0)); }
+function runningTime(j) {
+  const s = ms(j.started_at); if (s == null) return '–';
+  const e = ms(j.finished_at) || Date.now();
+  const m = Math.max(0, Math.round((e - s) / 60000));
+  return m < 1 ? 'under 1 min' : fmtMins(m);
+}
+function stepText(j) {
+  const parts = [];
+  if (j.steps_total > 0) parts.push('Step ' + Math.min(j.steps_done, j.steps_total) + ' of ' + j.steps_total);
+  if (j.step_note) parts.push(j.step_note);
+  return parts.join(' · ') || (STATUS[j.status] ? STATUS[j.status].label : '');
+}
+function stepBars(j) {
+  const total = Math.min(Math.max(j.steps_total || 0, 0), 12);
+  if (!total) return '';
+  const done = Math.min(j.steps_done || 0, total);
+  const c = DOT[(STATUS[j.status] || STATUS.Idle).key];
+  let h = '<div class="steps" aria-hidden="true">';
+  for (let i = 0; i < total; i++) h += '<span' + (i < done ? ' style="background:' + c + '"' : '') + '></span>';
+  return h + '</div>';
+}
+function statusBadge(status) {
+  const s = STATUS[status] || STATUS.Idle;
+  return '<span class="badge s-' + s.key + '"><span class="bd" style="background:' + DOT[s.key] + '"></span>' + esc(s.label) + '</span>';
+}
+function pillsFor(c) {
+  return ['Stuck', 'Needs you', 'Running', 'Idle'].filter(s => c[s]).map(s => '<span class="badge s-' + STATUS[s].key + '">' + c[s] + ' ' + STATUS[s].lower + '</span>').join('');
+}
+function jobLine(j) { return j.task_id ? taskBtn(j.task_id, esc(j.title)) : esc(j.title); }
+/* Group header: the whole row toggles (the button's ::after covers it), the name is its own link. */
+function groupHead(g, L, act, open, nameStyle) {
+  const name = esc(L.name), href = g.k === '__all' ? null : bizHref(g.k);
+  const nm = href ? '<a class="nm" href="' + href + '"' + nameStyle + '>' + name + '</a>' : '<span class="nm"' + nameStyle + '>' + name + '</span>';
+  return '<div class="ghead"><button type="button" class="gtoggle" data-cc="' + act + '" data-k="' + esc(g.k) + '" aria-expanded="' + open + '" aria-label="' + (open ? 'Hide' : 'Show') + ' jobs for ' + name + '">' + CHEV + '</button>' +
+    '<span class="dot" style="background:' + L.colour + '"></span>' + nm + '<span class="gpills">' + pillsFor(g.c) + '</span></div>';
+}
+
+/* ---------- Time spent ---------- */
+function periodStart(p) { return p === 'Day' ? startOfToday() : Date.now() - (p === 'Week' ? 7 : 30) * DAY; }
+function bucketOf(who) { return isMe(who) ? 'you' : isCos(who) ? 'cos' : 'agents'; }
+function timeSplit(period) {
+  const since = periodStart(period);
+  const out = { you: { total: 0, by: {} }, cos: { total: 0, by: {} }, agents: { total: 0, by: {} } };
+  D.activity.forEach(a => {
+    const t = ms(a.at); if (t == null || t < since || !(a.minutes > 0)) return;
+    const b = out[bucketOf(a.who)]; const k = a.stream || '__none';
+    b.total += a.minutes; b.by[k] = (b.by[k] || 0) + a.minutes;
+  });
+  return out;
+}
+function timeRows(period) {
+  const split = timeSplit(period);
+  const names = [['you', 'You'], ['cos', 'Chief of Staff'], ['agents', 'Agents']];
+  const used = new Set();
+  let html = '';
+  names.forEach(([k, label]) => {
+    const b = split[k];
+    let bar = '';
+    if (b.total > 0) {
+      const keys = D.streams.map(s => s.id).concat(['__none']).filter(id => b.by[id]);
+      keys.forEach(id => { used.add(id); const pct = (b.by[id] / b.total) * 100; const c = id === '__none' ? NONE_COLOUR : look(id).colour; bar += '<span style="width:' + pct.toFixed(2) + '%;background:' + c + '" title="' + esc((id === '__none' ? 'No business' : look(id).name) + ': ' + fmtMins(b.by[id])) + '"></span>'; });
+    }
+    const aria = label + ': ' + (b.total > 0 ? fmtMins(b.total) : 'no time logged');
+    html += '<div class="trow"><span class="nm">' + label + '</span><div class="tbar" role="img" aria-label="' + esc(aria) + '">' + bar + '</div><span class="hrs">' + (b.total > 0 ? fmtMins(b.total) : '–') + '</span></div>';
+  });
+  const any = split.you.total + split.cos.total + split.agents.total > 0;
+  let legend = '';
+  if (any) {
+    D.streams.forEach(s => {
+      if (!used.has(s.id)) return;
+      const L = look(s.id), href = bizHref(s.id), inner = '<i style="background:' + L.colour + '"></i>' + esc(L.name);
+      legend += href ? '<a href="' + href + '">' + inner + '</a>' : '<span>' + inner + '</span>';
+    });
+    if (used.has('__none')) legend += '<span><i style="background:' + NONE_COLOUR + '"></i>No business</span>';
+  }
+  return html + (any ? '<div class="legend">' + legend + '</div>' : '<p class="cc-empty">No time logged ' + (period === 'Day' ? 'today' : period === 'Week' ? 'in the last 7 days' : 'in the last 30 days') + '. Time appears here as work is logged, by you on a task or by your Chief of Staff and agents.</p>');
+}
+function periodSeg(cur, act) {
+  return '<div class="cc-seg" role="group" aria-label="Period">' + ['Day', 'Week', 'Month'].map(p => '<button type="button" data-cc="' + act + '" data-v="' + p + '" aria-pressed="' + (p === cur) + '">' + p + '</button>').join('') + '</div>';
+}
+
+/* ---------- Briefs ---------- */
+function latestBrief(streamId) { return D.briefs.find(b => (b.stream || null) === (streamId || null)) || null; }
+function pendingDecision(b) { return b && b.decision && !b.decided_at && Array.isArray(b.decision.options) && b.decision.options.length ? b.decision : null; }
+function decisionHtml(b, dark) {
+  const d = pendingDecision(b);
+  if (!d) {
+    if (b && b.decision && b.decided_at) return '<p class="decided">You chose “' + esc(b.decision_choice || '') + '” ' + esc(fmtStamp(ms(b.decided_at))) + '.</p>';
+    return '';
+  }
+  const opts = d.options.slice(0, 4).map((o, i) => '<button type="button" class="' + (dark ? (i === 0 ? 'o1' : 'on') : (i === 0 ? 'opt-1' : 'opt-n')) + '" data-cc="decide" data-brief="' + esc(b.id) + '" data-i="' + i + '">' + esc(o.label || 'Option ' + (i + 1)) + '</button>').join('');
+  if (dark) return (d.question ? '<p class="q">' + esc(d.question) + '</p>' : '') + '<div class="opts">' + opts + '</div>';
+  return '<div class="decision"><h3>Worth a decision</h3>' + (d.question ? '<p>' + esc(d.question) + '</p>' : '') + '<div class="opts">' + opts + '</div></div>';
+}
+
+/* ---------- Home ---------- */
+function cosPanel() {
+  const b = latestBrief(null);
+  const unseen = b && ccRecall('lastSeenBrief', null) !== b.id;
+  if (!cc.cosOpen) {
+    const flag = (unseen || pendingDecision(b)) ? '<span class="newdot" role="img" aria-label="New brief or decision waiting"></span>' : '';
+    return '<aside class="panel cos-closed" aria-label="Chief of Staff"><button type="button" class="cos-av" data-cc="cos-toggle" aria-label="Open the Chief of Staff panel">CS</button><span class="lbl" aria-hidden="true">Chief of Staff</span>' + flag + '</aside>';
+  }
+  if (b) ccStore('lastSeenBrief', b.id);
+  const parts = b ? [['Where things stand', b.standing], ['Holding things up', b.holding], ['Running late', b.late]].filter(p => p[1] && String(p[1]).trim()) : [];
+  const body = !cc.loaded ? '<p class="cc-empty">Loading the latest brief…</p>'
+    : b ? (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + decisionHtml(b, false)
+    : '<p class="cc-empty">No brief yet. When your Chief of Staff starts work, its latest brief appears here: where things stand, what is holding things up, and what is running late.</p>';
+  const open = state.tasks.filter(t => !isDone(t));
+  const np = open.filter(noPriority).length;
+  const loose = open.filter(t => !taskAreaId(t)).length;
+  const notes = [];
+  if (np) notes.push('<span>' + plural(np, 'open task has', 'open tasks have') + ' no priority, so ' + (np === 1 ? 'it counts' : 'they count') + ' as parked until one is set. <a href="#" data-cc="show-noprio">Show ' + (np === 1 ? 'it' : 'them') + '</a></span>');
+  if (loose) notes.push('<span>' + plural(loose, 'open task is', 'open tasks are') + ' not in any group, so ' + (loose === 1 ? 'it does' : 'they do') + ' not appear under a business.</span>');
+  const mic = ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+    ? '<button type="button" class="sqbtn ghost" data-cc="dictate" aria-pressed="' + cc.listening + '" aria-label="' + (cc.listening ? 'Stop dictating' : 'Dictate a message') + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></button>'
+    : '';
+  return '<aside class="panel cos" aria-label="Chief of Staff">' +
+    '<div class="cos-head"><div class="cos-av" aria-hidden="true">CS</div><div class="cos-title"><b>Chief of Staff</b><span>' + (b ? 'Brief · ' + esc(fmtStamp(ms(b.at))) : 'No brief yet') + '</span></div>' +
+    '<button type="button" class="iconbtn" data-cc="cos-toggle" aria-label="Collapse the Chief of Staff panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button></div>' +
+    '<div class="cos-body">' + body + (notes.length ? '<div class="sysnote">' + notes.join('') + '</div>' : '') + '</div>' +
+    '<form class="msgform" data-form="msg"><label for="cos-msg" class="vh">Message your Chief of Staff</label><input id="cos-msg" type="text" autocomplete="off" placeholder="Message your Chief of Staff…" value="' + esc(cc.msgDraft) + '">' + mic +
+    '<button type="submit" class="sqbtn" aria-label="Send message"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button></form>' +
+    '</aside>';
+}
+function planNote(t) {
+  const bits = [];
+  const job = jobsForTask(t.id).sort(jobSort)[0];
+  if (t.status === 'waiting') bits.push('Waiting on others');
+  else if (job) bits.push('Agent ' + STATUS[job.status].lower);
+  else if (t.status === 'doing') bits.push('In progress');
+  const d = dueMs(t.due);
+  if (d != null) {
+    const today = startOfToday();
+    if (d < today) { const n = Math.round((today - d) / DAY); bits.push(plural(n, 'day') + ' over'); }
+    else if (d === today) bits.push('Due today');
+    else bits.push('Due ' + fmtShort(d));
+  }
+  if (t.focus && bits.length < 2) bits.push('In focus');
+  if (isQuiet(t) && bits.length < 2) bits.push('Quiet ' + daysAgo(ms(t.updatedAt)) + ' d');
+  return bits.slice(0, 2).join(' · ');
+}
+function actionPlan() {
+  const visJobs = visibleJobs();
+  const cols = bizList().map(b => {
+    const all = bizTasks(b);
+    return { b, items: all.filter(inPlan).sort(planSort), live: all.filter(isLive).length, jobs: b.stream ? visJobs.filter(j => j.stream === b.stream).length : 0 };
+  }).filter(c => c.items.length);
+  const head = '<div class="plan-head"><div class="t"><h2>Action plan</h2><span>Priority 1, priority 2 and starred tasks only. Choose a business to see everything else in it.</span></div>' +
+    '<button type="button" class="btn" data-cc="plan-toggle" aria-expanded="' + cc.planOpen + '" aria-controls="plan-body">' + (cc.planOpen ? 'Hide' : 'Show action plan') + '</button></div>';
+  let body = '';
+  if (cc.planOpen) {
+    body = cols.length ? '<div class="plan-grid" id="plan-body">' + cols.map(c => {
+      const L = c.b.L;
+      const items = c.items.slice(0, 3).map(t => {
+        const note = planNote(t);
+        return '<button type="button" class="plan-item" data-task="' + esc(t.id) + '" title="Open this task" style="background:' + L.soft + '"><span class="p" style="color:' + L.ink + '">' + (t.priority === 1 ? 'P1' : t.priority === 2 ? 'P2' : 'Focus') + '</span><span class="x"><b>' + esc(t.title) + '</b>' + (note ? '<span style="color:' + L.ink + '">' + esc(note) + '</span>' : '') + '</span></button>';
+      }).join('');
+      const more = c.items.length > 3 ? '<a class="more" href="' + c.b.href + '">+ ' + (c.items.length - 3) + ' more</a>' : '';
+      return '<div class="plan-col"><a class="plan-name" href="' + c.b.href + '"><b><span class="dot" style="background:' + L.colour + '"></span>' + esc(L.name) + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AA0AC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></b><span>' + c.live + ' live' + (c.jobs ? ' · ' + plural(c.jobs, 'agent job') : '') + '</span></a>' + items + more + '</div>';
+    }).join('') + '</div>' : '<div id="plan-body" class="panel-pad"><p class="cc-empty">Nothing is at priority 1, priority 2 or starred yet. Give a task a priority, or star it, and it appears here.</p></div>';
+  }
+  return '<section class="panel" aria-label="Action plan" style="overflow:hidden">' + head + body + '</section>';
+}
+function fleetGroups(openMap) {
+  const jobs = visibleJobs();
+  const keys = [];
+  jobs.forEach(j => { const k = j.stream || '__all'; if (!keys.includes(k)) keys.push(k); });
+  const groups = keys.map(k => {
+    const js = jobs.filter(j => (j.stream || '__all') === k).sort(jobSort);
+    const c = statusCounts(js);
+    const s = streamOf(k);
+    const pos = k === '__all' ? -1 : (s ? s.position : 99);
+    return { k, js, c, pos, problem: c['Stuck'] ? 0 : c['Needs you'] ? 1 : 2 };
+  }).sort((a, b) => (a.problem - b.problem) || (a.pos - b.pos));
+  // A business seen for the first time opens by default when it has a problem; after that the user's choice sticks.
+  if (openMap.v === null) openMap.v = {};
+  groups.forEach(g => { if (!(g.k in openMap.v)) openMap.v[g.k] = g.problem < 2; });
+  return groups;
+}
+const fleetState = { get v() { return cc.fleetOpen; }, set v(x) { cc.fleetOpen = x; } };
+const agentsState = { get v() { return cc.agentsOpen; }, set v(x) { cc.agentsOpen = x; } };
+function homeFleet() {
+  const groups = fleetGroups(fleetState);
+  const n = visibleJobs().length;
+  let html = '<section class="panel panel-pad fleet" aria-label="Agent fleet"><div class="panel-head"><h2>Agent fleet · ' + plural(n, 'job') + '</h2>' +
+    (n ? '<button type="button" class="btn" data-cc="fleet-all" data-v="open">Expand all</button><button type="button" class="btn" data-cc="fleet-all" data-v="close">Collapse all</button>' : '') + '</div>';
+  if (!n) return html + '<p class="cc-empty">' + (cc.loaded ? 'No agent jobs yet. When your Chief of Staff hands work to an agent, the job appears here, grouped by business.' : 'Loading…') + '</p></section>';
+  groups.forEach(g => {
+    const L = look(g.k === '__all' ? null : g.k);
+    const open = !!cc.fleetOpen[g.k];
+    html += '<div class="fgroup">' + groupHead(g, L, 'fleet-toggle', open, '');
+    if (open) html += '<div class="fjobs">' + g.js.map(j => '<div class="fjob"><span class="in" title="' + esc(j.agent) + '">' + esc(initials(j.agent)) + '</span><span class="jt"><span class="vh">' + esc(j.agent) + ': </span>' + jobLine(j) + '</span><div style="flex:0 0 80px">' + stepBars(j) + '</div>' + statusBadge(j.status) + '</div>').join('') + '</div>';
+    html += '</div>';
+  });
+  return html + '<a class="more" href="#/agents" style="align-self:flex-start;margin-top:4px">Open the Agents page</a></section>';
+}
+function homeTime() {
+  return '<section class="panel panel-pad timebox" aria-label="Where the time went"><div class="panel-head"><h2>Where the time went</h2>' + periodSeg(cc.homePeriod, 'home-period') + '</div>' + timeRows(cc.homePeriod) + '</section>';
+}
+function activityText(a) {
+  const link = safeUrl(a.link);
+  return (a.kind === 'message' ? '<span class="ctag">To your Chief of Staff: </span>' : '') + esc(a.description) + (link ? ' <a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '');
+}
+function activityRows(list) {
+  return list.map(a => {
+    const L = look(a.stream);
+    const t = a.task_id ? getTask(a.task_id) : null;
+    const what = activityText(a) + (t ? '<span class="on-task">On: ' + taskBtn(t.id, esc(t.title)) + '</span>' : '');
+    const dotHtml = '<span class="dot" style="width:7px;height:7px;background:' + L.colour + '"></span>' + esc(L.name);
+    const href = a.stream ? bizHref(a.stream) : null;
+    const biz = href ? '<a href="' + href + '">' + dotHtml + '</a>' : a.stream ? dotHtml : '<span class="muted">–</span>';
+    return '<div class="arow"><span class="w">' + esc(fmtWhen(ms(a.at))) + '</span><span class="who">' + esc(whoLabel(a.who)) + '</span><span class="biz">' + biz + '</span><span class="what">' + what + '</span><span class="took">' + esc(fmtMins(a.minutes)) + '</span></div>';
+  }).join('');
+}
+function homeActivity() {
+  const f = cc.actFilter;
+  const list = D.activity.filter(a => f === 'All' || (f === 'You' ? isMe(a.who) : !isMe(a.who)));
+  const shown = list.slice(0, cc.actShown);
+  const seg = '<div class="cc-seg" role="group" aria-label="Show activity from">' + ['All', 'You', 'Agents'].map(v => '<button type="button" data-cc="act-filter" data-v="' + v + '" aria-pressed="' + (v === f) + '">' + v + '</button>').join('') + '</div>';
+  let body;
+  if (!D.activity.length) body = '<p class="cc-empty">' + (cc.loaded ? 'No activity logged yet. Updates you add to a task, and work done by your Chief of Staff and agents, appear here with the time they took.' : 'Loading…') + '</p>';
+  else if (!list.length) body = '<p class="cc-empty">Nothing from ' + (f === 'You' ? 'you' : 'your Chief of Staff or agents') + ' yet.</p>';
+  else body = '<div class="acts"><div class="acts-in">' + activityRows(shown) + '</div></div>' + (list.length > shown.length ? '<button type="button" class="btn showmore" data-cc="act-more">Show more (' + (list.length - shown.length) + ' older)</button>' : '');
+  return '<section class="panel panel-pad" aria-label="Activity" style="display:flex;flex-direction:column;gap:4px"><div class="panel-head"><h2>Activity<small>Every update also sits inside its task, and stays with it in the Archive</small></h2>' + seg + '</div>' + body + '</section>';
+}
+function homeHousekeeping() {
+  const quiet = state.tasks.filter(isQuiet).sort((a, b) => ms(a.updatedAt) - ms(b.updatedAt));
+  const waiting = state.tasks.filter(t => t.status === 'waiting');
+  const chip = (t, cls, text) => '<button type="button" class="cc-chip ' + cls + '" data-task="' + esc(t.id) + '" title="Open: ' + esc(t.title) + '">' + esc(text) + '</button>';
+  return '<section class="panel house" aria-label="Gone quiet and waiting on others">' +
+    '<span class="lbl">Gone quiet</span><div class="chips">' + (quiet.length ? quiet.map(t => chip(t, 'chip-quiet', t.title + ' · ' + daysAgo(ms(t.updatedAt)) + ' d')).join('') : '<span class="cc-empty" style="padding:0">Nothing live has gone quiet.</span>') + '</div>' +
+    '<span class="lbl">Waiting on others</span><div class="chips">' + (waiting.length ? waiting.map(t => chip(t, 'chip-wait', t.title)).join('') : '<span class="cc-empty" style="padding:0">Nothing is waiting on others.</span>') + '</div>' +
+    '</section>';
+}
+function homePage() {
+  return '<div class="home' + (cc.cosOpen ? '' : ' cos-shut') + '">' + cosPanel() + '<div class="home-main">' + actionPlan() + '<div class="row2">' + homeFleet() + homeTime() + '</div>' + homeActivity() + homeHousekeeping() + '</div></div>';
+}
+
+/* ---------- Business overview: Home with a group chosen ---------- */
+function jobCard(j) {
+  const s = STATUS[j.status] || STATUS.Idle;
+  const out = safeUrl(j.output_url);
+  return '<div class="jcard"><div class="top"><div class="in" aria-hidden="true">' + esc(initials(j.agent)) + '</div><span class="an">' + esc(j.agent) + '</span>' + statusBadge(j.status) + '</div>' +
+    '<span class="jt">' + jobLine(j) + '</span>' + stepBars(j) +
+    '<div class="meta"><span>' + esc(stepText(j)) + '</span><span class="mono">' + esc(runningTime(j)) + '</span></div>' +
+    (j.returns || out ? '<span class="jt"><b style="font-weight:600">' + esc(s.out) + ':</b> ' + esc(j.returns || '') + (out ? ' <a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') + '</span>' : '') +
+    '</div>';
+}
+function businessPage(a) {
+  const sid = a.stream && streamOf(a.stream) ? a.stream : null;
+  const L = paint(a.name, a.colour);
+  const tasks = bizTasks({ area: a, stream: sid });
+  const ids = new Set(tasks.map(t => t.id));
+  const live = tasks.filter(isLive);
+  const parked = tasks.filter(isParked).sort((x, y) => (x.priority ? 0 : 1) - (y.priority ? 0 : 1) || byDueThenOrder(x, y));
+  const now = live.filter(inPlan).sort(planSort);
+  const rest = live.filter(t => !inPlan(t)).sort(liveSort);
+  const doneTimes = tasks.filter(isDone).map(t => t.completedAt).filter(Boolean);
+  const lastDone = doneTimes.length ? Math.max.apply(null, doneTimes) : null;
+  const mine = (x) => (sid && x.stream === sid) || (x.task_id && ids.has(x.task_id));
+  const wk = Date.now() - 7 * DAY;
+  let all = 0, here = 0;
+  D.activity.forEach(x => { const t = ms(x.at); if (t != null && t >= wk && x.minutes > 0) { all += x.minutes; if (mine(x)) here += x.minutes; } });
+  const share = all > 0 ? Math.round((here / all) * 100) + '%' : '–';
+  const brief = sid ? latestBrief(sid) : null;
+  const briefText = brief ? [brief.standing, brief.holding, brief.late].filter(x => x && String(x).trim()).join('\n\n') : '';
+  const jobs = visibleJobs().filter(mine).sort(jobSort);
+  const acts = D.activity.filter(mine).slice(0, 30);
+  const doneCount = tasks.filter(isDone).length;
+
+  const note = !cc.loaded ? '<p class="muted" style="font-size:13px">Loading…</p>'
+    : !sid ? '<p class="muted" style="font-size:13px">This group is not linked to a business yet, so briefs and agent work for it are not gathered here. Link it under Backup &amp; settings, Groups.</p>'
+    : brief ? '<p>' + esc(briefText || 'No text in the latest note.') + '</p><span class="when">' + esc(fmtStamp(ms(brief.at))) + '</span>' + decisionHtml(brief, false)
+    : '<p class="muted" style="font-size:13px">No note on this business yet. Your Chief of Staff’s latest view of it will appear here.</p>';
+  const head = '<section class="panel biz-head" aria-label="Overview">' +
+    '<div class="biz-top"><span class="stile" style="background:' + L.tint + '"><i style="background:' + L.colour + '"></i></span><div class="t"><b>Overview</b><span>Live work, agents and parked ideas for this business' + (doneCount ? ' · ' + doneCount + ' in the Archive' : '') + '</span></div>' +
+    '<a class="btn" href="#/home">All businesses</a><a class="btn" href="#/list/g/' + encodeURIComponent(a.id) + '">Task list</a><a class="btn" href="#/done/g/' + encodeURIComponent(a.id) + '">Archive</a></div>' +
+    '<div class="note"><div class="cos-av" aria-hidden="true">CS</div><div class="x"><b>Latest from your Chief of Staff</b>' + note + '</div></div>' +
+    '<div class="stats"><div class="stat"><span>Live</span><b>' + live.length + '</b></div><div class="stat"><span>Parked</span><b>' + parked.length + '</b></div><div class="stat"><span>Last done</span><b>' + esc(fmtShort(lastDone)) + '</b></div><div class="stat"><span>Share of time this week</span><b>' + share + '</b></div></div></section>';
+
+  const rowOpts = { hideArea: true };
+  const pNow = '<section class="panel sec" aria-label="Priority now"><h2>Priority now</h2>' + (now.length ? rowsHTML(now, rowOpts) : '<p class="cc-empty">Nothing at priority 1, priority 2 or starred here.</p>') + '</section>';
+  const pRest = '<section class="panel sec" aria-label="Everything else live"><h2>Everything else live</h2>' + (rest.length ? rowsHTML(rest, rowOpts) : '<p class="cc-empty">No other live work here.</p>') + '</section>';
+  const pAgents = '<section class="panel sec" aria-label="Agents on this business"><h2>Agents on this business</h2>' + (jobs.length ? jobs.map(jobCard).join('') : '<p class="cc-empty">No agents are working on this business. When your Chief of Staff hands work here, each job shows its progress in this panel.</p>') + '</section>';
+  const pParked = '<section class="panel sec" aria-label="Parked for later"><h2>Parked for later</h2><span class="sub">Priority 4 and anything without a priority. They don’t count against you.</span>' +
+    (parked.length ? '<div class="parked">' + parked.map(t => {
+      const picking = cc.makeLive === t.id;
+      const ctrl = picking
+        ? '<span class="vh">Choose a priority for ' + esc(t.title) + '</span>' + [1, 2, 3].map(p => '<button type="button" class="pb pri" data-cc="set-pri" data-tid="' + esc(t.id) + '" data-p="' + p + '">P' + p + '</button>').join('') + '<button type="button" class="pb" data-cc="make-live-cancel">Cancel</button>'
+        : '<button type="button" class="pb" data-cc="make-live" data-tid="' + esc(t.id) + '" aria-label="Make ' + esc(t.title) + ' live">Make live</button>';
+      return '<div class="pchip">' + taskBtn(t.id, esc(t.title), 'tt') + (noPriority(t) ? '<span class="np">No priority</span>' : '') + ctrl + '</div>';
+    }).join('') + '</div>' : '<p class="cc-empty">Nothing parked here.</p>') + '</section>';
+  const pActs = '<section class="panel sec" aria-label="Activity on this business" style="gap:2px"><h2 style="margin-bottom:6px">Activity on this business</h2>' +
+    (acts.length ? acts.map(x => { const t = x.task_id ? getTask(x.task_id) : null; return '<div class="srow"><span class="w">' + esc(fmtWhen(ms(x.at))) + '</span><span class="x"><b>' + esc(whoLabel(x.who)) + '</b> ' + activityText(x) + (t ? ' <span class="muted">· ' + taskBtn(t.id, esc(t.title)) + '</span>' : '') + '</span><span class="took">' + esc(fmtMins(x.minutes)) + '</span></div>'; }).join('') : '<p class="cc-empty">No activity logged for this business yet.</p>') + '</section>';
+
+  return head + '<div class="cols2"><div class="lcol">' + pNow + pRest + '</div><div class="rcol">' + pAgents + '</div></div>' + pParked + pActs;
+}
+function ccBanner() { return cc.error ? '<div class="banner" role="alert">' + esc(cc.error) + '</div>' : ''; }
+function renderHomeView() {
+  const a = ui.filterArea ? areaOf(ui.filterArea) : null;
+  return '<div class="cc">' + ccBanner() + (a ? businessPage(a) : homePage()) + '</div>';
+}
+
+/* ---------- Agents page ---------- */
+function renderAgents() {
+  const b = latestBrief(null);
+  const jobs = visibleJobs();
+  const c = statusCounts(jobs);
+  const agentNames = new Set(jobs.filter(j => !isCos(j.agent)).map(j => j.agent));
+  const sub = (agentNames.size ? 'Coordinating ' + plural(agentNames.size, 'agent') : 'No agents working yet') + (b ? ' · last brief ' + fmtStamp(ms(b.at)) : '');
+  const cos = '<div class="cos-dark"><div class="hd"><div class="cos-av" aria-hidden="true">CS</div><div class="t"><b>Chief of Staff</b><span>' + esc(sub) + '</span></div></div>' +
+    (b ? '<p>' + esc(b.standing || b.holding || b.late || 'The latest brief has no text yet.') + '</p>' + decisionHtml(b, true) : '<p>' + (cc.loaded ? 'No brief yet. Once your Chief of Staff is running, its latest view of the fleet appears here.' : 'Loading…') + '</p>') +
+    '<div><a href="#/home">Message it from Home</a></div></div>';
+  const counts = '<div class="counts" aria-label="Agent status counts">' + STATUS_ORDER.map(s => '<div class="panel count"><span><span class="dot" style="width:8px;height:8px;background:' + DOT[STATUS[s].key] + '"></span>' + STATUS[s].label + '</span><b>' + c[s] + '</b></div>').join('') + '</div>';
+
+  const groups = fleetGroups(agentsState);
+  let fleet = '<section class="panel panel-pad" aria-label="Fleet at work" style="display:flex;flex-direction:column;gap:10px"><div class="panel-head"><h2>Fleet at work<small>Business → agent → what comes back to you</small></h2>' +
+    (jobs.length ? '<button type="button" class="btn" data-cc="agents-all" data-v="open">Expand all</button><button type="button" class="btn" data-cc="agents-all" data-v="close">Collapse all</button>' : '') + '</div>';
+  if (!jobs.length) fleet += '<p class="cc-empty">' + (cc.loaded ? 'No agent work yet. When your Chief of Staff hands a job to an agent, it appears here with its progress, how long it has been running, and what it will bring back to you.' : 'Loading…') + '</p>';
+  else {
+    groups.forEach(g => {
+      const L = look(g.k === '__all' ? null : g.k);
+      const open = !!cc.agentsOpen[g.k];
+      fleet += '<div class="ag-group" style="background:' + (open ? 'var(--panel)' : L.soft) + '">' + groupHead(g, L, 'agents-toggle', open, ' style="color:' + L.ink + '"');
+      if (open) {
+        fleet += '<div class="ag-rows">' + g.js.map(j => {
+          const s = STATUS[j.status] || STATUS.Idle;
+          const out = safeUrl(j.output_url);
+          return '<div class="ag-row"><div class="ag-job"><div class="in" aria-hidden="true">' + esc(initials(j.agent)) + '</div><div class="who"><div class="l1"><b>' + esc(j.agent) + '</b>' + statusBadge(j.status) + '</div><span class="jt">' + jobLine(j) + '</span></div>' +
+            '<div class="prog">' + stepBars(j) + '<div class="m"><span>' + esc(stepText(j)) + '</span><span class="mono">' + esc(runningTime(j)) + '</span></div></div></div>' +
+            '<div class="ag-arrow" aria-hidden="true"><svg width="28" height="12" viewBox="0 0 28 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h22M19 1.5L24 6l-5 4.5"></path></svg></div>' +
+            '<div class="ag-out"><span class="l">' + esc(s.out) + '</span><span class="v">' + esc(j.returns || '–') + '</span>' + (out ? '<a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer" style="font-size:13px">Open output</a>' : '') + '</div></div>';
+        }).join('') + '</div>';
+      }
+      fleet += '</div>';
+    });
+  }
+  fleet += '</section>';
+  const time = '<section class="panel panel-pad timebox" aria-label="Where the time went"><div class="panel-head"><h2>Where the time went</h2>' + periodSeg(cc.agentsPeriod, 'agents-period') + '</div>' + timeRows(cc.agentsPeriod) + '</section>';
+  return '<div class="cc">' + ccBanner() + '<section class="agents-top" aria-label="Chief of Staff and agent status">' + cos + counts + '</section>' + fleet + time + '</div>';
+}
+
+/* ---------- Task history: every update logged against one task ---------- */
+function taskActs(id) {
+  const seen = new Set(), out = [];
+  (cc.taskActs[id] || []).concat(D.activity.filter(a => a.task_id === id)).forEach(a => { if (!seen.has(a.id)) { seen.add(a.id); out.push(a); } });
+  return out;
+}
+let actCountCache = { v: -1, map: null };
+function actCount(id) {
+  if (actCountCache.v !== cc.actVersion) {
+    const m = new Map();
+    D.activity.forEach(a => { if (a.task_id) m.set(a.task_id, (m.get(a.task_id) || 0) + 1); });
+    actCountCache = { v: cc.actVersion, map: m };
+  }
+  return actCountCache.map.get(id) || 0;
+}
+function taskHistoryHTML(t) {
+  const acts = taskActs(t.id);
+  const jobs = D.jobs.filter(j => j.task_id === t.id);
+  const rows = [];
+  if (t.createdAt > 1e12) rows.push({ at: t.createdAt, sys: true, html: 'Task created' });
+  acts.forEach(a => rows.push({ at: ms(a.at) || 0, html: '<b>' + esc(whoLabel(a.who)) + '</b>' + (a.minutes > 0 ? '<span class="h-min">' + esc(fmtMins(a.minutes)) + '</span>' : '') + '<p>' + activityText(a) + '</p>' }));
+  jobs.forEach(j => {
+    const s = STATUS[j.status] || STATUS.Idle, out = safeUrl(j.output_url);
+    const fin = !!j.finished_at && j.status === 'Idle';
+    const detail = [fin ? '' : stepText(j), j.returns ? (fin ? 'Returned' : s.out) + ': ' + j.returns : '', j.finished_at ? 'Finished ' + fmtStamp(ms(j.finished_at)) : ''].filter(Boolean).join(' · ');
+    rows.push({ at: ms(j.started_at) || ms(j.created_at) || 0, html: '<b>' + esc(j.agent) + '</b><span class="h-job ' + s.key + '">' + (fin ? 'Finished' : esc(s.label)) + '</span><p>Agent job: ' + esc(j.title) + (detail ? '<br>' + esc(detail) : '') + (out ? ' <a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') + '</p>' });
+  });
+  if (t.status === 'done' && t.completedAt) rows.push({ at: t.completedAt, sys: true, html: 'Completed and moved to the Archive' });
+  rows.sort((a, b) => a.at - b.at);
+  const mins = acts.reduce((n, a) => n + (a.minutes > 0 ? a.minutes : 0), 0);
+  const count = acts.length + jobs.length;
+  const sum = count ? plural(acts.length, 'update') + (jobs.length ? ' · ' + plural(jobs.length, 'agent job') : '') + (mins ? ' · ' + fmtMins(mins) + ' logged' : '')
+    : 'No updates yet. Anything you, your Chief of Staff or an agent logs on this task appears here, and stays with it in the Archive.';
+  return '<div class="hist-sum">' + esc(sum) + '</div>' + (rows.length ? '<div class="hist">' + rows.map(r => '<div class="h-row' + (r.sys ? ' sys' : '') + '"><span class="h-when">' + esc(fmtStamp(r.at)) + '</span><div class="h-body">' + r.html + '</div></div>').join('') + '</div>' : '');
+}
+function refreshOpenHistory() {
+  const box = document.getElementById('etHist');
+  const t = ui.editingId ? getTask(ui.editingId) : null;
+  if (box && t) box.innerHTML = taskHistoryHTML(t);
+}
+/* Fetch one task's complete history, so an old archived task shows everything, not just recent rows. */
+async function loadTaskHistory(id) {
+  if (!sb || !sbUser) return;
+  const { data, error } = await sb.from('activity').select('*').eq('task_id', id).order('at', { ascending: false }).limit(1000);
+  if (error || !data) return;
+  cc.taskActs[id] = data;
+  if (ui.editingId === id) refreshOpenHistory();
+}
+async function addTaskUpdate(id, text, minutes) {
+  const msg = String(text || '').trim();
+  if (!msg) { toast('Write a few words about what was done'); return false; }
+  const mins = Math.max(0, Math.round(Number(minutes) || 0));
+  const { data, error } = await sb.from('activity').insert({ who: 'Ifran', kind: 'work', task_id: id, description: msg, minutes: mins }).select().single();
+  if (error) { toast('Could not save the update: ' + error.message); return false; }
+  if (data && !D.activity.some(a => a.id === data.id)) { D.activity.unshift(data); cc.actVersion++; }
+  refreshOpenHistory();
+  render();
+  toast('Update added to this task');
+  return true;
+}
+
+/* ---------- Data ---------- */
+async function ccLoad() {
+  const res = await Promise.all([
+    sb.from('streams').select('id,name,colour,position').order('position'),
+    sb.from('agent_jobs').select('*').order('created_at', { ascending: false }).limit(500),
+    sb.from('activity').select('*').order('at', { ascending: false }).limit(2000),
+    sb.from('briefs').select('*').order('at', { ascending: false }).limit(200),
+  ]);
+  const bad = res.find(r => r.error);
+  if (bad) throw new Error(bad.error.message || 'query failed');
+  [D.streams, D.jobs, D.activity, D.briefs] = res.map(r => r.data || []);
+  cc.loaded = true; cc.error = null; cc.actVersion++;
+}
+let ccReloadTimer = null;
+function ccScheduleReload() {
+  clearTimeout(ccReloadTimer);
+  ccReloadTimer = setTimeout(async () => {
+    if (!sb || !sbUser) return;
+    try { await ccLoad(); } catch (e) { cc.error = 'Could not refresh briefs, agents and activity. It will try again shortly.'; }
+    render();
+    refreshOpenHistory();
+  }, 400);
+}
+let ccChannel = null;
+function ccSubscribe() {
+  if (ccChannel) sb.removeChannel(ccChannel);
+  ccChannel = sb.channel('sorted-home');
+  ['streams', 'agent_jobs', 'activity', 'briefs'].forEach(t => {
+    ccChannel.on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: t, filter: 'user_id=eq.' + sbUser.id }, ccScheduleReload);
+  });
+  ccChannel.subscribe();
+}
+async function ccStart() {
+  try { await ccLoad(); } catch (e) { cc.error = 'Could not load briefs, agents and activity (' + e.message + '). It will try again shortly.'; cc.loaded = true; setTimeout(ccScheduleReload, 8000); }
+  render();
+  refreshOpenHistory();
+  ccSubscribe();
+}
+function ccReset() {
+  if (ccChannel && sb) { sb.removeChannel(ccChannel); ccChannel = null; }
+  D.streams = []; D.jobs = []; D.activity = []; D.briefs = [];
+  cc.loaded = false; cc.error = null; cc.taskActs = {}; cc.actVersion++; cc.msgDraft = '';
+}
+
+/* ---------- Actions ---------- */
+function setPriorityLive(taskId, p) {
+  const t = getTask(taskId);
+  if (!t || ![1, 2, 3, 4].includes(p)) return false;
+  t.priority = p;
+  save();
+  return true;
+}
+async function decide(briefId, i) {
+  const b = D.briefs.find(x => x.id === briefId);
+  const d = pendingDecision(b);
+  if (!d || !d.options[i]) return;
+  const opt = d.options[i];
+  const act = opt.action || null;
+  let did = '';
+  if (act && act.type === 'set_priority' && getTask(act.task_id) && [1, 2, 3, 4].includes(Number(act.priority))) {
+    if (setPriorityLive(act.task_id, Number(act.priority))) did = ' and set priority ' + Number(act.priority);
+  }
+  const now = new Date().toISOString();
+  const label = opt.label || ('Option ' + (i + 1));
+  const up = await sb.from('briefs').update({ decision_choice: label, decided_at: now }).eq('id', briefId);
+  if (up.error) { toast('Could not record your decision: ' + up.error.message); return; }
+  b.decision_choice = label; b.decided_at = now;
+  const task = act && getTask(act.task_id) ? getTask(act.task_id) : null;
+  await sb.from('activity').insert({ who: 'Ifran', kind: 'decision', stream: b.stream || (task ? taskStream(task) : null), task_id: task ? task.id : null, description: 'Chose “' + label + '”' + (d.question ? ' on: ' + d.question : '') });
+  toast('Decision recorded' + did + '.');
+  ccScheduleReload();
+  render();
+}
+async function sendCosMessage(text) {
+  const msg = String(text || '').trim();
+  if (!msg) return;
+  const { data, error } = await sb.from('activity').insert({ who: 'Ifran', kind: 'message', description: msg, minutes: 0 }).select().single();
+  if (error) { toast('Could not send: ' + error.message); return; }
+  cc.msgDraft = '';
+  if (data && !D.activity.some(a => a.id === data.id)) { D.activity.unshift(data); cc.actVersion++; }
+  toast('Sent to your Chief of Staff.');
+  render();
+}
+let recog = null;
+function toggleDictation() {
+  const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!R) return;
+  if (cc.listening && recog) { recog.stop(); return; }
+  recog = new R(); recog.lang = 'en-GB'; recog.interimResults = false; recog.continuous = false;
+  recog.onresult = (e) => { const said = Array.from(e.results).map(r => r[0].transcript).join(' '); cc.msgDraft = (cc.msgDraft ? cc.msgDraft.trim() + ' ' : '') + said; };
+  recog.onend = () => { cc.listening = false; render(); const el = document.getElementById('cos-msg'); if (el) el.focus(); };
+  recog.onerror = () => { cc.listening = false; render(); };
+  cc.listening = true; render(); recog.start();
+}
+/* Clicks on the Home, business and Agents pages. Returns true when it handled the click. */
+function ccClick(e) {
+  const b = e.target.closest('[data-cc]');
+  if (!b) return false;
+  const act = b.dataset.cc, v = b.dataset.v;
+  const refocus = (sel) => { const f = document.querySelector(sel); if (f) f.focus(); };
+  if (b.tagName === 'A') e.preventDefault();
+  if (act === 'cos-toggle') { cc.cosOpen = !cc.cosOpen; ccStore('cosOpen', cc.cosOpen); render(); refocus('[data-cc="cos-toggle"]'); }
+  else if (act === 'plan-toggle') { cc.planOpen = !cc.planOpen; ccStore('planOpen', cc.planOpen); render(); refocus('[data-cc="plan-toggle"]'); }
+  else if (act === 'home-period') { cc.homePeriod = v; render(); }
+  else if (act === 'agents-period') { cc.agentsPeriod = v; render(); }
+  else if (act === 'act-filter') { cc.actFilter = v; cc.actShown = ACTIVITY_PAGE; render(); }
+  else if (act === 'act-more') { cc.actShown += ACTIVITY_PAGE; render(); }
+  else if (act === 'fleet-toggle') { cc.fleetOpen[b.dataset.k] = !cc.fleetOpen[b.dataset.k]; render(); }
+  else if (act === 'agents-toggle') { cc.agentsOpen[b.dataset.k] = !cc.agentsOpen[b.dataset.k]; render(); }
+  else if (act === 'fleet-all' || act === 'agents-all') {
+    const m = {}; visibleJobs().forEach(j => { m[j.stream || '__all'] = v === 'open'; });
+    if (act === 'fleet-all') cc.fleetOpen = m; else cc.agentsOpen = m;
+    render();
+  }
+  else if (act === 'make-live') { cc.makeLive = b.dataset.tid; render(); refocus('[data-cc="set-pri"]'); }
+  else if (act === 'make-live-cancel') { cc.makeLive = null; render(); }
+  else if (act === 'set-pri') {
+    const t = getTask(b.dataset.tid); const p = Number(b.dataset.p);
+    if (t && setPriorityLive(t.id, p)) { cc.makeLive = null; toast('“' + t.title + '” is now live at P' + p + '.'); render(); }
+  }
+  else if (act === 'show-noprio') { ui.view = 'list'; ui.filterArea = null; ui.filterProject = null; ui.fQuad = ''; ui.fStatus = ''; ui.fPri = '0'; render(); document.getElementById('content').scrollTop = 0; }
+  else if (act === 'decide') { b.disabled = true; decide(b.dataset.brief, Number(b.dataset.i)); }
+  else if (act === 'dictate') { toggleDictation(); }
+  return true;
+}
+document.addEventListener('input', (e) => { if (e.target && e.target.id === 'cos-msg') cc.msgDraft = e.target.value; });
+document.addEventListener('submit', (e) => {
+  const f = e.target.closest('[data-form="msg"]');
+  if (!f) return;
+  e.preventDefault();
+  sendCosMessage(cc.msgDraft);
+});
+
+/* ---------- One address per page: Back, Forward and refresh all behave ----------
+   #/home, #/list, #/agents ... with /g/<group id> or /p/<project id> when one is chosen.
+   Old Command Centre addresses (#/stream/<id>, #/streams, #/parked) still land sensibly. */
+function navHash() {
+  return '#/' + ui.view + (ui.filterProject ? '/p/' + encodeURIComponent(ui.filterProject) : ui.filterArea ? '/g/' + encodeURIComponent(ui.filterArea) : '');
+}
+let navReady = false;
+function syncUrl() {
+  if (/^#task=/.test(location.hash)) return;
+  const h = navHash();
+  if (location.hash === h) { navReady = true; return; }
+  try {
+    if (navReady) history.pushState(null, '', h); else history.replaceState(null, '', h);
+  } catch (e) {}
+  navReady = true;
+}
+function applyHash() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  if (!raw || !/^#\//.test(location.hash)) return false;
+  let parts;
+  try { parts = raw.split('/').map(decodeURIComponent); } catch (e) { return false; }
+  let view = parts[0], area = null, proj = null;
+  if (view === 'stream' || view === 'streams') { const a = areaForStream(parts[1]); view = 'home'; area = a ? a.id : null; }
+  else if (view === 'parked') view = 'home';
+  else if (parts[1] === 'g' && parts[2] && areaOf(parts[2])) area = parts[2];
+  else if (parts[1] === 'p' && parts[2] && state.projects.some(p => p.id === parts[2])) proj = parts[2];
+  if (!NAV_VIEWS.includes(view)) return false;
+  if (proj && (view === 'home' || view === 'agents')) view = 'list';
+  if (area && view === 'agents') area = null;
+  ui.view = view; ui.filterProject = proj; ui.filterArea = proj ? null : area;
+  return true;
+}
+window.addEventListener('hashchange', () => {
+  if (!sbUser) return;
+  if (/^#task=/.test(location.hash)) { openTaskFromLink(); return; }
+  if (applyHash()) { closeModal(); cc.makeLive = null; render(); document.getElementById('content').scrollTop = 0; }
+});
+
+/* Keep briefs, agents and activity fresh while the app stays open, and catch up after the device wakes. */
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+  if (!sbUser) return;
+  ccScheduleReload();
+  if (Date.now() - hiddenAt > 30000) softRefresh();
+});
+setInterval(() => { if (sbUser && document.visibilityState === 'visible') { ccScheduleReload(); softRefresh(); } }, 300000);
+
+
 /* ================= Auth & boot ================= */
 
 let authMode = 'signin';
@@ -3058,7 +4186,7 @@ function setAuthMode(mode) {
   authMode = mode;
   document.getElementById('authGo').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
   document.getElementById('authSub').textContent = mode === 'signin'
-    ? 'Sign in to see your tasks on any device.'
+    ? 'Sign in to see your work on any device.'
     : 'Choose the email and password you will use on every device.';
   document.getElementById('authAlt').innerHTML = mode === 'signin'
     ? 'First time here? <button id="authToggle">Create your account</button>'
@@ -3095,37 +4223,35 @@ async function doAuth() {
 async function enterApp(session) {
   sbUser = session.user;
   showShell();
-  if (loadCache()) { applyListPrefs(); render(); }
+  let hashDone = false;
+  if (loadCache()) { applyListPrefs(); applyHash(); hashDone = true; render(); }
+  ccStart();
   await fullLoad();
   applyListPrefs();
+  if (!hashDone) applyHash();
   render();
   subscribeRealtime();
   openTaskFromLink();
 }
 
-/* Links from the Command Centre arrive as sorted/#task=<id>: show the task in its
-   project or group, open its editor, then clear the hash so a refresh does not reopen it. */
+/* A link of the form sorted/#task=<id> (handy for the Chief of Staff and agents to hand out)
+   opens that task's sheet over whatever page is showing, then tidies the address. */
 function openTaskFromLink() {
   const m = location.hash.match(/^#task=(.+)$/);
   if (!m || !sbUser) return;
-  const id = decodeURIComponent(m[1]);
-  history.replaceState(null, '', location.pathname + location.search);
-  const t = getTask(id);
-  if (!t) { toast('That task is no longer in Sorted.'); return; }
-  closeModal();
-  ui.view = 'list';
-  ui.filterProject = t.projectId || null;
-  ui.filterArea = t.projectId ? null : (t.areaId || null);
-  render();
+  let id = m[1];
+  try { id = decodeURIComponent(m[1]); } catch (e) {}
+  history.replaceState(null, '', location.pathname + location.search + navHash());
+  if (!getTask(id)) { toast('That task is no longer in Sorted.'); return; }
   openEdit(id);
 }
-window.addEventListener('hashchange', openTaskFromLink);
 
 async function signOutNow() {
   try { await sb.auth.signOut(); } catch (e) {}
   localStorage.removeItem(STORE_KEY);
   state.tasks = []; state.projects = []; state.areas = []; state.settings = defaultSettings();
   sbUser = null;
+  ccReset();
   closeModal();
   showAuth();
 }
@@ -3143,7 +4269,7 @@ document.getElementById('authToggle').addEventListener('click', () => setAuthMod
   sb = window.supabase.createClient(SB_URL, SB_ANON, { db: { schema: SB_SCHEMA } });
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && session && !sbUser) enterApp(session);
-    if (event === 'SIGNED_OUT') { sbUser = null; showAuth(); }
+    if (event === 'SIGNED_OUT') { sbUser = null; ccReset(); showAuth(); }
   });
   const { data } = await sb.auth.getSession();
   if (data && data.session) enterApp(data.session);
