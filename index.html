@@ -370,6 +370,21 @@
   .step-row.done .step-title { text-decoration: line-through; color: var(--ink-faint); }
   .step-del { color: var(--ink-faint); font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
   .step-del:hover { color: var(--danger); background: var(--q1-soft); }
+  /* Optional due date on a step: a small chip, or a calendar button when none is set */
+  .step-due {
+    flex: none; font-size: 12px; font-weight: 600; line-height: 1.3; padding: 3px 9px; border-radius: 999px;
+    background: var(--surface-2); color: var(--ink-soft); font-variant-numeric: tabular-nums;
+  }
+  .step-due.none { background: none; color: var(--ink-faint); padding: 4px 5px; display: inline-flex; border-radius: 6px; }
+  .step-due:hover { color: var(--ink); background: var(--surface-2); }
+  .step-due.overdue { background: var(--q1-soft); color: var(--q1); }
+  .step-due.today { background: var(--q3-soft); color: var(--q3); }
+  .step-row.done .step-due { opacity: 0.6; }
+  .step-date {
+    flex: none; font-size: 12px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--ink); outline: none;
+  }
+  .step-date:focus { border-color: var(--accent); }
 
 
   /* ---------- Matrix ---------- */
@@ -471,6 +486,18 @@
   .pick.q3.on { background: var(--q3-soft); color: var(--q3); border-color: var(--q3); }
   .pick.q4.on { background: var(--q4-soft); color: var(--q4); border-color: var(--q4); }
   .sheet-actions { display: flex; gap: 8px; margin-top: 20px; align-items: center; }
+  /* Task sheet: a quiet aside beside a label, the one-line status box, the waiting-on pair,
+     and Save pinned to the bottom so it stays in reach above a long history */
+  .f-aside { font-weight: 500; letter-spacing: 0; text-transform: none; margin-left: 7px; }
+  .f-textarea.f-status { min-height: 0; resize: none; font-weight: 500; overflow: hidden; }
+  .wait-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .wait-row > div { flex: 1; min-width: 150px; }
+  .sheet.task-sheet { padding-bottom: 0; }
+  .task-sheet .sheet-actions {
+    position: sticky; bottom: 0; z-index: 2; background: var(--surface);
+    margin: 6px -22px 0; padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line-soft);
+  }
   .btn-primary {
     background: var(--accent); color: var(--accent-ink);
     padding: 10px 20px; border-radius: 8px; font-weight: 600;
@@ -723,6 +750,12 @@
   .cc .opt-1 { background: var(--accent); color: var(--accent-ink); }
   .cc .opt-n { border: 1px solid var(--line); background: var(--panel); color: var(--ink-3); }
   .cc .decided { font-size: 12px; color: var(--muted); }
+  /* What has changed since the brief was written, so its commentary is never read as current when it is not */
+  .cc .fresh { font-size: 12px; line-height: 1.5; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .cc .fresh.ok { background: var(--track); color: var(--muted); }
+  .cc .fresh.stale { background: var(--need-bg); color: var(--need-fg); }
+  .cc .fresh b { font-weight: 600; }
+  .cc .fresh .tlink { text-decoration: underline; }
   .cc .sysnote { font-size: 12px; line-height: 1.5; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 6px; }
   .cc .msgform { display: flex; gap: 6px; align-items: center; }
   .cc .msgform input { flex: 1 1 auto; min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 0 10px; font-size: 13px; background: var(--sub); outline: none; }
@@ -804,6 +837,7 @@
   .cc .cc-chip:hover { filter: brightness(0.97); }
   .cc .chip-quiet { background: var(--need-bg); color: var(--need-fg); }
   .cc .chip-wait { background: var(--track); color: var(--ink-3); }
+  .cc .chip-wait.chase { background: var(--need-bg); color: var(--need-fg); }
 
   /* Business overview (Home with a group chosen) */
   .cc .biz-head { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
@@ -1117,8 +1151,11 @@ function save() {
 
 const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
 
-const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, parent_id: t.parentId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null });
-const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at), updatedAt: r.updated_at || null });
+const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, parent_id: t.parentId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null, waiting_on: t.waitingOn || null, follow_up: t.followUp || null });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at), updatedAt: r.updated_at || null, waitingOn: r.waiting_on || null, followUp: r.follow_up || null, currentStatus: r.current_status || null, statusAt: r.status_at || null });
+/* currentStatus and statusAt are deliberately not in taskToRow. The database refreshes them whenever an update
+   is logged on a task, so the app only reads them here and writes them on their own (pushStatusLine). That way a
+   stale copy on one device can never overwrite a newer status line. */
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
 const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '', stream: a.stream || null });
@@ -1305,7 +1342,16 @@ function subscribeRealtime() {
       const item = rowToX(payload.new);
       const js = JSON.stringify(table === 'tasks' ? taskToRow(item) : table === 'projects' ? projToRow(item) : areaToRow(item));
       if (baseline[table][item.id] === js) { // echo of our own write: local state is newer or identical
-        if (table === 'tasks') { const cur = list.find(x => x.id === item.id); if (cur) cur.updatedAt = item.updatedAt; }
+        if (table === 'tasks') {
+          const cur = list.find(x => x.id === item.id);
+          if (cur) {
+            cur.updatedAt = item.updatedAt;
+            if (cur.currentStatus !== item.currentStatus || cur.statusAt !== item.statusAt) {
+              cur.currentStatus = item.currentStatus; cur.statusAt = item.statusAt;
+              saveCache(); refreshOpenStatus();
+            }
+          }
+        }
         return;
       }
       const i = list.findIndex(x => x.id === item.id);
@@ -1315,6 +1361,7 @@ function subscribeRealtime() {
     if (table === 'areas') sortAreas();
     saveCache();
     render();
+    if (table === 'tasks') refreshOpenStatus();
   };
   rtChannel = sb.channel('sorted-sync')
     .on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: 'tasks', filter: 'user_id=eq.' + sbUser.id }, apply('tasks', rowToTask, 'tasks'))
@@ -1353,6 +1400,11 @@ function fmtDue(iso) {
   const opts = { weekday: 'short', day: 'numeric', month: 'short' };
   if (y !== new Date().getFullYear()) opts.year = 'numeric';
   return dt.toLocaleDateString('en-GB', opts);
+}
+/* The same date for use mid-phrase: "follow up yesterday", not "follow up Yesterday". */
+function fmtDueIn(iso) {
+  const f = fmtDue(iso);
+  return (f === 'Today' || f === 'Tomorrow' || f === 'Yesterday') ? f.toLowerCase() : f;
 }
 function dueClass(iso) {
   const t = todayISO();
@@ -1472,6 +1524,7 @@ function addTask(fields) {
     id: uid(), title: '', notes: '', projectId: null, areaId: null, parentId: null, due: null,
     quadrant: null, priority: null, status: 'todo', focus: false, steps: [],
     sortOrder: minOrder - 1, createdAt: Date.now(), completedAt: null,
+    waitingOn: null, followUp: null, currentStatus: null, statusAt: null,
   }, fields);
   if (!t.title.trim()) return null;
   state.tasks.unshift(t);
@@ -1525,7 +1578,61 @@ function projectOf(t) { return state.projects.find(p => p.id === t.projectId) ||
 function areaOf(id) { return state.areas.find(a => a.id === id) || null; }
 function taskAreaId(t) {
   const p = projectOf(t);
-  return p ? (p.areaId || null) : (t.areaId || null);
+  const id = p ? p.areaId : t.areaId;
+  return id && areaOf(id) ? id : null;   // a group that no longer exists counts as no group
+}
+
+/* Waiting on someone: the board status, or a name in the optional "Waiting on" field. */
+function isWaiting(t) { return t.status !== 'done' && (t.status === 'waiting' || !!t.waitingOn); }
+function chaseDue(t) { return isWaiting(t) && !!t.followUp && t.followUp <= todayISO(); }
+/* Steps can carry their own optional due date. */
+function nextStepDue(t) {
+  let best = null;
+  (t.steps || []).forEach(s => { if (!s.done && s.due && (!best || s.due < best.due)) best = s; });
+  return best;
+}
+/* The earliest date anything on the task falls due: the task itself or one of its open steps. */
+function effDue(t) {
+  const s = nextStepDue(t);
+  if (s && (!t.due || s.due < t.due)) return s.due;
+  return t.due || null;
+}
+function sortByEffDue(a, b) {
+  const da = effDue(a), db = effDue(b);
+  if (da && db && da !== db) return da < db ? -1 : 1;
+  if (da && !db) return -1;
+  if (!da && db) return 1;
+  return a.createdAt - b.createdAt;
+}
+
+/* The status line is saved on its own, never as part of the whole task (see rowToTask). */
+function setStatusLine(id, text) {
+  const t = getTask(id);
+  if (!t) return;
+  const line = oneLine(text);
+  t.currentStatus = line || null;
+  t.statusAt = line ? new Date().toISOString() : null;
+  saveCache();
+  pushStatusLine(id, 0);
+}
+async function pushStatusLine(id, tries) {
+  const t = getTask(id);
+  if (!t || !sb || !sbUser) return;
+  // A task added seconds ago may not have reached the cloud yet: wait for it rather than lose the line
+  if (!baseline.tasks[id]) { if (tries < 40) setTimeout(() => pushStatusLine(id, tries + 1), 500); return; }
+  const { error } = await sb.from('tasks').update({ current_status: t.currentStatus, status_at: t.statusAt }).eq('id', id);
+  if (error) toast('Could not save the status line: ' + error.message);
+}
+/* Bring one task's status line in from the cloud (after an update is logged, the database rewrites it). */
+async function pullStatusLine(id) {
+  if (!sb || !sbUser) return;
+  const { data, error } = await sb.from('tasks').select('current_status,status_at,updated_at').eq('id', id).maybeSingle();
+  const t = getTask(id);
+  if (error || !data || !t) return;
+  t.currentStatus = data.current_status || null; t.statusAt = data.status_at || null;
+  if (data.updated_at) t.updatedAt = data.updated_at;
+  saveCache();
+  refreshOpenStatus();
 }
 
 /* ================= Filtering ================= */
@@ -1536,7 +1643,8 @@ function visibleTasks() {
   else if (ui.filterArea) list = list.filter(t => taskAreaId(t) === ui.filterArea);
   if (ui.search.trim()) {
     const q = ui.search.trim().toLowerCase();
-    list = list.filter(t => t.title.toLowerCase().includes(q) || (t.notes || '').toLowerCase().includes(q));
+    const has = (v) => (v || '').toLowerCase().includes(q);
+    list = list.filter(t => has(t.title) || has(t.notes) || has(t.waitingOn) || has(t.currentStatus));
   }
   return list;
 }
@@ -1630,16 +1738,23 @@ function taskRowHTML(t, opts) {
   if (t.quadrant && !opts.hideQuad) {
     meta.push('<span class="chip q' + t.quadrant + '">' + esc(state.settings.quadNames[t.quadrant - 1]) + '</span>');
   }
-  if (!opts.hideStatus && (t.status === 'doing' || t.status === 'waiting')) {
+  if (isWaiting(t)) {
+    // On the board the column already says "Waiting on", so only the name is worth a chip there
+    if (t.waitingOn) meta.push('<span class="chip st" title="Waiting on">' + (opts.hideStatus ? '' : 'Waiting on ') + esc(t.waitingOn) + '</span>');
+    else if (!opts.hideStatus) meta.push('<span class="chip st">' + esc(statusName('waiting')) + '</span>');
+    if (t.followUp) meta.push('<span class="m-due ' + dueClass(t.followUp) + '" title="Date to chase this up">Follow up ' + esc(fmtDueIn(t.followUp)) + '</span>');
+  } else if (!opts.hideStatus && t.status === 'doing') {
     meta.push('<span class="chip st">' + esc(statusName(t.status)) + '</span>');
   }
   const stepTotal = (t.steps || []).length;
   if (stepTotal) {
     const stepDone = t.steps.filter(s => s.done).length;
     meta.push('<span title="Steps">' + stepDone + ' of ' + stepTotal + '</span>');
+    const ns = t.status === 'done' ? null : nextStepDue(t);
+    if (ns) meta.push('<span class="m-due ' + dueClass(ns.due) + '" title="Next step due: ' + esc(ns.title) + '">Step due ' + esc(fmtDueIn(ns.due)) + '</span>');
   }
   if (t.notes) {
-    meta.push('<span title="Has notes">&#9998;</span>');
+    meta.push('<span title="Has a description">&#9998;</span>');
   }
   const updCount = actCount(t.id);
   if (updCount) meta.push('<span title="Updates logged on this task. Open it to read them.">' + updCount + (updCount === 1 ? ' update' : ' updates') + '</span>');
@@ -1677,7 +1792,7 @@ const VIEWS = [
 function renderSidebar() {
   const open = state.tasks.filter(t => t.status !== 'done');
   const counts = {
-    today: open.filter(t => t.focus || (t.due && t.due <= todayISO())).length,
+    today: open.filter(t => t.focus || (effDue(t) && effDue(t) <= todayISO()) || chaseDue(t)).length,
     list: open.length,
     matrix: open.filter(t => !t.quadrant).length,
     board: open.filter(t => t.status === 'doing').length,
@@ -1889,14 +2004,19 @@ function renderToday() {
   const open = openTasks();
   const t = todayISO();
   const weekEnd = addDaysISO(t, 7);
-  const focus = open.filter(x => x.focus).sort(sortByDue);
-  const overdue = open.filter(x => !x.focus && x.due && x.due < t).sort(sortByDue);
-  const today = open.filter(x => !x.focus && x.due === t).sort(sortByDue);
-  const week = open.filter(x => !x.focus && x.due && x.due > t && x.due <= weekEnd).sort(sortByDue);
+  // A task counts as due on its own date or on the date of its earliest open step, whichever comes first
+  const focus = open.filter(x => x.focus).sort(sortByEffDue);
+  const overdue = open.filter(x => !x.focus && effDue(x) && effDue(x) < t).sort(sortByEffDue);
+  const today = open.filter(x => !x.focus && effDue(x) === t).sort(sortByEffDue);
+  const shown = new Set(focus.concat(overdue, today).map(x => x.id));
+  const chase = open.filter(x => !shown.has(x.id) && chaseDue(x)).sort((a, b) => (a.followUp < b.followUp ? -1 : a.followUp > b.followUp ? 1 : 0));
+  chase.forEach(x => shown.add(x.id));
+  const week = open.filter(x => !shown.has(x.id) && effDue(x) && effDue(x) > t && effDue(x) <= weekEnd).sort(sortByEffDue);
   let html = '';
   if (focus.length) html += '<div class="group-head">Focus <span class="g-count">' + focus.length + '</span></div>' + rowsHTML(focus);
   if (overdue.length) html += '<div class="group-head" style="color:var(--q1)">Overdue <span class="g-count">' + overdue.length + '</span></div>' + rowsHTML(overdue);
   if (today.length) html += '<div class="group-head">Due today <span class="g-count">' + today.length + '</span></div>' + rowsHTML(today);
+  if (chase.length) html += '<div class="group-head">Follow up <span class="g-count">' + chase.length + '</span></div>' + rowsHTML(chase);
   if (week.length) html += '<div class="group-head">This week <span class="g-count">' + week.length + '</span></div>' + rowsHTML(week);
   if (!html) {
     html = '<div class="empty"><div class="e-big">A clear day.</div>Nothing due or flagged for now. Star a task with the &#9734; to bring it here, or add one above.</div>';
@@ -1973,8 +2093,8 @@ function renderList() {
 
   if (inColumns) {
     const cols = state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour }));
-    const otherItems = open.filter(t => !taskAreaId(t));
-    if (otherItems.length) cols.push({ id: null, name: 'Other', colour: null });
+    // Tasks in no group come first. As the last column they sat off the right-hand edge and looked lost.
+    if (open.some(t => !taskAreaId(t))) cols.unshift({ id: null, name: 'No group', colour: null });
     html += '<div class="board" style="grid-template-columns:repeat(' + cols.length + ',minmax(250px,1fr))">';
     for (const c of cols) {
       const items = open.filter(t => taskAreaId(t) === c.id).sort(listSort());
@@ -1995,18 +2115,21 @@ function renderList() {
   }
 
   if (ui.groupBy === 'project') {
-    for (const a of [...state.areas, null]) {
+    // "No group" leads, and a task pointing at a project or group that no longer exists lands there
+    // too, so nothing can drop out of the list.
+    const realArea = (id) => (id && areaOf(id) ? id : null);
+    for (const a of [null, ...state.areas]) {
       const aid = a ? a.id : null;
-      const direct = open.filter(t => !t.projectId && (t.areaId || null) === aid);
+      const direct = open.filter(t => !projectOf(t) && realArea(t.areaId) === aid);
       const blocks = [];
-      for (const p of state.projects.filter(p => (p.areaId || null) === aid)) {
+      for (const p of state.projects.filter(p => realArea(p.areaId) === aid)) {
         const items = open.filter(t => t.projectId === p.id);
         if (items.length) blocks.push({ p, items });
       }
       if (!blocks.length && !direct.length) continue;
       const total = direct.length + blocks.reduce((n, b) => n + b.items.length, 0);
       html += '<div class="group-head">' +
-        (a ? '<span class="g-dot" style="background:' + a.colour + '"></span>' + esc(a.name) : 'Other') +
+        (a ? '<span class="g-dot" style="background:' + a.colour + '"></span>' + esc(a.name) : 'No group') +
         ' <span class="g-count">' + total + '</span></div>';
       if (direct.length) html += wrap(direct, { hideProject: true, hideArea: true });
       for (const b of blocks) {
@@ -2658,6 +2781,31 @@ function closeModal() {
   ui.editingId = null;
 }
 
+/* Text boxes in the task sheet grow with what is in them, so a long description reads in full. */
+function growField(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight + 2, 340) + 'px';
+}
+function oneLine(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
+function statusStampText(t) { return t.currentStatus && t.statusAt ? 'as of ' + fmtStamp(ms(t.statusAt)) : ''; }
+/* The open task sheet follows a status line changed elsewhere (an update logged by an agent, say),
+   unless Ifran is part-way through typing his own. */
+function refreshOpenStatus() {
+  const el = document.getElementById('etStatus');
+  const t = ui.editingId ? getTask(ui.editingId) : null;
+  if (!el || !t) return;
+  const cur = t.currentStatus || '';
+  if (oneLine(el.value) === (el.dataset.shown || '')) { el.value = cur; growField(el); }
+  el.dataset.shown = cur;
+  const st = document.getElementById('etStatusAt');
+  if (st) st.textContent = statusStampText(t);
+}
+
+const ICON_CAL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>';
+
+/* The task sheet. Order, top to bottom: title, current status, description, steps, project and group,
+   the sorting fields, then History and updates at the very bottom. Save stays pinned in view. */
 function openEdit(id) {
   const t = getTask(id);
   if (!t) return;
@@ -2685,26 +2833,32 @@ function openEdit(id) {
     '<button class="pick" id="etUpdAdd">Add update</button></div></div>';
   document.getElementById('modalRoot').innerHTML =
     '<div class="overlay" data-close>' +
-    '<div class="sheet" role="dialog" aria-label="' + (archived ? 'Archived task' : 'Task') + '">' +
+    '<div class="sheet task-sheet" role="dialog" aria-label="' + (archived ? 'Archived task' : 'Task') + '">' +
     '<h2>' + (archived ? 'Archived task' : 'Task') + '</h2>' +
-    (archived ? '<div class="archived-note"><span>Completed <b>' + esc(t.completedAt ? fmtStamp(t.completedAt) : '') + '</b>. To bring it back, set its status to To do and save.</span></div>' + histBlock : '') +
+    (archived ? '<div class="archived-note"><span>Completed <b>' + esc(t.completedAt ? fmtStamp(t.completedAt) : '') + '</b>. Its full history is at the bottom. To bring it back, set its status to To do and save.</span></div>' : '') +
     (t.parentId && getTask(t.parentId) ?
       '<div class="f-row" style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft)">Sub-task of <b>' + esc(getTask(t.parentId).title) + '</b>' +
       '<button class="pick" id="etDetach">Make top-level</button></div>' : '') +
     '<div class="f-row"><label class="f-label" for="etTitle">Task</label><input class="f-input" id="etTitle" value="' + esc(t.title) + '"></div>' +
+    '<div class="f-row"><label class="f-label" for="etStatus">Current status<span class="f-aside" id="etStatusAt">' + esc(statusStampText(t)) + '</span></label>' +
+    '<textarea class="f-textarea f-status" id="etStatus" rows="1" maxlength="300" data-shown="' + esc(t.currentStatus || '') + '" placeholder="One line on where this stands. It refreshes itself whenever an update is logged.">' + esc(t.currentStatus || '') + '</textarea></div>' +
+    '<div class="f-row"><label class="f-label" for="etNotes">Description</label><textarea class="f-textarea" id="etNotes" placeholder="What this is about and what done looks like">' + esc(t.notes || '') + '</textarea></div>' +
     '<div class="f-row"><span class="f-label">Steps</span><div id="etSteps"></div>' +
     '<div style="display:flex;gap:6px;margin-top:4px"><input class="f-input" id="etStepNew" placeholder="Break the task into steps"><button class="pick" id="etStepAdd">Add</button></div></div>' +
-    '<div class="f-row"><label class="f-label" for="etNotes">Notes</label><textarea class="f-textarea" id="etNotes">' + esc(t.notes || '') + '</textarea></div>' +
-    (archived ? '' : histBlock) +
     '<div class="f-row" style="display:flex;gap:10px;flex-wrap:wrap">' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etProj">Project</label><select class="f-select" id="etProj">' + projOpts + '</select></div>' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etArea" title="Used when the task has no project">Group</label><select class="f-select" id="etArea">' + areaOpts + '</select></div>' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etDue">Due date</label><input class="f-input" id="etDue" type="date" value="' + (t.due || '') + '"></div>' +
     '</div>' +
-    '<div class="f-row"><span class="f-label">Quadrant</span><div class="pick-row" id="etQuads">' + quadBtns + '</div></div>' +
     '<div class="f-row"><span class="f-label" title="Your own 1 to 4 ranking, shown in the Priority view">Priority</span><div class="pick-row" id="etPris">' + priBtns + '</div></div>' +
-    '<div class="f-row"><span class="f-label">Status</span><div class="pick-row" id="etStats">' + statBtns + '</div></div>' +
+    '<div class="f-row"><span class="f-label">Status</span><div class="pick-row" id="etStats">' + statBtns + '</div>' +
+    '<div class="wait-row">' +
+    '<div><label class="f-label" for="etWait">Waiting on<span class="f-aside">optional</span></label><input class="f-input" id="etWait" maxlength="80" autocomplete="off" placeholder="Who or what, e.g. Arjen, an agent" value="' + esc(t.waitingOn || '') + '"></div>' +
+    '<div><label class="f-label" for="etFollow">Follow up on<span class="f-aside">optional</span></label><input class="f-input" id="etFollow" type="date" value="' + esc(t.followUp || '') + '"></div>' +
+    '</div></div>' +
+    '<div class="f-row"><span class="f-label">Quadrant</span><div class="pick-row" id="etQuads">' + quadBtns + '</div></div>' +
     '<div class="f-row"><span class="f-label">Today list</span><button class="pick' + (t.focus ? ' on' : '') + '" id="etFocus">' + (t.focus ? '&#9733; In Today focus' : '&#9734; Add to Today focus') + '</button></div>' +
+    histBlock +
     '<div class="sheet-actions">' +
     '<button class="btn-danger" id="etDelete">Delete</button>' +
     '<button class="btn-quiet" data-close-btn>Cancel</button>' +
@@ -2712,9 +2866,10 @@ function openEdit(id) {
     '</div></div></div>';
 
   const root = document.getElementById('modalRoot');
+  // Steps keep every field they came with (an agent may have set a due date), not just the ones shown here
   const local = { quadrant: t.quadrant, status: t.status, focus: t.focus, priority: t.priority, deleteArmed: false,
-    parentId: t.parentId || null,
-    steps: (t.steps || []).map(s => ({ id: s.id || uid(), title: s.title, done: !!s.done })) };
+    parentId: t.parentId || null, backTo: null, dateOpen: null,
+    steps: (t.steps || []).map(st => Object.assign({}, st, { id: st.id || uid(), title: st.title, done: !!st.done })) };
   const detachBtn = root => {
     const b = root.querySelector('#etDetach');
     if (b) b.addEventListener('click', (e) => {
@@ -2724,25 +2879,49 @@ function openEdit(id) {
     });
   };
 
+  const statusEl = root.querySelector('#etStatus');
+  const notesEl = root.querySelector('#etNotes');
+  growField(statusEl); growField(notesEl);
+  statusEl.addEventListener('input', () => growField(statusEl));
+  statusEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });   // it is one line
+  notesEl.addEventListener('input', () => growField(notesEl));
+
+  const stepsBox = root.querySelector('#etSteps');
   const renderSteps = () => {
-    const box = root.querySelector('#etSteps');
-    box.innerHTML = local.steps.map(s =>
-      '<div class="step-row' + (s.done ? ' done' : '') + '" data-sid="' + s.id + '">' +
-      '<button class="check' + (s.done ? ' checked' : '') + '" data-stoggle aria-label="Toggle step">' + ICONS.tick + '</button>' +
-      '<span class="step-title">' + esc(s.title) + '</span>' +
-      '<button class="step-del" data-sdel aria-label="Remove step">&times;</button></div>'
-    ).join('') || '<div style="font-size:13px;color:var(--ink-faint);padding:2px 0">No steps yet. Steps let one task hold its sub-activities.</div>';
+    stepsBox.innerHTML = local.steps.map(st => {
+      let date;
+      if (local.dateOpen === st.id) date = '<input type="date" class="step-date" data-sdate value="' + esc(st.due || '') + '" aria-label="Due date for this step">';
+      else if (st.due) date = '<button type="button" class="step-due ' + (st.done ? '' : dueClass(st.due)) + '" data-sdue title="Change or clear this step’s due date">' + esc(fmtDue(st.due)) + '</button>';
+      else date = '<button type="button" class="step-due none" data-sdue title="Give this step a due date (optional)" aria-label="Give this step a due date">' + ICON_CAL + '</button>';
+      return '<div class="step-row' + (st.done ? ' done' : '') + '" data-sid="' + esc(st.id) + '">' +
+        '<button class="check' + (st.done ? ' checked' : '') + '" data-stoggle aria-label="Toggle step">' + ICONS.tick + '</button>' +
+        '<span class="step-title">' + esc(st.title) + '</span>' + date +
+        '<button class="step-del" data-sdel aria-label="Remove step">&times;</button></div>';
+    }).join('') || '<div style="font-size:13px;color:var(--ink-faint);padding:2px 0">No steps yet. Steps break one task into tick-boxes, each with its own optional due date.</div>';
   };
   renderSteps();
   detachBtn(root);
-  root.querySelector('#etSteps').addEventListener('click', (e) => {
-    const row = e.target.closest('[data-sid]');
-    if (!row) return;
-    const s = local.steps.find(x => x.id === row.dataset.sid);
-    if (!s) return;
-    if (e.target.closest('[data-stoggle]')) { s.done = !s.done; renderSteps(); }
-    if (e.target.closest('[data-sdel]')) { local.steps = local.steps.filter(x => x.id !== s.id); renderSteps(); }
+  const stepOf = (el) => { const row = el.closest('[data-sid]'); return row ? local.steps.find(x => x.id === row.dataset.sid) : null; };
+  stepsBox.addEventListener('click', (e) => {
+    const st = stepOf(e.target);
+    if (!st) return;
+    if (e.target.closest('[data-stoggle]')) { st.done = !st.done; renderSteps(); }
+    else if (e.target.closest('[data-sdel]')) { local.steps = local.steps.filter(x => x.id !== st.id); renderSteps(); }
+    else if (e.target.closest('[data-sdue]')) {
+      local.dateOpen = st.id;
+      renderSteps();
+      const inp = stepsBox.querySelector('[data-sdate]');
+      if (inp) { inp.focus(); try { inp.showPicker(); } catch (err) { /* the field itself is still there to type in */ } }
+    }
   });
+  const takeStepDate = (e) => {
+    if (!e.target.matches('[data-sdate]')) return;
+    const st = stepOf(e.target);
+    if (!st) return;
+    if (e.target.value) st.due = e.target.value; else delete st.due;
+  };
+  stepsBox.addEventListener('input', takeStepDate);
+  stepsBox.addEventListener('change', takeStepDate);
   const addStep = () => {
     const inp = root.querySelector('#etStepNew');
     const v = inp.value.trim();
@@ -2771,11 +2950,27 @@ function openEdit(id) {
     local.priority = Number(b.dataset.pri) || null;
     root.querySelectorAll('#etPris .pick').forEach(x => x.classList.toggle('on', (Number(x.dataset.pri) || null) === local.priority));
   });
+
+  // Status and the optional "Waiting on" pair move together: naming who it waits on (or a date to
+  // chase) marks the task as waiting, and putting it back into play clears them.
+  const waitEl = root.querySelector('#etWait');
+  const followEl = root.querySelector('#etFollow');
+  const paintStats = () => root.querySelectorAll('#etStats .pick').forEach(x => x.classList.toggle('on', x.dataset.status === local.status));
+  const onWaitEdit = () => {
+    const filled = !!(waitEl.value.trim() || followEl.value);
+    if (filled && (local.status === 'todo' || local.status === 'doing')) { local.backTo = local.status; local.status = 'waiting'; paintStats(); }
+    else if (!filled && local.backTo && local.status === 'waiting') { local.status = local.backTo; local.backTo = null; paintStats(); }
+  };
+  waitEl.addEventListener('input', onWaitEdit);
+  followEl.addEventListener('input', onWaitEdit);
+  followEl.addEventListener('change', onWaitEdit);
   root.querySelector('#etStats').addEventListener('click', (e) => {
     const b = e.target.closest('[data-status]');
     if (!b) return;
     local.status = b.dataset.status;
-    root.querySelectorAll('#etStats .pick').forEach(x => x.classList.toggle('on', x.dataset.status === local.status));
+    local.backTo = null;
+    if (local.status === 'todo' || local.status === 'doing') { waitEl.value = ''; followEl.value = ''; }
+    paintStats();
   });
   root.querySelector('#etFocus').addEventListener('click', (e) => {
     local.focus = !local.focus;
@@ -2797,7 +2992,7 @@ function openEdit(id) {
     if (!title) { toast('The task needs a title'); return; }
     const cur = getTask(t.id) || t;   // the live copy: a sync may have replaced the object while the sheet was open
     cur.title = title;
-    cur.notes = root.querySelector('#etNotes').value.trim();
+    cur.notes = notesEl.value.trim();
     cur.projectId = root.querySelector('#etProj').value || null;
     cur.areaId = root.querySelector('#etArea').value || null;
     cur.due = root.querySelector('#etDue').value || null;
@@ -2806,10 +3001,16 @@ function openEdit(id) {
     cur.focus = local.focus;
     cur.steps = local.steps;
     cur.parentId = local.parentId;
+    const back = local.status === 'todo' || local.status === 'doing';
+    cur.waitingOn = back ? null : (oneLine(waitEl.value) || null);
+    cur.followUp = back ? null : (followEl.value || null);
     if (local.status !== cur.status) {
       cur.status = local.status;
       cur.completedAt = cur.status === 'done' ? Date.now() : null;
     }
+    // The status line is only written when it was actually retyped here (see setStatusLine)
+    const line = oneLine(statusEl.value);
+    if (line !== (statusEl.dataset.shown || '')) setStatusLine(cur.id, line);
     save(); closeModal(); render();
   });
   root.querySelector('#etUpdAdd').addEventListener('click', async () => {
@@ -3440,6 +3641,8 @@ document.getElementById('content').addEventListener('drop', (e) => {
     if (st !== t.status) {
       t.status = st;
       t.completedAt = st === 'done' ? Date.now() : null;
+      // Dragged back into play: it is no longer waiting on anyone
+      if (st === 'todo' || st === 'doing') { t.waitingOn = null; t.followUp = null; }
     }
   }
   save(); render();
@@ -3676,6 +3879,35 @@ function decisionHtml(b, dark) {
   return '<div class="decision"><h3>Worth a decision</h3>' + (d.question ? '<p>' + esc(d.question) + '</p>' : '') + '<div class="opts">' + opts + '</div></div>';
 }
 
+/* What has changed in Sorted since a brief was written. The brief's words are a snapshot; this is
+   worked out live from the data, so the panel always says how far the commentary can be trusted.
+   scope narrows it to one business: { tasks: [...], mine: (activity row) => boolean }. */
+function sinceBrief(b, scope) {
+  const at = ms(b.at);
+  if (at == null) return null;
+  const tasks = scope ? scope.tasks : state.tasks;
+  const done = tasks.filter(t => isDone(t) && t.completedAt && t.completedAt > at);
+  const added = tasks.filter(t => !isDone(t) && t.createdAt > at);
+  const updates = D.activity.filter(a => a.kind === 'work' && !isCos(a.who) && (ms(a.at) || 0) > at && (!scope || scope.mine(a)));
+  const counted = new Set(done.concat(added).map(t => t.id));
+  updates.forEach(a => { if (a.task_id) counted.add(a.task_id); });
+  const edited = tasks.filter(t => !counted.has(t.id) && (ms(t.updatedAt) || 0) > at);
+  return { done, added, updates, edited, any: done.length + added.length + updates.length + edited.length > 0 };
+}
+function freshnessHtml(b, scope) {
+  const s = sinceBrief(b, scope);
+  if (!s) return '';
+  if (!s.any) return '<div class="fresh ok">Up to date. Nothing has changed ' + (scope ? 'here' : 'in Sorted') + ' since this was written.</div>';
+  const bits = [];
+  if (s.done.length) bits.push(plural(s.done.length, 'task') + ' completed');
+  if (s.added.length) bits.push(plural(s.added.length, 'task') + ' added');
+  if (s.updates.length) bits.push(plural(s.updates.length, 'update') + ' logged');
+  if (s.edited.length) bits.push(plural(s.edited.length, 'task') + ' edited');
+  const names = s.done.slice(0, 4).map(t => taskBtn(t.id, esc(t.title))).join(', ');
+  return '<div class="fresh stale"><b>Changed since this was written</b><span>' + esc(bits.join(', ')) + '. The words below do not take that into account yet.</span>' +
+    (names ? '<span>Completed: ' + names + (s.done.length > 4 ? ' and ' + (s.done.length - 4) + ' more' : '') + '</span>' : '') + '</div>';
+}
+
 /* ---------- Home ---------- */
 function cosPanel() {
   const b = latestBrief(null);
@@ -3687,14 +3919,14 @@ function cosPanel() {
   if (b) ccStore('lastSeenBrief', b.id);
   const parts = b ? [['Where things stand', b.standing], ['Holding things up', b.holding], ['Running late', b.late]].filter(p => p[1] && String(p[1]).trim()) : [];
   const body = !cc.loaded ? '<p class="cc-empty">Loading the latest brief…</p>'
-    : b ? (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + decisionHtml(b, false)
+    : b ? freshnessHtml(b) + (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + decisionHtml(b, false)
     : '<p class="cc-empty">No brief yet. When your Chief of Staff starts work, its latest brief appears here: where things stand, what is holding things up, and what is running late.</p>';
   const open = state.tasks.filter(t => !isDone(t));
   const np = open.filter(noPriority).length;
   const loose = open.filter(t => !taskAreaId(t)).length;
   const notes = [];
   if (np) notes.push('<span>' + plural(np, 'open task has', 'open tasks have') + ' no priority, so ' + (np === 1 ? 'it counts' : 'they count') + ' as parked until one is set. <a href="#" data-cc="show-noprio">Show ' + (np === 1 ? 'it' : 'them') + '</a></span>');
-  if (loose) notes.push('<span>' + plural(loose, 'open task is', 'open tasks are') + ' not in any group, so ' + (loose === 1 ? 'it does' : 'they do') + ' not appear under a business.</span>');
+  if (loose) notes.push('<span>' + plural(loose, 'open task is', 'open tasks are') + ' not in any group, so ' + (loose === 1 ? 'it does' : 'they do') + ' not appear under a business. <a href="#" data-cc="show-loose">Show ' + (loose === 1 ? 'it' : 'them') + '</a></span>');
   const mic = ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
     ? '<button type="button" class="sqbtn ghost" data-cc="dictate" aria-pressed="' + cc.listening + '" aria-label="' + (cc.listening ? 'Stop dictating' : 'Dictate a message') + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></button>'
     : '';
@@ -3709,7 +3941,7 @@ function cosPanel() {
 function planNote(t) {
   const bits = [];
   const job = jobsForTask(t.id).sort(jobSort)[0];
-  if (t.status === 'waiting') bits.push('Waiting on others');
+  if (isWaiting(t)) bits.push('Waiting on ' + (t.waitingOn || 'others'));
   else if (job) bits.push('Agent ' + STATUS[job.status].lower);
   else if (t.status === 'doing') bits.push('In progress');
   const d = dueMs(t.due);
@@ -3809,11 +4041,13 @@ function homeActivity() {
 }
 function homeHousekeeping() {
   const quiet = state.tasks.filter(isQuiet).sort((a, b) => ms(a.updatedAt) - ms(b.updatedAt));
-  const waiting = state.tasks.filter(t => t.status === 'waiting');
+  // Waiting tasks with a follow-up date come first, soonest first; a date that has arrived is picked out
+  const waiting = state.tasks.filter(isWaiting).sort((a, b) => (a.followUp || '9999') < (b.followUp || '9999') ? -1 : (a.followUp || '9999') > (b.followUp || '9999') ? 1 : 0);
+  const waitText = (t) => t.title + (t.waitingOn ? ' · ' + t.waitingOn : '') + (t.followUp ? ' · follow up ' + fmtDueIn(t.followUp) : '');
   const chip = (t, cls, text) => '<button type="button" class="cc-chip ' + cls + '" data-task="' + esc(t.id) + '" title="Open: ' + esc(t.title) + '">' + esc(text) + '</button>';
   return '<section class="panel house" aria-label="Gone quiet and waiting on others">' +
     '<span class="lbl">Gone quiet</span><div class="chips">' + (quiet.length ? quiet.map(t => chip(t, 'chip-quiet', t.title + ' · ' + daysAgo(ms(t.updatedAt)) + ' d')).join('') : '<span class="cc-empty" style="padding:0">Nothing live has gone quiet.</span>') + '</div>' +
-    '<span class="lbl">Waiting on others</span><div class="chips">' + (waiting.length ? waiting.map(t => chip(t, 'chip-wait', t.title)).join('') : '<span class="cc-empty" style="padding:0">Nothing is waiting on others.</span>') + '</div>' +
+    '<span class="lbl">Waiting on others</span><div class="chips">' + (waiting.length ? waiting.map(t => chip(t, 'chip-wait' + (chaseDue(t) ? ' chase' : ''), waitText(t))).join('') : '<span class="cc-empty" style="padding:0">Nothing is waiting on others.</span>') + '</div>' +
     '</section>';
 }
 function homePage() {
@@ -3854,7 +4088,7 @@ function businessPage(a) {
 
   const note = !cc.loaded ? '<p class="muted" style="font-size:13px">Loading…</p>'
     : !sid ? '<p class="muted" style="font-size:13px">This group is not linked to a business yet, so briefs and agent work for it are not gathered here. Link it under Backup &amp; settings, Groups.</p>'
-    : brief ? '<p>' + esc(briefText || 'No text in the latest note.') + '</p><span class="when">' + esc(fmtStamp(ms(brief.at))) + '</span>' + decisionHtml(brief, false)
+    : brief ? freshnessHtml(brief, { tasks, mine }) + '<p>' + esc(briefText || 'No text in the latest note.') + '</p><span class="when">' + esc(fmtStamp(ms(brief.at))) + '</span>' + decisionHtml(brief, false)
     : '<p class="muted" style="font-size:13px">No note on this business yet. Your Chief of Staff’s latest view of it will appear here.</p>';
   const head = '<section class="panel biz-head" aria-label="Overview">' +
     '<div class="biz-top"><span class="stile" style="background:' + L.tint + '"><i style="background:' + L.colour + '"></i></span><div class="t"><b>Overview</b><span>Live work, agents and parked ideas for this business' + (doneCount ? ' · ' + doneCount + ' in the Archive' : '') + '</span></div>' +
@@ -3982,6 +4216,7 @@ async function addTaskUpdate(id, text, minutes) {
   refreshOpenHistory();
   render();
   toast('Update added to this task');
+  pullStatusLine(id);   // logging an update makes the database refresh the task's status line
   return true;
 }
 
@@ -4106,6 +4341,7 @@ function ccClick(e) {
     if (t && setPriorityLive(t.id, p)) { cc.makeLive = null; toast('“' + t.title + '” is now live at P' + p + '.'); render(); }
   }
   else if (act === 'show-noprio') { ui.view = 'list'; ui.filterArea = null; ui.filterProject = null; ui.fQuad = ''; ui.fStatus = ''; ui.fPri = '0'; render(); document.getElementById('content').scrollTop = 0; }
+  else if (act === 'show-loose') { ui.view = 'list'; ui.filterArea = null; ui.filterProject = null; ui.fQuad = ''; ui.fStatus = ''; ui.fPri = ''; ui.search = ''; render(); document.getElementById('content').scrollTop = 0; }
   else if (act === 'decide') { b.disabled = true; decide(b.dataset.brief, Number(b.dataset.i)); }
   else if (act === 'dictate') { toggleDictation(); }
   return true;
@@ -4124,9 +4360,9 @@ document.addEventListener('submit', (e) => {
 function navHash() {
   return '#/' + ui.view + (ui.filterProject ? '/p/' + encodeURIComponent(ui.filterProject) : ui.filterArea ? '/g/' + encodeURIComponent(ui.filterArea) : '');
 }
-let navReady = false;
+let navReady = false, navBooted = false;   // navBooted: the address the app was opened on has been read
 function syncUrl() {
-  if (/^#task=/.test(location.hash)) return;
+  if (!navBooted || /^#task=/.test(location.hash)) return;
   const h = navHash();
   if (location.hash === h) { navReady = true; return; }
   try {
@@ -4224,11 +4460,12 @@ async function enterApp(session) {
   sbUser = session.user;
   showShell();
   let hashDone = false;
-  if (loadCache()) { applyListPrefs(); applyHash(); hashDone = true; render(); }
+  if (loadCache()) { applyListPrefs(); applyHash(); hashDone = true; navBooted = true; render(); }
   ccStart();
   await fullLoad();
   applyListPrefs();
   if (!hashDone) applyHash();
+  navBooted = true;
   render();
   subscribeRealtime();
   openTaskFromLink();
