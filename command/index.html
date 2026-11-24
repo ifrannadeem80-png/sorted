@@ -94,7 +94,7 @@ h1, h2, h3, p { margin: 0; }
 
 /* ---------- Home layout (design J) ---------- */
 .home { display: flex; align-items: stretch; min-height: calc(100vh - 51px); }
-.cos { flex: 0 0 20%; min-width: 250px; max-width: 320px; background: var(--panel); border-right: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.cos { flex: 0 0 20%; min-width: 250px; max-width: 320px; background: var(--panel); border-right: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 51px; height: calc(100vh - 51px); overflow-y: auto; }
 .cos-head { display: flex; align-items: center; gap: 10px; }
 .cos-av { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #4F5BD5, #7C5CE0); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex: 0 0 auto; border: 0; }
 .cos-title { display: flex; flex-direction: column; gap: 1px; flex: 1 1 auto; min-width: 0; }
@@ -319,7 +319,7 @@ h1, h2, h3, p { margin: 0; }
   .topbar-in { padding: 10px 16px; }
   .mainnav { flex: 1 1 100%; order: 3; }
   .home { flex-direction: column; min-height: 0; }
-  .cos { flex: 0 0 auto; max-width: none; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); }
+  .cos { flex: 0 0 auto; max-width: none; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); position: static; height: auto; overflow: visible; }
   .cos-closed { flex: 0 0 auto; flex-direction: row; justify-content: flex-start; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
   .cos-closed .lbl { display: inline; font-size: 13px; font-weight: 600; }
   .home-main { padding: 14px 16px 24px; }
@@ -689,7 +689,9 @@ function fleetGroups(openMap) {
     const pos = k === '__all' ? -1 : (IX.stream[k] ? IX.stream[k].position : 99);
     return { k, js, c, pos, problem: c['Stuck'] ? 0 : c['Needs you'] ? 1 : 2 };
   }).sort((a, b) => (a.problem - b.problem) || (a.pos - b.pos));
-  if (openMap.v === null) { openMap.v = {}; groups.forEach(g => { if (g.problem < 2) openMap.v[g.k] = true; }); }
+  // A business seen for the first time opens by default when it has a problem; after that the user's choice sticks.
+  if (openMap.v === null) openMap.v = {};
+  groups.forEach(g => { if (!(g.k in openMap.v)) openMap.v[g.k] = g.problem < 2; });
   return groups;
 }
 function pillsFor(c) {
@@ -720,7 +722,8 @@ function activityRows(list) {
     const L = look(a.stream);
     const link = safeUrl(a.link);
     const what = (a.kind === 'message' ? '<span class="tag">To your Chief of Staff: </span>' : '') + esc(a.description) + (link ? ' <a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Open</a>' : '');
-    return '<div class="arow"><span class="w">' + esc(fmtWhen(ms(a.at))) + '</span><span class="who">' + esc(whoLabel(a.who)) + '</span><span class="biz"><span class="dot" style="width:7px;height:7px;background:' + L.colour + '"></span>' + esc(L.name) + '</span><span class="what">' + what + '</span><span class="took">' + esc(fmtMins(a.minutes)) + '</span></div>';
+    const biz = (a.stream || a.kind === 'work') ? '<span class="dot" style="width:7px;height:7px;background:' + L.colour + '"></span>' + esc(L.name) : '<span class="muted">—</span>';
+    return '<div class="arow"><span class="w">' + esc(fmtWhen(ms(a.at))) + '</span><span class="who">' + esc(whoLabel(a.who)) + '</span><span class="biz">' + biz + '</span><span class="what">' + what + '</span><span class="took">' + esc(fmtMins(a.minutes)) + '</span></div>';
   }).join('');
 }
 function homeActivity() {
@@ -1007,7 +1010,7 @@ document.addEventListener('click', async (e) => {
   else if (act === 'fleet-toggle') { UI.fleetOpen[b.dataset.k] = !UI.fleetOpen[b.dataset.k]; render(); }
   else if (act === 'agents-toggle') { UI.agentsOpen[b.dataset.k] = !UI.agentsOpen[b.dataset.k]; render(); }
   else if (act === 'fleet-all' || act === 'agents-all') {
-    const m = {}; if (v === 'open') visibleJobs().forEach(j => { m[j.stream || '__all'] = true; });
+    const m = {}; visibleJobs().forEach(j => { m[j.stream || '__all'] = v === 'open'; });
     if (act === 'fleet-all') UI.fleetOpen = m; else UI.agentsOpen = m; render();
   }
   else if (act === 'make-live') { UI.makeLive = b.dataset.task; render(); const f = document.querySelector('[data-act="set-pri"]'); if (f) f.focus(); }
