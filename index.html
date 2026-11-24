@@ -3,103 +3,113 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1E5B4A">
+<meta name="theme-color" content="#111318">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Sorted">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <title>Sorted</title>
 <style>
   /* ---------- Design tokens ---------- */
+  /* Palette, typeface and status colours shared with the Command Centre (sorted/command/).
+     q1-q4 follow its status colours: stuck red, running blue, needs-you amber, idle grey. */
   :root {
-    --bg: #F6F7F5;
+    --bg: #F3F4F7;
     --surface: #FFFFFF;
-    --surface-2: #EDF0EB;
-    --ink: #1B2420;
-    --ink-soft: #5C6862;
-    --ink-faint: #8B958F;
-    --line: #DDE3DC;
-    --line-soft: #E8ECE6;
-    --accent: #1E5B4A;
+    --surface-2: #F0F1F4;
+    --ink: #111318;
+    --ink-soft: #5C6270;
+    --ink-faint: #666C7A;
+    --line: #E5E7EC;
+    --line-soft: #EDEFF3;
+    --accent: #111318;
     --accent-ink: #FFFFFF;
-    --accent-soft: #E2EDE8;
-    --q1: #B54430; --q1-soft: #F6E3DE; --q1-tint: #FAF1EE;
-    --q2: #1E5B4A; --q2-soft: #E2EDE8; --q2-tint: #F0F6F3;
-    --q3: #A1720E; --q3-soft: #F4EAD3; --q3-tint: #F9F4E7;
-    --q4: #66716B; --q4-soft: #E9ECE9; --q4-tint: #F1F3F1;
-    --danger: #B3402E;
-    --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 4px 16px rgba(27,36,32,0.07);
-    --shadow-lift: 0 2px 6px rgba(27,36,32,0.10), 0 10px 30px rgba(27,36,32,0.14);
-    --radius: 10px;
-    --serif: 'Charter', 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif;
-    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    --accent-soft: #ECEDF1;
+    --link: #3F4BC4;
+    --q1: #A6211A; --q1-soft: #FDECEA; --q1-tint: #FEF6F5;
+    --q2: #1D4BB8; --q2-soft: #E7EEFF; --q2-tint: #F4F7FF;
+    --q3: #8A4B00; --q3-soft: #FFF1DB; --q3-tint: #FFF9EF;
+    --q4: #4A4F5C; --q4-soft: #F0F1F4; --q4-tint: #F7F8FA;
+    --danger: #A6211A;
+    --shadow: 0 1px 2px rgba(17,19,24,0.06), 0 4px 14px rgba(17,19,24,0.05);
+    --shadow-lift: 0 6px 24px rgba(17,19,24,0.18);
+    --radius: 12px;
+    --serif: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --sans: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #131816;
-      --surface: #1B221F;
-      --surface-2: #222B27;
-      --ink: #E7ECE8;
-      --ink-soft: #A0ACA5;
-      --ink-faint: #6E7A73;
-      --line: #2D3732;
-      --line-soft: #26302B;
-      --accent: #62A98E;
-      --accent-ink: #10201A;
-      --accent-soft: #22362E;
-      --q1: #D9765F; --q1-soft: #3A2620; --q1-tint: #221B18;
-      --q2: #62A98E; --q2-soft: #22362E; --q2-tint: #18221E;
-      --q3: #CFA045; --q3-soft: #38301B; --q3-tint: #211E15;
-      --q4: #90998F; --q4-soft: #2A322D; --q4-tint: #1D211F;
-      --danger: #D9765F;
+      --bg: #0F1115;
+      --surface: #171A21;
+      --surface-2: #1F232B;
+      --ink: #ECEEF2;
+      --ink-soft: #A9AFBB;
+      --ink-faint: #8A909C;
+      --line: #2B303A;
+      --line-soft: #232730;
+      --accent: #ECEEF2;
+      --accent-ink: #111318;
+      --accent-soft: #2A2F3A;
+      --link: #A8B0FF;
+      --q1: #F08A7E; --q1-soft: #3A1F1D; --q1-tint: #221615;
+      --q2: #8FB2FF; --q2-soft: #1D2A4A; --q2-tint: #151B2B;
+      --q3: #E7B45C; --q3-soft: #3A2C14; --q3-tint: #211B10;
+      --q4: #A3A9B5; --q4-soft: #2A2E36; --q4-tint: #1C1F25;
+      --danger: #F08A7E;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
-      --shadow-lift: 0 2px 6px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.45);
+      --shadow-lift: 0 6px 28px rgba(0,0,0,0.5);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #131816;
-    --surface: #1B221F;
-    --surface-2: #222B27;
-    --ink: #E7ECE8;
-    --ink-soft: #A0ACA5;
-    --ink-faint: #6E7A73;
-    --line: #2D3732;
-    --line-soft: #26302B;
-    --accent: #62A98E;
-    --accent-ink: #10201A;
-    --accent-soft: #22362E;
-    --q1: #D9765F; --q1-soft: #3A2620; --q1-tint: #221B18;
-    --q2: #62A98E; --q2-soft: #22362E; --q2-tint: #18221E;
-    --q3: #CFA045; --q3-soft: #38301B; --q3-tint: #211E15;
-    --q4: #90998F; --q4-soft: #2A322D; --q4-tint: #1D211F;
-    --danger: #D9765F;
+    --bg: #0F1115;
+    --surface: #171A21;
+    --surface-2: #1F232B;
+    --ink: #ECEEF2;
+    --ink-soft: #A9AFBB;
+    --ink-faint: #8A909C;
+    --line: #2B303A;
+    --line-soft: #232730;
+    --accent: #ECEEF2;
+    --accent-ink: #111318;
+    --accent-soft: #2A2F3A;
+    --link: #A8B0FF;
+    --q1: #F08A7E; --q1-soft: #3A1F1D; --q1-tint: #221615;
+    --q2: #8FB2FF; --q2-soft: #1D2A4A; --q2-tint: #151B2B;
+    --q3: #E7B45C; --q3-soft: #3A2C14; --q3-tint: #211B10;
+    --q4: #A3A9B5; --q4-soft: #2A2E36; --q4-tint: #1C1F25;
+    --danger: #F08A7E;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
-    --shadow-lift: 0 2px 6px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.45);
+    --shadow-lift: 0 6px 28px rgba(0,0,0,0.5);
   }
   :root[data-theme="light"] {
-    --bg: #F6F7F5;
+    --bg: #F3F4F7;
     --surface: #FFFFFF;
-    --surface-2: #EDF0EB;
-    --ink: #1B2420;
-    --ink-soft: #5C6862;
-    --ink-faint: #8B958F;
-    --line: #DDE3DC;
-    --line-soft: #E8ECE6;
-    --accent: #1E5B4A;
+    --surface-2: #F0F1F4;
+    --ink: #111318;
+    --ink-soft: #5C6270;
+    --ink-faint: #666C7A;
+    --line: #E5E7EC;
+    --line-soft: #EDEFF3;
+    --accent: #111318;
     --accent-ink: #FFFFFF;
-    --accent-soft: #E2EDE8;
-    --q1: #B54430; --q1-soft: #F6E3DE; --q1-tint: #FAF1EE;
-    --q2: #1E5B4A; --q2-soft: #E2EDE8; --q2-tint: #F0F6F3;
-    --q3: #A1720E; --q3-soft: #F4EAD3; --q3-tint: #F9F4E7;
-    --q4: #66716B; --q4-soft: #E9ECE9; --q4-tint: #F1F3F1;
-    --danger: #B3402E;
-    --shadow: 0 1px 2px rgba(27,36,32,0.06), 0 4px 16px rgba(27,36,32,0.07);
-    --shadow-lift: 0 2px 6px rgba(27,36,32,0.10), 0 10px 30px rgba(27,36,32,0.14);
+    --accent-soft: #ECEDF1;
+    --link: #3F4BC4;
+    --q1: #A6211A; --q1-soft: #FDECEA; --q1-tint: #FEF6F5;
+    --q2: #1D4BB8; --q2-soft: #E7EEFF; --q2-tint: #F4F7FF;
+    --q3: #8A4B00; --q3-soft: #FFF1DB; --q3-tint: #FFF9EF;
+    --q4: #4A4F5C; --q4-soft: #F0F1F4; --q4-tint: #F7F8FA;
+    --danger: #A6211A;
+    --shadow: 0 1px 2px rgba(17,19,24,0.06), 0 4px 14px rgba(17,19,24,0.05);
+    --shadow-lift: 0 6px 24px rgba(17,19,24,0.18);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -114,7 +124,7 @@
   }
   button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
   input, select, textarea { font: inherit; color: var(--ink); }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
   }
@@ -133,7 +143,7 @@
   }
   .area-row { display: flex; align-items: center; }
   .area-row .proj-btn { flex: 1; font-weight: 600; color: var(--ink); }
-  .area-row .proj-btn.active { color: var(--accent); }
+  .area-row .proj-btn.active { color: var(--ink); }
   .caret { padding: 4px 7px; color: var(--ink-faint); font-size: 10px; border-radius: 6px; }
   .caret:hover { background: var(--surface-2); color: var(--ink); }
   .proj-btn.indent { padding-left: 28px; }
@@ -149,12 +159,12 @@
   .bg-swatch.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
   .brand {
     font-family: var(--serif);
-    font-size: 26px; font-weight: 700;
-    letter-spacing: 0.01em;
+    font-size: 26px; font-weight: 600;
+    letter-spacing: -0.02em;
     padding: 0 10px 14px;
     color: var(--ink);
   }
-  .brand .dot { color: var(--accent); }
+  .brand .dot { color: var(--link); }
   .nav-btn {
     display: flex; align-items: center; gap: 10px;
     padding: 9px 10px; border-radius: 8px;
@@ -163,9 +173,11 @@
     transition: background 0.12s;
   }
   .nav-btn:hover { background: var(--surface-2); }
-  .nav-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); color: var(--accent-ink); }
+  .nav-btn.active .nav-count { color: inherit; opacity: 0.75; }
+  a.nav-btn { text-decoration: none; }
   .nav-btn svg { flex: none; }
-  .nav-count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .nav-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
   .side-label {
     margin: 18px 10px 6px;
@@ -174,14 +186,14 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .side-label button { color: var(--ink-faint); font-size: 16px; line-height: 1; padding: 0 2px; }
-  .side-label button:hover { color: var(--accent); }
+  .side-label button:hover { color: var(--link); }
   .proj-btn {
     display: flex; align-items: center; gap: 9px;
     padding: 7px 10px; border-radius: 8px;
     color: var(--ink-soft); text-align: left; width: 100%;
   }
   .proj-btn:hover { background: var(--surface-2); }
-  .proj-btn.active { background: var(--accent-soft); color: var(--accent); }
+  .proj-btn.active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
   .proj-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
   .proj-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sidebar-foot { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line-soft); }
@@ -194,7 +206,7 @@
   }
   .view-title {
     font-family: var(--serif);
-    font-size: 24px; font-weight: 700;
+    font-size: 24px; font-weight: 600; letter-spacing: -0.02em;
     text-wrap: balance;
     margin-right: auto;
     white-space: nowrap;
@@ -289,12 +301,12 @@
 
   .group-head {
     font-family: var(--serif);
-    font-size: 16px; font-weight: 700;
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
     margin: 20px 2px 9px;
     display: flex; align-items: baseline; gap: 8px;
   }
   .group-head:first-child { margin-top: 8px; }
-  .group-head .g-count { font-family: var(--sans); font-size: 12px; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .group-head .g-count { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
   .group-head .g-dot { width: 10px; height: 10px; border-radius: 50%; align-self: center; }
   .sub-head {
     font-size: 13px; font-weight: 600; color: var(--ink-soft);
@@ -309,16 +321,16 @@
   }
   .seg { display: inline-flex; background: var(--surface-2); border-radius: 8px; padding: 3px; }
   .seg button { padding: 5px 12px; border-radius: 6px; font-size: 13px; color: var(--ink-soft); font-weight: 500; }
-  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(17,19,24,0.12); }
   .tool-label { font-size: 12px; color: var(--ink-faint); margin-right: -2px; }
-  .link-btn { color: var(--accent); font-size: 13px; font-weight: 600; padding: 5px 8px; border-radius: 6px; }
+  .link-btn { color: var(--link); font-size: 13px; font-weight: 600; padding: 5px 8px; border-radius: 6px; }
   .link-btn:hover { background: var(--accent-soft); }
 
   .empty {
     text-align: center; color: var(--ink-faint);
     padding: 48px 20px; font-size: 14px;
   }
-  .empty .e-big { font-family: var(--serif); font-size: 19px; color: var(--ink-soft); margin-bottom: 6px; }
+  .empty .e-big { font-family: var(--serif); font-weight: 600; font-size: 19px; color: var(--ink-soft); margin-bottom: 6px; }
 
   /* ---------- Priority table ---------- */
   .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -390,7 +402,7 @@
     font-weight: 700; font-size: 14px;
   }
   .quad-head .q-mark { width: 10px; height: 10px; border-radius: 3px; flex: none; }
-  .quad-head .q-count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .quad-head .q-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
   .quad-body { flex: 1; overflow-y: auto; }
   .quad-body .task-row { padding: 8px 10px; margin-bottom: 6px; }
   .quad-body .t-meta { margin-top: 2px; }
@@ -417,26 +429,26 @@
   }
   .col.drag-over { border-color: var(--accent); background: var(--accent-soft); }
   .col-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; padding: 2px 4px 10px; }
-  .col-head .q-count { margin-left: auto; font-size: 12px; color: var(--ink-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .col-head .q-count { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); font-weight: 500; font-variant-numeric: tabular-nums; }
   .col .task-row { padding: 9px 11px; }
 
   /* ---------- Modal / sheet ---------- */
   .overlay {
     position: fixed; inset: 0; z-index: 50;
-    background: rgba(15,20,17,0.45);
+    background: rgba(17,19,24,0.45);
     display: flex; align-items: center; justify-content: center;
     padding: 18px;
   }
   .sheet {
     background: var(--surface);
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: var(--shadow-lift);
     width: 100%; max-width: 520px;
     max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px);
     overflow-y: auto;
     padding: 22px;
   }
-  .sheet h2 { font-family: var(--serif); font-size: 20px; margin-bottom: 14px; }
+  .sheet h2 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; font-size: 20px; margin-bottom: 14px; }
   .f-row { margin-bottom: 14px; }
   .f-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
   .f-input, .f-select, .f-textarea {
@@ -522,7 +534,7 @@
   .map-node.done rect { opacity: 0.55; }
   .map-node.done .n-title { text-decoration: line-through; fill: var(--ink-faint); }
   .map-node.root-node rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
-  .map-node.root-node text { font-family: var(--serif); font-size: 16px; font-weight: 700; fill: var(--accent); }
+  .map-node.root-node text { font-family: var(--serif); font-size: 16px; font-weight: 600; fill: var(--accent); }
   .map-node .zi { fill: var(--accent); opacity: 0; pointer-events: none; }
   .map-node.rz-top .zi-top { opacity: 1; }
   .map-node.rz-bottom .zi-bottom { opacity: 1; }
@@ -585,7 +597,7 @@
   }
   .auth-btn:disabled { opacity: 0.6; cursor: default; }
   .auth-alt { text-align: center; margin-top: 14px; font-size: 13.5px; color: var(--ink-faint); }
-  .auth-alt button { color: var(--accent); font-weight: 600; }
+  .auth-alt button { color: var(--link); font-weight: 600; }
   .auth-err { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 10px; text-align: center; }
   .sync-dot {
     width: 8px; height: 8px; border-radius: 50%;
@@ -605,7 +617,7 @@
     font-size: 13px; font-weight: 600; color: var(--ink-soft);
     white-space: nowrap;
   }
-  .chip-f.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .chip-f.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 
   @media (max-width: 880px) {
     .sidebar { display: none; }
@@ -732,10 +744,10 @@ function applyListPrefs() {
 
 function seedAreas() {
   return [
-    { id: uid(), name: 'Property', colour: '#1E5B4A', position: 0 },
-    { id: uid(), name: 'China (Orders)', colour: '#B54430', position: 1 },
-    { id: uid(), name: 'Tiling Smart', colour: '#A1720E', position: 2 },
-    { id: uid(), name: 'AI System Development', colour: '#3E5F8A', position: 3 },
+    { id: uid(), name: 'Property', colour: '#4F5BD5', position: 0 },
+    { id: uid(), name: 'China (Orders)', colour: '#E0673A', position: 1 },
+    { id: uid(), name: 'Tiling Smart', colour: '#0F8A9D', position: 2 },
+    { id: uid(), name: 'AI System Development', colour: '#7C5CE0', position: 3 },
   ];
 }
 
@@ -1099,7 +1111,7 @@ function parseQuickAdd(text) {
 function addProject(name, colour, areaId) {
   const existing = state.projects.find(p => p.name.toLowerCase() === name.toLowerCase());
   if (existing) return existing;
-  const colours = ['#1E5B4A', '#B54430', '#A1720E', '#3E5F8A', '#7A4E8A', '#4E7A56', '#8A5B3E'];
+  const colours = ['#4F5BD5', '#E0673A', '#0F8A9D', '#C2418B', '#7C5CE0', '#3F4BC4', '#8A5B3E'];
   const proj = { id: uid(), name: name, colour: colour || colours[state.projects.length % colours.length], areaId: areaId || null };
   state.projects.push(proj);
   save();
@@ -1109,7 +1121,7 @@ function addProject(name, colour, areaId) {
 function addArea(name) {
   const existing = state.areas.find(a => a.name.toLowerCase() === name.toLowerCase());
   if (existing) return existing;
-  const colours = ['#1E5B4A', '#B54430', '#A1720E', '#3E5F8A', '#7A4E8A', '#4E7A56', '#8A5B3E'];
+  const colours = ['#4F5BD5', '#E0673A', '#0F8A9D', '#C2418B', '#7C5CE0', '#3F4BC4', '#8A5B3E'];
   const area = { id: uid(), name: name, colour: colours[state.areas.length % colours.length], position: state.areas.length };
   state.areas.push(area);
   save();
@@ -1239,6 +1251,7 @@ const ICONS = {
   matrix: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="8" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect><rect x="13" y="13" width="8" height="8" rx="1.5"></rect></svg>',
   priority: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"></path><path d="M4 4h14l-3.5 4.5L18 13H4"></path></svg>',
   map: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="2.2"></circle><circle cx="18" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="18" cy="19" r="2.2"></circle><path d="M7 11 15.8 5.8M7.2 12h9.6M7 13l8.8 5.2"></path></svg>',
+  command: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="3"></circle></svg>',
   done: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 5-5"></path></svg>',
   board: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="5" height="18" rx="1.5"></rect><rect x="10" y="3" width="5" height="12" rx="1.5"></rect><rect x="17" y="3" width="5" height="8" rx="1.5"></rect></svg>',
   star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5L2.6 9.3l6.5-.9z"></path></svg>',
@@ -1336,6 +1349,7 @@ function renderSidebar() {
       (c ? '<span class="nav-count" title="' + c + countLabel[v.key] + '">' + c + '</span>' : '') +
       '</button>';
   }
+  html += '<a class="nav-btn" href="command/">' + ICONS.command + 'Command Centre</a>';
   const projBtn = (p, indent) => {
     const c = state.tasks.filter(t => t.projectId === p.id && t.status !== 'done').length;
     return '<button class="proj-btn' + (indent ? ' indent' : '') + (ui.filterProject === p.id ? ' active' : '') + '" data-proj="' + p.id + '">' +
@@ -1735,7 +1749,7 @@ function mapForest() {
   });
   const collapsedSet = new Set(state.settings.mapCollapsed || []);
   const roots = [];
-  const areasPlus = [...state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour, real: true })), { id: null, name: 'Other', colour: '#66716B', real: false }];
+  const areasPlus = [...state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour, real: true })), { id: null, name: 'Other', colour: '#9AA0AC', real: false }];
   for (const a of areasPlus) {
     if (a.real && hiddenA.has(a.id)) continue;
     const projs = state.projects.filter(p => (p.areaId || null) === a.id && !hiddenP.has(p.id));
@@ -1804,7 +1818,7 @@ function nodeColour(node, roots) {
   if (node.kind === 'project') return node.colour;
   const t = node.task;
   if (t) { const a = areaOf(taskAreaId(t)); if (a) return a.colour; }
-  return '#66716B';
+  return '#9AA0AC';
 }
 
 function renderMap(el) {
@@ -1836,7 +1850,7 @@ function renderMap(el) {
     R.flat.forEach(n => { n.side = 'right'; n.y -= R.height / 2; });
     L.flat.forEach(n => { n.side = 'left'; n.y -= L.height / 2; });
     const rootNode = {
-      kind: 'root', id: '__root', label: s.mapRootLabel || 'My Projects', colour: '#1E5B4A',
+      kind: 'root', id: '__root', label: s.mapRootLabel || 'My Projects', colour: '#111318',
       x: -rd.w / 2, y: -rd.h / 2, w: rd.w, h: rd.h, side: 'right',
       children: [...right, ...left], childCount: roots.length,
     };
@@ -2577,6 +2591,10 @@ function openSettings() {
     '<div class="sheet" role="dialog" aria-label="Settings">' +
     '<h2>Backup &amp; settings</h2>' +
 
+    '<div class="f-row"><span class="f-label">Command Centre</span>' +
+    '<a class="btn-primary" href="command/" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none">' + ICONS.command + 'Open Command Centre</a>' +
+    '</div>' +
+
     '<div class="f-row"><span class="f-label">Backup</span>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
     '<button class="btn-primary" id="setExport">Download backup</button>' +
@@ -3082,7 +3100,26 @@ async function enterApp(session) {
   applyListPrefs();
   render();
   subscribeRealtime();
+  openTaskFromLink();
 }
+
+/* Links from the Command Centre arrive as sorted/#task=<id>: show the task in its
+   project or group, open its editor, then clear the hash so a refresh does not reopen it. */
+function openTaskFromLink() {
+  const m = location.hash.match(/^#task=(.+)$/);
+  if (!m || !sbUser) return;
+  const id = decodeURIComponent(m[1]);
+  history.replaceState(null, '', location.pathname + location.search);
+  const t = getTask(id);
+  if (!t) { toast('That task is no longer in Sorted.'); return; }
+  closeModal();
+  ui.view = 'list';
+  ui.filterProject = t.projectId || null;
+  ui.filterArea = t.projectId ? null : (t.areaId || null);
+  render();
+  openEdit(id);
+}
+window.addEventListener('hashchange', openTaskFromLink);
 
 async function signOutNow() {
   try { await sb.auth.signOut(); } catch (e) {}
