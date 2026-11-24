@@ -19,7 +19,7 @@
 <title>Sorted</title>
 <style>
   /* ---------- Design tokens ---------- */
-  /* One palette for the whole app. q1-q4 double as the agent status colours on Home and Agents:
+  /* One palette for the whole app. q1-q4 double as the agent status colours on Home:
      stuck red, running blue, needs-you amber, idle grey. */
   :root {
     --bg: #F3F4F7;
@@ -493,6 +493,26 @@
   .wait-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
   .wait-row > div { flex: 1; min-width: 150px; }
   .sheet.task-sheet { padding-bottom: 0; }
+  /* Steps with the task's optional picture beside them (above them on a phone) */
+  .steps-wrap { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .steps-main { flex: 1 1 220px; min-width: 0; }
+  .task-img { flex: 0 0 132px; display: flex; flex-direction: column; gap: 5px; }
+  .task-img.none { flex: 1 1 100%; }
+  .task-img.busy { opacity: 0.5; pointer-events: none; }
+  .img-view { display: block; width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); cursor: zoom-in; }
+  .img-view img { display: block; width: 100%; height: 132px; object-fit: cover; }
+  .img-acts { display: flex; gap: 12px; justify-content: center; }
+  .img-acts button, .img-add { font-size: 12px; font-weight: 500; color: var(--ink-faint); }
+  .img-acts button:hover, .img-add:hover { color: var(--ink); text-decoration: underline; }
+  .img-add { display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; align-self: flex-start; }
+  .lightbox { position: fixed; inset: 0; z-index: 120; background: rgba(10,12,16,0.88); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+  .lightbox button { position: absolute; top: 12px; right: 14px; color: #FFFFFF; font-size: 30px; line-height: 1; padding: 4px 10px; }
+  @media (max-width: 520px) {
+    .task-img { flex: 1 1 100%; order: -1; }
+    .task-img.none { order: 0; }
+    .img-view img { height: 180px; }
+  }
   .task-sheet .sheet-actions {
     position: sticky; bottom: 0; z-index: 2; background: var(--surface);
     margin: 6px -22px 0; padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px));
@@ -677,7 +697,7 @@
     }
     .tab.active { color: var(--accent); }
   }
-  /* ---------- Home, business and Agents pages (formerly the separate Command Centre) ----------
+  /* ---------- Home and business pages (formerly the separate Command Centre) ----------
      Everything here lives inside .cc so it cannot disturb the task views. Colours are
      aliases of the app tokens above, so these pages follow light and dark mode too. */
   :root {
@@ -742,13 +762,6 @@
   .cc .cos-body { display: flex; flex-direction: column; gap: 14px; }
   .cc .cos-part h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
   .cc .cos-part p { font-size: 13px; line-height: 1.55; color: var(--ink-2); white-space: pre-line; }
-  .cc .decision { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--cos-bg); }
-  .cc .decision h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cos-ink); }
-  .cc .decision p { font-size: 13px; line-height: 1.55; color: var(--ink-2); }
-  .cc .decision .opts { display: flex; flex-wrap: wrap; gap: 6px; }
-  .cc .decision .opts button { height: 34px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 500; }
-  .cc .opt-1 { background: var(--accent); color: var(--accent-ink); }
-  .cc .opt-n { border: 1px solid var(--line); background: var(--panel); color: var(--ink-3); }
   .cc .decided { font-size: 12px; color: var(--muted); }
   /* What has changed since the brief was written, so its commentary is never read as current when it is not */
   .cc .fresh { font-size: 12px; line-height: 1.5; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
@@ -847,11 +860,6 @@
   .cc .biz-top .t { display: flex; flex-direction: column; gap: 1px; flex: 1 1 200px; min-width: 0; }
   .cc .biz-top .t b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
   .cc .biz-top .t span { font-size: 12px; color: var(--muted); }
-  .cc .note { background: var(--cos-bg); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
-  .cc .note .x { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 auto; }
-  .cc .note .x b { font-size: 12px; font-weight: 600; color: var(--cos-ink); }
-  .cc .note .x p { font-size: 14px; line-height: 1.55; color: var(--ink-2); white-space: pre-line; }
-  .cc .note .x .when { font-size: 12px; color: var(--muted); }
   .cc .stats { display: flex; flex-wrap: wrap; gap: 10px; }
   .cc .stat { flex: 1 1 130px; border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
   .cc .stat span { font-size: 12px; color: var(--muted); }
@@ -882,51 +890,56 @@
   .cc .srow .x b { font-weight: 600; }
   .cc .srow .took { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); flex: 0 0 auto; }
 
-  /* Agents page */
-  .cc .agents-top { display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch; }
-  .cc .cos-dark { flex: 3 1 420px; background: #111318; color: #FFFFFF; border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-  .cc .cos-dark .hd { display: flex; align-items: center; gap: 12px; }
-  .cc .cos-dark .cos-av { width: 44px; height: 44px; font-size: 13px; background: linear-gradient(135deg, #6E79F0, #A68BFF); }
-  .cc .cos-dark .hd .t { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; }
-  .cc .cos-dark .hd .t b { font-size: 16px; font-weight: 600; }
-  .cc .cos-dark .hd .t span { font-size: 12px; color: #B4B9C6; }
-  .cc .cos-dark p { font-size: 15px; line-height: 1.55; color: #E6E8EE; white-space: pre-line; }
-  .cc .cos-dark .q { font-size: 14px; }
-  .cc .cos-dark .opts { display: flex; flex-wrap: wrap; gap: 8px; }
-  .cc .cos-dark .opts button { height: 40px; padding: 0 16px; border-radius: 10px; font-size: 13px; font-weight: 600; }
-  .cc .cos-dark .opts .o1 { background: #FFFFFF; color: #111318; }
-  .cc .cos-dark .opts .on { border: 1px solid #4A505D; color: #FFFFFF; font-weight: 500; }
-  .cc .cos-dark a { color: #C3CBFF; }
-  .cc .cos-dark .decided { color: #B4B9C6; }
-  .cc .counts { flex: 2 1 300px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .cc .count { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
-  .cc .count span { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-  .cc .count b { font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
-  .cc .ag-group { border: 1px solid var(--line-soft); border-radius: 12px; }
-  .cc .ag-group .ghead { padding: 10px 12px; gap: 10px; border-radius: 12px; }
-  .cc .ag-group .gtoggle::after { border-radius: 12px; }
-  .cc .ag-rows { display: flex; flex-direction: column; gap: 10px; padding: 4px 12px 12px; }
-  .cc .ag-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px 230px; align-items: center; }
-  .cc .ag-job { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; background: var(--panel); }
-  .cc .ag-job .in { width: 38px; height: 38px; border-radius: 12px; background: var(--track); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--ink-3); flex: 0 0 auto; }
-  .cc .ag-job .who { display: flex; flex-direction: column; gap: 4px; flex: 1 1 200px; min-width: 0; }
-  .cc .ag-job .who .l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-  .cc .ag-job .who .l1 b { font-size: 14px; font-weight: 600; }
-  .cc .ag-job .who .jt { font-size: 13px; color: var(--ink-3); overflow-wrap: anywhere; }
-  .cc .ag-job .prog { flex: 1 1 180px; display: flex; flex-direction: column; gap: 6px; }
-  .cc .ag-job .prog .m { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
-  .cc .ag-arrow { display: flex; justify-content: center; color: var(--ink-faint); }
-  .cc .ag-out { padding: 10px 12px; border-radius: 12px; border: 1px dashed var(--line); display: flex; flex-direction: column; gap: 3px; }
-  .cc .ag-out .l { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .cc .ag-out .v { font-size: 13px; font-weight: 500; line-height: 1.35; overflow-wrap: anywhere; }
+  /* Agent status counts: one thin line above the plan */
+  .cc .statbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; padding: 8px 16px; font-size: 12px; color: var(--muted); }
+  .cc .statbar .sb-l { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .cc .statbar .sb-i { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-3); }
+  .cc .statbar .sb-i .dot { width: 7px; height: 7px; }
+  .cc .statbar .sb-i b { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+  .cc .statbar .sb-i.zero, .cc .statbar .sb-i.zero b { color: var(--ink-faint); }
+
+  /* Needs your attention: laid out like the Action plan, one column per business */
+  .cc .att-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 8px; border-radius: 999px; background: var(--need-bg); color: var(--need-fg); font-size: 12px; font-weight: 600; vertical-align: 2px; }
+  .cc .att-empty .plan-head { border-bottom: 0; padding: 10px 16px; }
+  .cc .att-empty .plan-head h2 { font-size: 15px; }
+  .cc div.plan-name b { cursor: default; }
+  .cc .att-card { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; min-width: 0; }
+  .cc .att-who { font-size: 11px; font-weight: 600; display: flex; justify-content: space-between; gap: 8px; }
+  .cc .att-who i { font-style: normal; font-weight: 400; font-family: var(--mono); color: var(--muted); }
+  .cc .att-q { font-size: 13px; line-height: 1.45; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; white-space: pre-line; }
+  .cc .att-why { font-size: 12px; line-height: 1.45; color: var(--ink-3); overflow-wrap: anywhere; }
+  .cc .att-task { font-size: 12px; color: var(--muted); }
+  .cc .att-task .tlink { color: var(--link); }
+  .cc .att-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cc .att-btn { min-height: 32px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 500; color: var(--ink-3); text-align: left; display: inline-flex; align-items: center; }
+  .cc .att-btn:hover { background: var(--sub); text-decoration: none; }
+  .cc .att-btn.rec { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .cc .att-btn:disabled { opacity: 0.5; }
+  .cc .att-form { display: flex; gap: 6px; }
+  .cc .att-form input { flex: 1 1 auto; min-width: 0; height: 32px; border: 1px solid var(--line); border-radius: 8px; padding: 0 9px; font-size: 12px; background: var(--panel); outline: none; }
+  .cc .att-form input:focus { border-color: var(--accent); }
+  .cc .att-form input::placeholder { color: var(--ink-faint); }
+
+  /* The brief's notes on each business, folded away under the whole picture */
+  .cc .cos-biz { display: flex; flex-direction: column; gap: 2px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+  .cc .cos-biz h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .cc .cb-h { display: flex; align-items: center; gap: 7px; width: 100%; padding: 6px 2px; border-radius: 6px; text-align: left; font-size: 13px; }
+  .cc .cb-h:hover { background: var(--sub); }
+  .cc .cb-h b { font-weight: 500; flex: 1 1 auto; min-width: 0; }
+  .cc .cb-h > span:last-child { font-size: 11px; color: var(--muted); }
+  .cc .cb-b { display: flex; flex-direction: column; gap: 8px; padding: 4px 2px 10px 21px; }
+  .cc .cb-b p { font-size: 13px; line-height: 1.55; color: var(--ink-2); white-space: pre-line; }
+
+  /* Fleet rows say what the job is doing and what comes back; plan cards can carry a small picture */
+  .cc .fjob .jd { display: block; margin-top: 2px; font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+  .cc .plan-item .plan-thumb { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; flex: 0 0 auto; margin-left: auto; }
+  .cc .biz-hint { font-size: 12.5px; color: var(--muted); }
 
   @media (max-width: 1180px) {
     .cc .home, .cc .home.cos-shut { grid-template-columns: minmax(0, 1fr); }
     .cc .cos { position: static; max-height: none; overflow: visible; }
     .cc .cos-closed { position: static; flex-direction: row; justify-content: flex-start; padding: 8px 12px; }
     .cc .cos-closed .lbl { display: inline; font-size: 13px; font-weight: 600; }
-    .cc .ag-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-    .cc .ag-arrow { display: none; }
   }
   @media (max-width: 880px) {
     .cc .plan-col { border-right: 0; border-bottom: 1px solid var(--line-soft); }
@@ -1092,7 +1105,7 @@ let state = {
 };
 
 let ui = {
-  view: 'home',            // home | agents | today | list | matrix | board | priority | map | done
+  view: 'home',            // home | today | list | matrix | board | priority | map | done
   groupBy: 'project',      // project | due | quadrant
   sortBy: 'due',           // due | added
   layout: 'rows',          // rows | tiles (list view)
@@ -1151,15 +1164,15 @@ function save() {
 
 const baseline = { tasks: {}, projects: {}, areas: {}, settings: null };
 
-const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, parent_id: t.parentId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null, waiting_on: t.waitingOn || null, follow_up: t.followUp || null });
-const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at), updatedAt: r.updated_at || null, waitingOn: r.waiting_on || null, followUp: r.follow_up || null, currentStatus: r.current_status || null, statusAt: r.status_at || null });
+const taskToRow = (t) => ({ id: t.id, title: t.title, notes: t.notes || '', project_id: t.projectId || null, area_id: t.areaId || null, parent_id: t.parentId || null, due: t.due || null, quadrant: t.quadrant || null, priority: t.priority || null, status: t.status || 'todo', focus: !!t.focus, steps: t.steps || [], sort_order: t.sortOrder || 0, created_at: t.createdAt || 0, completed_at: t.completedAt || null, waiting_on: t.waitingOn || null, follow_up: t.followUp || null, image_path: t.imagePath || null, image_thumb: t.imageThumb || null });
+const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', projectId: r.project_id || null, areaId: r.area_id || null, parentId: r.parent_id || null, due: r.due || null, quadrant: r.quadrant || null, priority: r.priority || null, status: r.status || 'todo', focus: !!r.focus, steps: Array.isArray(r.steps) ? r.steps : [], sortOrder: Number(r.sort_order) || 0, createdAt: Number(r.created_at) || 0, completedAt: r.completed_at === null ? null : Number(r.completed_at), updatedAt: r.updated_at || null, waitingOn: r.waiting_on || null, followUp: r.follow_up || null, imagePath: r.image_path || null, imageThumb: r.image_thumb || null, currentStatus: r.current_status || null, statusAt: r.status_at || null });
 /* currentStatus and statusAt are deliberately not in taskToRow. The database refreshes them whenever an update
    is logged on a task, so the app only reads them here and writes them on their own (pushStatusLine). That way a
    stale copy on one device can never overwrite a newer status line. */
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
-const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '', stream: a.stream || null });
-const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '', stream: r.stream || null });
+const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '', stream: a.stream || null, internal: !!a.internal });
+const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '', stream: r.stream || null, internal: !!r.internal });
 function sortAreas() { state.areas.sort((a, b) => (a.position || 0) - (b.position || 0)); }
 
 /* Group backdrops: token stored in area.bg */
@@ -1554,6 +1567,8 @@ function toggleFocus(id) {
 }
 
 function deleteTask(id) {
+  const gone = getTask(id);
+  if (gone) dropStoredImages([gone.imagePath]);
   state.tasks = state.tasks.filter(t => t.id !== id);
   // Children of a deleted task become top-level rather than disappearing
   state.tasks.forEach(t => { if (t.parentId === id) t.parentId = null; });
@@ -1605,6 +1620,105 @@ function sortByEffDue(a, b) {
   return a.createdAt - b.createdAt;
 }
 
+/* ---------- One optional image per task ----------
+   The picture is shrunk in the browser and kept in a private storage bucket, in a folder only
+   this user can reach. A tiny square preview travels with the task itself (imageThumb), so the
+   Action plan card and the task sheet can show something at once. Most tasks have no image. */
+const IMG_BUCKET = 'sorted-task-images';
+const imgUrlCache = new Map();   // storage path -> address of the downloaded picture, for this visit
+const ICON_IMG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="m4 18 5.5-5 4 3.5 3-2.5L21 18"></path></svg>';
+/* The preview is drawn straight into the page, so it must be exactly a small picture and nothing else. */
+function safeThumb(v) {
+  return typeof v === 'string' && v.length < 40000 && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(v) ? v : null;
+}
+function thumbImg(t, cls) {
+  const src = safeThumb(t.imageThumb);
+  return src ? '<img class="' + cls + '" src="' + src + '" alt="">' : '';
+}
+async function taskImageUrl(path) {
+  if (!path || !sb) return null;
+  if (imgUrlCache.has(path)) return imgUrlCache.get(path);
+  const { data, error } = await sb.storage.from(IMG_BUCKET).download(path);
+  if (error || !data) return null;
+  const url = URL.createObjectURL(data);
+  imgUrlCache.set(path, url);
+  return url;
+}
+/* Shrink a chosen picture to at most 1600 pixels a side, and make the 96 pixel square preview. */
+async function prepareImage(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('unreadable')); i.src = url; });
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h) throw new Error('unreadable');
+    const scale = Math.min(1, 1600 / Math.max(w, h));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(w * scale)); c.height = Math.max(1, Math.round(h * scale));
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);   // a see-through background would turn black as a JPEG
+    g.drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.82));
+    const side = Math.min(w, h);
+    const t = document.createElement('canvas');
+    t.width = 96; t.height = 96;
+    const tg = t.getContext('2d');
+    tg.fillStyle = '#ffffff'; tg.fillRect(0, 0, 96, 96);
+    tg.drawImage(img, (w - side) / 2, (h - side) / 2, side, side, 0, 0, 96, 96);
+    return { blob, thumb: t.toDataURL('image/jpeg', 0.7) };
+  } finally { URL.revokeObjectURL(url); }
+}
+/* Like "Add update", a picture takes effect straight away rather than waiting for Save. */
+async function setTaskImage(id, file) {
+  if (!getTask(id) || !file || !sb || !sbUser) return false;
+  if (!/^image\//.test(file.type || '')) { toast('Choose a picture: a photo, a scan or a screenshot'); return false; }
+  let made = null;
+  try { made = await prepareImage(file); } catch (e) { made = null; }
+  if (!made || !made.blob) { toast('That file could not be read as a picture'); return false; }
+  const path = sbUser.id + '/' + id + '-' + Date.now() + '.jpg';
+  const up = await sb.storage.from(IMG_BUCKET).upload(path, made.blob, { contentType: 'image/jpeg', upsert: false });
+  if (up.error) { toast('Could not upload the picture: ' + up.error.message); return false; }
+  const cur = getTask(id);
+  if (!cur) { dropStoredImages([path]); return false; }
+  const old = cur.imagePath;
+  cur.imagePath = path; cur.imageThumb = made.thumb;
+  imgUrlCache.set(path, URL.createObjectURL(made.blob));
+  save(); render();
+  dropStoredImages([old]);
+  toast('Picture added to this task');
+  return true;
+}
+function removeTaskImage(id) {
+  const t = getTask(id);
+  if (!t || !t.imagePath) return;
+  const old = t.imagePath;
+  t.imagePath = null; t.imageThumb = null;
+  save(); render();
+  dropStoredImages([old]);
+  toast('Picture removed');
+}
+/* Best effort: a file left behind harms nothing, so a failure here is not worth interrupting anyone for. */
+function dropStoredImages(paths) {
+  const list = (paths || []).filter(Boolean);
+  if (!list.length || !sb) return;
+  list.forEach(p => imgUrlCache.delete(p));
+  sb.storage.from(IMG_BUCKET).remove(list).then(() => {}, () => {});
+}
+function closeLightbox() {
+  const d = document.getElementById('lightbox');
+  if (d) d.remove();
+  return !!d;
+}
+function openLightbox(src) {
+  closeLightbox();
+  const d = document.createElement('div');
+  d.className = 'lightbox'; d.id = 'lightbox';
+  d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'Picture, full size');
+  d.innerHTML = '<img alt="Picture for this task"><button type="button" aria-label="Close the picture">&times;</button>';
+  d.querySelector('img').src = src;
+  d.addEventListener('click', closeLightbox);
+  document.body.appendChild(d);
+}
+
 /* The status line is saved on its own, never as part of the whole task (see rowToTask). */
 function setStatusLine(id, text) {
   const t = getTask(id);
@@ -1637,10 +1751,16 @@ async function pullStatusLine(id) {
 
 /* ================= Filtering ================= */
 
+/* A group marked internal holds the Chief of Staff's own tasks. They stay out of every view of
+   Ifran's work and show only when that group (or a project in it) is the one opened. */
+function isInternalTask(t) { const a = areaOf(taskAreaId(t)); return !!(a && a.internal); }
+function myTasks() { return state.areas.some(a => a.internal) ? state.tasks.filter(t => !isInternalTask(t)) : state.tasks; }
+
 function visibleTasks() {
   let list = state.tasks;
   if (ui.filterProject) list = list.filter(t => t.projectId === ui.filterProject);
   else if (ui.filterArea) list = list.filter(t => taskAreaId(t) === ui.filterArea);
+  else list = myTasks();
   if (ui.search.trim()) {
     const q = ui.search.trim().toLowerCase();
     const has = (v) => (v || '').toLowerCase().includes(q);
@@ -1699,7 +1819,6 @@ const ICONS = {
   priority: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V4"></path><path d="M4 4h14l-3.5 4.5L18 13H4"></path></svg>',
   map: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="2.2"></circle><circle cx="18" cy="5" r="2.2"></circle><circle cx="19" cy="12" r="2.2"></circle><circle cx="18" cy="19" r="2.2"></circle><path d="M7 11 15.8 5.8M7.2 12h9.6M7 13l8.8 5.2"></path></svg>',
   home: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7"></path><path d="M6 10v10h12V10"></path><path d="M10 20v-5h4v5"></path></svg>',
-  agents: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20a6.5 6.5 0 0 1 13 0"></path><path d="M19 4.5v3M17.5 6h3"></path></svg>',
   more: '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5" cy="12" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle cx="19" cy="12" r="1.9"></circle></svg>',
   done: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 12 2.5 2.5 5-5"></path></svg>',
   board: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="5" height="18" rx="1.5"></rect><rect x="10" y="3" width="5" height="12" rx="1.5"></rect><rect x="17" y="3" width="5" height="8" rx="1.5"></rect></svg>',
@@ -1790,7 +1909,7 @@ const VIEWS = [
 ];
 
 function renderSidebar() {
-  const open = state.tasks.filter(t => t.status !== 'done');
+  const open = myTasks().filter(t => t.status !== 'done');
   const counts = {
     today: open.filter(t => t.focus || (effDue(t) && effDue(t) <= todayISO()) || chaseDue(t)).length,
     list: open.length,
@@ -1800,10 +1919,9 @@ function renderSidebar() {
   };
   const countLabel = { today: '', list: '', matrix: ' unsorted', board: ' active', priority: ' prioritised' };
   let html = '<div class="brand">Sorted<span class="dot">.</span></div>';
-  const attn = visibleJobs().filter(j => j.status === 'Needs you' || j.status === 'Stuck').length;
-  html += '<button class="nav-btn' + (ui.view === 'home' ? ' active' : '') + '" data-view="home">' + ICONS.home + 'Home</button>' +
-    '<button class="nav-btn' + (ui.view === 'agents' ? ' active' : '') + '" data-view="agents">' + ICONS.agents + 'Agents' +
-    (attn ? '<span class="nav-badge" title="' + attn + (attn === 1 ? ' job needs you or is stuck' : ' jobs need you or are stuck') + '">' + attn + '</span>' : '') + '</button>' +
+  const attn = attentionItems().length;   // questions, decisions and jobs waiting on Ifran, all answered on Home
+  html += '<button class="nav-btn' + (ui.view === 'home' ? ' active' : '') + '" data-view="home">' + ICONS.home + 'Home' +
+    (attn ? '<span class="nav-badge" title="' + attn + (attn === 1 ? ' thing needs' : ' things need') + ' your attention">' + attn + '</span>' : '') + '</button>' +
     '<div class="side-label first">Tasks</div>';
   for (const v of VIEWS) {
     const c = counts[v.key];
@@ -1820,8 +1938,11 @@ function renderSidebar() {
   };
   html += '<div class="side-label">Groups <button data-addproj title="New project" aria-label="New project">+</button></div>';
   const collapsed = state.settings.collapsed || [];
-  for (const a of state.areas) {
-    const c = open.filter(t => taskAreaId(t) === a.id).length;
+  const sideAreas = state.areas.filter(a => !a.internal).concat(state.areas.filter(a => a.internal));
+  let apartLabelled = false;
+  for (const a of sideAreas) {
+    if (a.internal && !apartLabelled) { apartLabelled = true; html += '<div class="side-label" title="Tasks in these groups stay out of your Action plan, lists and business pages">Kept apart</div>'; }
+    const c = (a.internal ? state.tasks.filter(t => t.status !== 'done') : open).filter(t => taskAreaId(t) === a.id).length;
     const isCollapsed = collapsed.includes(a.id);
     html += '<div class="area-row">' +
       '<button class="proj-btn' + (ui.filterArea === a.id ? ' active' : '') + '" data-area="' + a.id + '">' +
@@ -1839,7 +1960,7 @@ function renderSidebar() {
     html += '<div class="side-label">Other projects</div>';
     for (const p of unfiled) html += projBtn(p, false);
   }
-  const doneCount = state.tasks.filter(t => t.status === 'done').length;
+  const doneCount = myTasks().filter(t => t.status === 'done').length;
   html += '<div class="sidebar-foot">' +
     '<button class="nav-btn' + (ui.view === 'done' ? ' active' : '') + '" data-view="done">' + ICONS.done + 'Archive' +
     (doneCount ? '<span class="nav-count">' + doneCount + '</span>' : '') + '</button>' +
@@ -1871,7 +1992,6 @@ function viewTitle() {
   }
   if (ui.view === 'done') return 'Archive';
   if (ui.view === 'home') return 'Home';
-  if (ui.view === 'agents') return 'Agents';
   const v = VIEWS.find(v => v.key === ui.view);
   return v ? v.name : '';
 }
@@ -1879,7 +1999,7 @@ function viewTitle() {
 function renderChipbar() {
   let html = '<button class="chip-f' + (!ui.filterArea && !ui.filterProject ? ' on' : '') + '" data-all>All</button>';
   const activeProj = ui.filterProject ? state.projects.find(p => p.id === ui.filterProject) : null;
-  for (const a of state.areas) {
+  for (const a of state.areas.filter(a => !a.internal).concat(state.areas.filter(a => a.internal))) {
     const expanded = ui.filterArea === a.id || (activeProj && activeProj.areaId === a.id);
     html += '<button class="chip-f' + (ui.filterArea === a.id ? ' on' : '') + '" data-area="' + a.id + '">' +
       '<span class="proj-dot" style="background:' + a.colour + '"></span>' + esc(a.name) + '</button>';
@@ -1906,12 +2026,11 @@ function render() {
   const [y, m, d] = t.split('-').map(Number);
   const dateStr = new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   let sub = '';
-  if (ui.filterArea || ui.filterProject) sub = ui.view === 'home' ? 'Business overview' : ui.view === 'done' ? 'Archive' : '';
+  if (ui.filterArea || ui.filterProject) sub = ui.view === 'home' ? ((areaOf(ui.filterArea) || {}).internal ? 'Own tasks, kept apart' : 'Business overview') : ui.view === 'done' ? 'Archive' : '';
   else if (ui.view === 'today' || ui.view === 'home') sub = dateStr;
   titleEl.innerHTML = viewTitle() + (sub ? '<span class="view-sub">' + sub + '</span>' : '');
   document.title = (titleEl.firstChild ? titleEl.firstChild.textContent + ' · ' : '') + 'Sorted';
-  document.getElementById('quickWrap').style.display = (ui.view === 'agents' || ui.view === 'done') ? 'none' : '';
-  document.getElementById('chipbar').style.display = ui.view === 'agents' ? 'none' : '';
+  document.getElementById('quickWrap').style.display = ui.view === 'done' ? 'none' : '';
   const el = document.getElementById('content');
   // Re-rendering must not throw away what is being typed (the message box on Home)
   const active = document.activeElement;
@@ -1919,7 +2038,6 @@ function render() {
   const caret = keepId && typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null;
   el.style.background = resolveAreaBg(activeAreaForBg());
   if (ui.view === 'home') el.innerHTML = renderHomeView();
-  else if (ui.view === 'agents') el.innerHTML = renderAgents();
   else if (ui.view === 'today') el.innerHTML = renderToday();
   else if (ui.view === 'list') el.innerHTML = renderList();
   else if (ui.view === 'matrix') el.innerHTML = renderMatrix();
@@ -2242,7 +2360,7 @@ function mapForest() {
   const roots = [];
   const areasPlus = [...state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour, real: true })), { id: null, name: 'Other', colour: '#9AA0AC', real: false }];
   for (const a of areasPlus) {
-    if (a.real && hiddenA.has(a.id)) continue;
+    if (a.real && (hiddenA.has(a.id) || (areaOf(a.id) || {}).internal)) continue;
     const projs = state.projects.filter(p => (p.areaId || null) === a.id && !hiddenP.has(p.id));
     const direct = state.tasks.filter(t => !t.projectId && (t.areaId || null) === a.id && !t.parentId && include(t)).sort(sortByManual);
     const projNodes = [];
@@ -2777,6 +2895,7 @@ document.addEventListener('keydown', (e) => {
 /* ================= Modals ================= */
 
 function closeModal() {
+  closeLightbox();
   document.getElementById('modalRoot').innerHTML = '';
   ui.editingId = null;
 }
@@ -2843,8 +2962,9 @@ function openEdit(id) {
     '<div class="f-row"><label class="f-label" for="etStatus">Current status<span class="f-aside" id="etStatusAt">' + esc(statusStampText(t)) + '</span></label>' +
     '<textarea class="f-textarea f-status" id="etStatus" rows="1" maxlength="300" data-shown="' + esc(t.currentStatus || '') + '" placeholder="One line on where this stands. It refreshes itself whenever an update is logged.">' + esc(t.currentStatus || '') + '</textarea></div>' +
     '<div class="f-row"><label class="f-label" for="etNotes">Description</label><textarea class="f-textarea" id="etNotes" placeholder="What this is about and what done looks like">' + esc(t.notes || '') + '</textarea></div>' +
-    '<div class="f-row"><span class="f-label">Steps</span><div id="etSteps"></div>' +
+    '<div class="f-row"><span class="f-label">Steps</span><div class="steps-wrap"><div class="steps-main"><div id="etSteps"></div>' +
     '<div style="display:flex;gap:6px;margin-top:4px"><input class="f-input" id="etStepNew" placeholder="Break the task into steps"><button class="pick" id="etStepAdd">Add</button></div></div>' +
+    '<div class="task-img none" id="etImg"></div></div><input type="file" id="etImgFile" accept="image/*" style="display:none" aria-hidden="true" tabindex="-1"></div>' +
     '<div class="f-row" style="display:flex;gap:10px;flex-wrap:wrap">' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etProj">Project</label><select class="f-select" id="etProj">' + projOpts + '</select></div>' +
     '<div style="flex:1;min-width:140px"><label class="f-label" for="etArea" title="Used when the task has no project">Group</label><select class="f-select" id="etArea">' + areaOpts + '</select></div>' +
@@ -2932,6 +3052,51 @@ function openEdit(id) {
   };
   root.querySelector('#etStepAdd').addEventListener('click', addStep);
   root.querySelector('#etStepNew').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addStep(); } });
+
+  // The optional picture, beside the steps. Adding, replacing or removing it takes effect at once.
+  const imgBox = root.querySelector('#etImg');
+  const imgFile = root.querySelector('#etImgFile');
+  let imgRemoveArmed = false;
+  const renderImg = () => {
+    const cur = getTask(t.id) || t;
+    imgRemoveArmed = false;
+    if (!cur.imagePath) {
+      imgBox.className = 'task-img none';
+      imgBox.innerHTML = '<button type="button" class="img-add" data-img="add" title="One picture for this task, if it helps (optional)">' + ICON_IMG + 'Add an image</button>';
+      return;
+    }
+    const thumb = safeThumb(cur.imageThumb);
+    imgBox.className = 'task-img';
+    imgBox.innerHTML = '<button type="button" class="img-view" data-img="view" title="Open the picture" aria-label="Open the picture full size"><img id="etImgEl" alt="Picture for this task"' + (thumb ? ' src="' + thumb + '"' : '') + '></button>' +
+      '<div class="img-acts"><button type="button" data-img="add">Replace</button><button type="button" data-img="del">Remove</button></div>';
+    const path = cur.imagePath;
+    taskImageUrl(path).then(u => {
+      const el = document.getElementById('etImgEl');
+      const now = getTask(t.id);
+      if (u && el && now && now.imagePath === path) el.src = u;
+    });
+  };
+  renderImg();
+  imgBox.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-img]');
+    if (!b) return;
+    if (b.dataset.img === 'add') imgFile.click();
+    else if (b.dataset.img === 'view') { const el = document.getElementById('etImgEl'); if (el && el.src) openLightbox(el.src); }
+    else if (b.dataset.img === 'del') {
+      if (!imgRemoveArmed) { imgRemoveArmed = true; b.textContent = 'Really remove?'; return; }
+      removeTaskImage(t.id);
+      renderImg();
+    }
+  });
+  imgFile.addEventListener('change', async () => {
+    const f = imgFile.files && imgFile.files[0];
+    imgFile.value = '';
+    if (!f) return;
+    imgBox.classList.add('busy');
+    await setTaskImage(t.id, f);
+    imgBox.classList.remove('busy');
+    if (ui.editingId === t.id) renderImg();
+  });
 
   root.querySelector('.overlay').addEventListener('click', (e) => {
     if (e.target.dataset.close !== undefined && e.target.classList.contains('overlay')) closeModal();
@@ -3152,7 +3317,8 @@ function openSettings() {
     '<input type="color" value="' + a.colour + '" data-acol="' + a.id + '" style="width:34px;height:30px;border:none;background:none;padding:0;cursor:pointer" aria-label="Group colour">' +
     '<input class="f-input" style="flex:1;min-width:80px" value="' + esc(a.name) + '" data-aname="' + a.id + '" aria-label="Group name">' +
     (D.streams.length ? '<select class="f-select" style="width:116px;flex:none" data-astream="' + a.id + '" aria-label="Business for ' + esc(a.name) + '" title="The business this group belongs to. Briefs and agent work for that business show under this group.">' +
-      '<option value="">No business</option>' + D.streams.map(s => '<option value="' + esc(s.id) + '"' + (a.stream === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select>' : '') +
+      '<option value="">No business</option>' + D.streams.map(s => '<option value="' + esc(s.id) + '"' + (!a.internal && a.stream === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') +
+      '<option value="__apart"' + (a.internal ? ' selected' : '') + '>Chief of Staff’s own (kept apart)</option></select>' : '') +
     '<button class="btn-quiet" style="border:1px solid var(--line);padding:6px 10px" data-asty="' + a.id + '">Backdrop</button>' +
     '<button class="btn-danger" style="margin:0;padding:6px 10px" data-adel="' + a.id + '">Delete</button>' +
     '</div>'
@@ -3180,7 +3346,7 @@ function openSettings() {
     '<h2>Backup &amp; settings</h2>' +
 
     '<div class="f-row only-mobile"><span class="f-label">Go to</span><div class="goto-row">' +
-    [['agents', 'Agents'], ['board', 'Board'], ['map', 'Map'], ['done', 'Archive']].map(g => '<button class="pick' + (ui.view === g[0] ? ' on' : '') + '" data-goto="' + g[0] + '">' + ICONS[g[0]] + g[1] + '</button>').join('') +
+    [['board', 'Board'], ['map', 'Map'], ['done', 'Archive']].map(g => '<button class="pick' + (ui.view === g[0] ? ' on' : '') + '" data-goto="' + g[0] + '">' + ICONS[g[0]] + g[1] + '</button>').join('') +
     '</div></div>' +
 
     '<div class="f-row"><span class="f-label">Backup</span>' +
@@ -3206,7 +3372,7 @@ function openSettings() {
     '</div>' +
 
     '<div class="f-row"><span class="f-label">Groups</span>' + areaRows + newAreaRow +
-    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work, one per business. The business setting ties a group to its briefs and agent work on Home. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work, one per business. The business setting ties a group to its briefs and agent work on Home. A group set to “Chief of Staff’s own” holds its own tasks: they stay out of your Action plan, lists and business pages and show only when you open that group. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
     '</div>' +
     '<div class="f-row"><span class="f-label">Projects</span>' + projRows +
     '<div style="margin-top:8px"><button class="btn-quiet" id="setNewProject" style="border:1px solid var(--line)">Add a project</button></div>' +
@@ -3273,6 +3439,7 @@ function openSettings() {
       e.currentTarget.textContent = 'Really delete ' + n + ' archived ' + (n === 1 ? 'task' : 'tasks') + ' for good?';
       return;
     }
+    dropStoredImages(state.tasks.filter(t => t.status === 'done').map(t => t.imagePath));
     state.tasks = state.tasks.filter(t => t.status !== 'done');
     save(); render(); closeModal();
     toast('Archive emptied');
@@ -3366,7 +3533,7 @@ function openSettings() {
     });
     root.querySelectorAll('[data-astream]').forEach(sel => {
       const a = state.areas.find(a => a.id === sel.dataset.astream);
-      if (a) a.stream = sel.value || null;
+      if (a) { a.internal = sel.value === '__apart'; a.stream = a.internal ? null : (sel.value || null); }
     });
     save(); render(); closeModal();
     toast('Settings saved');
@@ -3450,8 +3617,8 @@ function toast(msg, action) {
 /* ================= Events ================= */
 
 function setView(v) {
-  // Home pressed again while on Home, or Agents: back to the whole picture, no group chosen
-  if ((v === 'home' && ui.view === 'home') || v === 'agents') { ui.filterArea = null; ui.filterProject = null; }
+  // Home pressed again while on Home: back to the whole picture, no group chosen
+  if (v === 'home' && ui.view === 'home') { ui.filterArea = null; ui.filterProject = null; }
   if (v === 'home') ui.filterProject = null;
   ui.view = v;
   render();
@@ -3461,7 +3628,7 @@ function setView(v) {
 function applyProjectFilter(id) {
   ui.filterProject = (ui.filterProject === id) ? null : id;
   ui.filterArea = null;
-  if (ui.filterProject && (ui.view === 'today' || ui.view === 'home' || ui.view === 'agents')) ui.view = 'list';
+  if (ui.filterProject && (ui.view === 'today' || ui.view === 'home')) ui.view = 'list';
   render();
 }
 
@@ -3469,7 +3636,6 @@ function applyAreaFilter(id) {
   ui.filterArea = (ui.filterArea === id) ? null : id;
   ui.filterProject = null;
   if (ui.filterArea && ui.view === 'today') ui.view = 'list';
-  if (ui.view === 'agents') ui.view = 'home';   // choosing a group from Agents opens that business
   render();
 }
 
@@ -3534,7 +3700,7 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => {
     ui.search = e.target.value;
-    if (ui.search.trim() && (ui.view === 'home' || ui.view === 'agents')) ui.view = 'list';   // results are a task list
+    if (ui.search.trim() && ui.view === 'home') ui.view = 'list';   // results are a task list
     render();
   }, 180);
 });
@@ -3649,10 +3815,10 @@ document.getElementById('content').addEventListener('drop', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') { if (!closeLightbox()) closeModal(); }   // a picture opened full size closes first
 });
 
-/* ================= Home, business and Agents pages =================
+/* ================= Home and business pages =================
    These were the separate Command Centre until 24 Nov 2026. They now render inside the
    app shell from the same task data (state) as every other view. The extra tables they
    read (streams, agent_jobs, activity, briefs) are loaded into D and refreshed live. */
@@ -3668,9 +3834,9 @@ const STATUS = {
 };
 const STATUS_ORDER = ['Running', 'Needs you', 'Stuck', 'Idle'];
 const DOT = { run: '#2563EB', need: '#E39A2B', stuck: '#D9483B', idle: '#9AA0AC' };
-const NAV_VIEWS = ['home', 'agents', 'today', 'list', 'matrix', 'board', 'priority', 'map', 'done'];
+const NAV_VIEWS = ['home', 'today', 'list', 'matrix', 'board', 'priority', 'map', 'done'];
 
-const D = { streams: [], jobs: [], activity: [], briefs: [] };
+const D = { streams: [], jobs: [], activity: [], briefs: [], questions: [] };
 
 function ccStore(key, val) { try { localStorage.setItem('cc.' + key, JSON.stringify(val)); } catch (e) {} }
 function ccRecall(key, dflt) { try { const v = localStorage.getItem('cc.' + key); return v === null ? dflt : JSON.parse(v); } catch (e) { return dflt; } }
@@ -3679,9 +3845,9 @@ const cc = {
   loaded: false, error: null,
   cosOpen: ccRecall('cosOpen', true),
   planOpen: ccRecall('planOpen', true),
-  homePeriod: 'Week', agentsPeriod: 'Week',
+  homePeriod: 'Week',
   actFilter: 'All', actShown: ACTIVITY_PAGE,
-  fleetOpen: null, agentsOpen: null,
+  fleetOpen: null, cosBizOpen: {}, ansDraft: {},
   makeLive: null, msgDraft: '', listening: false,
   taskActs: {}, actVersion: 0,
 };
@@ -3714,9 +3880,9 @@ function bizHref(streamId) { const a = areaForStream(streamId); return a ? '#/ho
 function taskStream(t) { const a = areaOf(taskAreaId(t)); return a && a.stream ? a.stream : null; }
 /* One entry per business: each group, in the order of the sidebar. */
 function bizList() {
-  return state.areas.map(a => ({ area: a, stream: a.stream && streamOf(a.stream) ? a.stream : null, L: paint(a.name, a.colour), href: '#/home/g/' + encodeURIComponent(a.id) }));
+  return state.areas.filter(a => !a.internal).map(a => ({ area: a, stream: a.stream && streamOf(a.stream) ? a.stream : null, L: paint(a.name, a.colour), href: '#/home/g/' + encodeURIComponent(a.id) }));
 }
-function bizTasks(b) { return state.tasks.filter(t => taskAreaId(t) === b.area.id || (b.stream && taskStream(t) === b.stream)); }
+function bizTasks(b) { return (b.area.internal ? state.tasks : myTasks()).filter(t => taskAreaId(t) === b.area.id || (b.stream && taskStream(t) === b.stream)); }
 
 const DAY = 86400000;
 function startOfToday() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
@@ -3868,15 +4034,98 @@ function periodSeg(cur, act) {
 /* ---------- Briefs ---------- */
 function latestBrief(streamId) { return D.briefs.find(b => (b.stream || null) === (streamId || null)) || null; }
 function pendingDecision(b) { return b && b.decision && !b.decided_at && Array.isArray(b.decision.options) && b.decision.options.length ? b.decision : null; }
-function decisionHtml(b, dark) {
-  const d = pendingDecision(b);
-  if (!d) {
-    if (b && b.decision && b.decided_at) return '<p class="decided">You chose “' + esc(b.decision_choice || '') + '” ' + esc(fmtStamp(ms(b.decided_at))) + '.</p>';
-    return '';
+/* A decision already made is noted under the brief. One still open is asked in "Needs your attention". */
+function decidedNote(b) {
+  return b && b.decision && b.decided_at ? '<p class="decided">You chose “' + esc(b.decision_choice || '') + '” ' + esc(fmtStamp(ms(b.decided_at))) + '.</p>' : '';
+}
+function briefWords(b) { return b ? [b.standing, b.holding, b.late].filter(x => x && String(x).trim()).join('\n\n') : ''; }
+/* The tasks and activity that belong to one business, for the "changed since" line on its note. */
+function bizScope(streamId) {
+  const a = areaForStream(streamId);
+  const tasks = myTasks().filter(t => (a && taskAreaId(t) === a.id) || taskStream(t) === streamId);
+  const ids = new Set(tasks.map(t => t.id));
+  return { tasks, mine: (x) => x.stream === streamId || (x.task_id && ids.has(x.task_id)) };
+}
+
+/* ---------- Needs your attention ----------
+   Everything waiting on Ifran's direction, in one place: questions asked by the Chief of Staff or an
+   agent (sorted.questions), the open decision on the latest brief for the whole picture and for each
+   business, and agent jobs that need him or are stuck. Each names its task and is answered where it sits. */
+function optionLabels(list) {
+  return (Array.isArray(list) ? list : []).map(o => (typeof o === 'string' ? o : (o && o.label) || '')).map(x => String(x).trim()).filter(Boolean).slice(0, 4);
+}
+function attentionItems() {
+  const items = [];
+  D.questions.filter(q => !q.answered_at).forEach(q => {
+    const task = q.task_id ? getTask(q.task_id) || null : null;
+    items.push({ kind: 'q', id: q.id, at: ms(q.at) || 0, stream: q.stream || (task ? taskStream(task) : null), task, who: q.who || 'Chief of Staff',
+      text: q.question, reason: q.reason, options: optionLabels(q.options), recommended: Number.isInteger(q.recommended) ? q.recommended : 0 });
+  });
+  const seen = new Set();
+  D.briefs.forEach(b => {   // newest first: only the latest brief of each kind can still be asking
+    const k = b.stream || '';
+    if (seen.has(k)) return;
+    seen.add(k);
+    const d = pendingDecision(b);
+    if (!d) return;
+    const act = d.options.map(o => o && o.action).find(x => x && x.task_id);
+    const task = getTask(d.task_id || (act && act.task_id)) || null;
+    items.push({ kind: 'd', id: b.id, at: ms(b.at) || 0, stream: b.stream || (task ? taskStream(task) : null), task, who: 'Chief of Staff',
+      text: d.question || 'A decision is waiting', reason: d.reason, options: optionLabels(d.options), recommended: Number.isInteger(d.recommended) ? d.recommended : 0 });
+  });
+  visibleJobs().filter(j => j.status === 'Needs you' || j.status === 'Stuck').forEach(j => {
+    const task = j.task_id ? getTask(j.task_id) || null : null;
+    items.push({ kind: 'j', id: j.id, at: ms(j.updated_at) || 0, stream: j.stream || (task ? taskStream(task) : null), task, who: j.agent, job: j,
+      text: j.step_note || j.title, options: [] });
+  });
+  return items.sort((a, b) => b.at - a.at);
+}
+function attentionCard(it, L) {
+  const key = it.kind + '-' + it.id;
+  const lead = it.kind === 'j' ? esc(it.who) + (it.job.status === 'Stuck' ? ' is stuck' : ' needs you') : esc(it.who) + ' asks';
+  let html = '<div class="att-card" style="background:' + L.soft + '"><span class="att-who" style="color:' + L.ink + '">' + lead + '<i>' + esc(fmtWhen(it.at)) + '</i></span>' +
+    '<p class="att-q">' + esc(it.text) + '</p>' + (it.reason ? '<p class="att-why">' + esc(it.reason) + '</p>' : '') +
+    (it.task ? '<span class="att-task">' + taskBtn(it.task.id, '<span class="muted">On:</span> ' + esc(it.task.title)) + '</span>' : '');
+  if (it.kind === 'j') {
+    const out = safeUrl(it.job.output_url);
+    html += '<div class="att-opts">' + (out ? '<a class="att-btn" href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') +
+      (it.job.finished_at ? '<button type="button" class="att-btn" data-cc="job-done" data-id="' + esc(it.id) + '">Mark as dealt with</button>' : '') + '</div>';
+    return html + '</div>';
   }
-  const opts = d.options.slice(0, 4).map((o, i) => '<button type="button" class="' + (dark ? (i === 0 ? 'o1' : 'on') : (i === 0 ? 'opt-1' : 'opt-n')) + '" data-cc="decide" data-brief="' + esc(b.id) + '" data-i="' + i + '">' + esc(o.label || 'Option ' + (i + 1)) + '</button>').join('');
-  if (dark) return (d.question ? '<p class="q">' + esc(d.question) + '</p>' : '') + '<div class="opts">' + opts + '</div>';
-  return '<div class="decision"><h3>Worth a decision</h3>' + (d.question ? '<p>' + esc(d.question) + '</p>' : '') + '<div class="opts">' + opts + '</div></div>';
+  if (it.options.length) {
+    html += '<div class="att-opts">' + it.options.map((o, i) => '<button type="button" class="att-btn' + (i === it.recommended ? ' rec' : '') + '" data-cc="ans-opt" data-kind="' + it.kind + '" data-id="' + esc(it.id) + '" data-i="' + i + '"' +
+      (i === it.recommended ? ' title="The option recommended to you"' : '') + '>' + esc(o) + '</button>').join('') + '</div>';
+  }
+  return html + '<form class="att-form" data-form="ans" data-kind="' + it.kind + '" data-id="' + esc(it.id) + '"><label class="vh" for="ans-' + esc(key) + '">Your answer</label>' +
+    '<input id="ans-' + esc(key) + '" data-ans="' + esc(key) + '" type="text" autocomplete="off" placeholder="' + (it.options.length ? 'Or answer in your own words' : 'Type your answer') + '" value="' + esc(cc.ansDraft[key] || '') + '">' +
+    '<button type="submit" class="att-btn">Send</button></form></div>';
+}
+function attentionPanel() {
+  const items = attentionItems();
+  const head = '<div class="plan-head"><div class="t"><h2>Needs your attention' + (items.length ? '<span class="att-n">' + items.length + '</span>' : '') + '</h2>' +
+    '<span>' + (items.length ? 'Questions and jobs waiting on your direction. Answer here and it is logged on the task.' : (cc.loaded ? 'Nothing is waiting on your direction.' : 'Loading…')) + '</span></div></div>';
+  if (!items.length) return '<section class="panel att-empty" aria-label="Needs your attention">' + head + '</section>';
+  // One column per business, like the Action plan; anything without a business sits under General
+  const cols = [];
+  const colFor = (it) => {
+    const a = areaForStream(it.stream) || (it.task ? areaOf(taskAreaId(it.task)) : null);
+    const k = a ? a.id : (it.stream || '__general');
+    let c = cols.find(x => x.k === k);
+    if (!c) { c = { k, L: a ? paint(a.name, a.colour) : it.stream ? look(it.stream) : paint('General', NONE_COLOUR), href: a && !a.internal ? '#/home/g/' + encodeURIComponent(a.id) : null, pos: a ? (a.position || 0) : 999, items: [] }; cols.push(c); }
+    return c;
+  };
+  items.forEach(it => colFor(it).items.push(it));
+  cols.sort((a, b) => a.pos - b.pos);
+  return '<section class="panel" aria-label="Needs your attention" style="overflow:hidden">' + head + '<div class="plan-grid">' + cols.map(c => {
+    const nm = '<b><span class="dot" style="background:' + c.L.colour + '"></span>' + esc(c.L.name) + '</b><span>' + c.items.length + ' waiting</span>';
+    return '<div class="plan-col">' + (c.href ? '<a class="plan-name" href="' + c.href + '">' + nm + '</a>' : '<div class="plan-name">' + nm + '</div>') + c.items.map(it => attentionCard(it, c.L)).join('') + '</div>';
+  }).join('') + '</div></section>';
+}
+/* Agent status counts: one thin line above the plan. */
+function statusBar() {
+  const c = statusCounts(visibleJobs());
+  return '<div class="panel statbar" role="group" aria-label="Agent status counts"><span class="sb-l">Agents</span>' +
+    STATUS_ORDER.map(s => '<span class="sb-i' + (c[s] ? '' : ' zero') + '"><span class="dot" style="background:' + DOT[STATUS[s].key] + '"></span>' + STATUS[s].label + '<b>' + c[s] + '</b></span>').join('') + '</div>';
 }
 
 /* What has changed in Sorted since a brief was written. The brief's words are a snapshot; this is
@@ -3885,7 +4134,7 @@ function decisionHtml(b, dark) {
 function sinceBrief(b, scope) {
   const at = ms(b.at);
   if (at == null) return null;
-  const tasks = scope ? scope.tasks : state.tasks;
+  const tasks = scope ? scope.tasks : myTasks();
   const done = tasks.filter(t => isDone(t) && t.completedAt && t.completedAt > at);
   const added = tasks.filter(t => !isDone(t) && t.createdAt > at);
   const updates = D.activity.filter(a => a.kind === 'work' && !isCos(a.who) && (ms(a.at) || 0) > at && (!scope || scope.mine(a)));
@@ -3913,15 +4162,23 @@ function cosPanel() {
   const b = latestBrief(null);
   const unseen = b && ccRecall('lastSeenBrief', null) !== b.id;
   if (!cc.cosOpen) {
-    const flag = (unseen || pendingDecision(b)) ? '<span class="newdot" role="img" aria-label="New brief or decision waiting"></span>' : '';
+    const flag = unseen ? '<span class="newdot" role="img" aria-label="New brief"></span>' : '';
     return '<aside class="panel cos-closed" aria-label="Chief of Staff"><button type="button" class="cos-av" data-cc="cos-toggle" aria-label="Open the Chief of Staff panel">CS</button><span class="lbl" aria-hidden="true">Chief of Staff</span>' + flag + '</aside>';
   }
   if (b) ccStore('lastSeenBrief', b.id);
   const parts = b ? [['Where things stand', b.standing], ['Holding things up', b.holding], ['Running late', b.late]].filter(p => p[1] && String(p[1]).trim()) : [];
+  // The brief is shown here and nowhere else: the whole picture first, then each business's own note, folded away
+  const notesByBiz = D.streams.map(s => ({ s, b: latestBrief(s.id) })).filter(x => x.b && briefWords(x.b));
+  const bizNotes = notesByBiz.length ? '<div class="cos-biz"><h3>By business</h3>' + notesByBiz.map(x => {
+    const open = !!cc.cosBizOpen[x.s.id], L = look(x.s.id);
+    return '<div class="cb"><button type="button" class="cb-h" data-cc="cos-biz" data-k="' + esc(x.s.id) + '" aria-expanded="' + open + '">' + CHEV +
+      '<span class="dot" style="background:' + L.colour + '"></span><b>' + esc(L.name) + '</b><span>' + esc(fmtShort(ms(x.b.at))) + '</span></button>' +
+      (open ? '<div class="cb-b">' + freshnessHtml(x.b, bizScope(x.s.id)) + '<p>' + esc(briefWords(x.b)) + '</p>' + decidedNote(x.b) + '</div>' : '') + '</div>';
+  }).join('') + '</div>' : '';
   const body = !cc.loaded ? '<p class="cc-empty">Loading the latest brief…</p>'
-    : b ? freshnessHtml(b) + (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + decisionHtml(b, false)
-    : '<p class="cc-empty">No brief yet. When your Chief of Staff starts work, its latest brief appears here: where things stand, what is holding things up, and what is running late.</p>';
-  const open = state.tasks.filter(t => !isDone(t));
+    : b ? freshnessHtml(b) + (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + decidedNote(b) + bizNotes
+    : '<p class="cc-empty">No brief yet. When your Chief of Staff starts work, its latest brief appears here: where things stand, what is holding things up, and what is running late.</p>' + bizNotes;
+  const open = myTasks().filter(t => !isDone(t));
   const np = open.filter(noPriority).length;
   const loose = open.filter(t => !taskAreaId(t)).length;
   const notes = [];
@@ -3969,7 +4226,7 @@ function actionPlan() {
       const L = c.b.L;
       const items = c.items.slice(0, 3).map(t => {
         const note = planNote(t);
-        return '<button type="button" class="plan-item" data-task="' + esc(t.id) + '" title="Open this task" style="background:' + L.soft + '"><span class="p" style="color:' + L.ink + '">' + (t.priority === 1 ? 'P1' : t.priority === 2 ? 'P2' : 'Focus') + '</span><span class="x"><b>' + esc(t.title) + '</b>' + (note ? '<span style="color:' + L.ink + '">' + esc(note) + '</span>' : '') + '</span></button>';
+        return '<button type="button" class="plan-item" data-task="' + esc(t.id) + '" title="Open this task" style="background:' + L.soft + '"><span class="p" style="color:' + L.ink + '">' + (t.priority === 1 ? 'P1' : t.priority === 2 ? 'P2' : 'Focus') + '</span><span class="x"><b>' + esc(t.title) + '</b>' + (note ? '<span style="color:' + L.ink + '">' + esc(note) + '</span>' : '') + '</span>' + thumbImg(t, 'plan-thumb') + '</button>';
       }).join('');
       const more = c.items.length > 3 ? '<a class="more" href="' + c.b.href + '">+ ' + (c.items.length - 3) + ' more</a>' : '';
       return '<div class="plan-col"><a class="plan-name" href="' + c.b.href + '"><b><span class="dot" style="background:' + L.colour + '"></span>' + esc(L.name) + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AA0AC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></b><span>' + c.live + ' live' + (c.jobs ? ' · ' + plural(c.jobs, 'agent job') : '') + '</span></a>' + items + more + '</div>';
@@ -3994,7 +4251,11 @@ function fleetGroups(openMap) {
   return groups;
 }
 const fleetState = { get v() { return cc.fleetOpen; }, set v(x) { cc.fleetOpen = x; } };
-const agentsState = { get v() { return cc.agentsOpen; }, set v(x) { cc.agentsOpen = x; } };
+function jobDetail(j) {
+  const s = STATUS[j.status] || STATUS.Idle, out = safeUrl(j.output_url);
+  const bits = [esc(j.agent), esc(stepText(j)), esc(runningTime(j))].filter(x => x && x !== '–');
+  return '<small class="jd">' + bits.join(' · ') + (j.returns || out ? '<br>' + esc(s.out) + ': ' + esc(j.returns || '') + (out ? ' <a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') : '') + '</small>';
+}
 function homeFleet() {
   const groups = fleetGroups(fleetState);
   const n = visibleJobs().length;
@@ -4005,10 +4266,10 @@ function homeFleet() {
     const L = look(g.k === '__all' ? null : g.k);
     const open = !!cc.fleetOpen[g.k];
     html += '<div class="fgroup">' + groupHead(g, L, 'fleet-toggle', open, '');
-    if (open) html += '<div class="fjobs">' + g.js.map(j => '<div class="fjob"><span class="in" title="' + esc(j.agent) + '">' + esc(initials(j.agent)) + '</span><span class="jt"><span class="vh">' + esc(j.agent) + ': </span>' + jobLine(j) + '</span><div style="flex:0 0 80px">' + stepBars(j) + '</div>' + statusBadge(j.status) + '</div>').join('') + '</div>';
+    if (open) html += '<div class="fjobs">' + g.js.map(j => '<div class="fjob"><span class="in" title="' + esc(j.agent) + '">' + esc(initials(j.agent)) + '</span><span class="jt"><span class="vh">' + esc(j.agent) + ': </span>' + jobLine(j) + jobDetail(j) + '</span><div style="flex:0 0 80px">' + stepBars(j) + '</div>' + statusBadge(j.status) + '</div>').join('') + '</div>';
     html += '</div>';
   });
-  return html + '<a class="more" href="#/agents" style="align-self:flex-start;margin-top:4px">Open the Agents page</a></section>';
+  return html + '</section>';
 }
 function homeTime() {
   return '<section class="panel panel-pad timebox" aria-label="Where the time went"><div class="panel-head"><h2>Where the time went</h2>' + periodSeg(cc.homePeriod, 'home-period') + '</div>' + timeRows(cc.homePeriod) + '</section>';
@@ -4040,9 +4301,9 @@ function homeActivity() {
   return '<section class="panel panel-pad" aria-label="Activity" style="display:flex;flex-direction:column;gap:4px"><div class="panel-head"><h2>Activity<small>Every update also sits inside its task, and stays with it in the Archive</small></h2>' + seg + '</div>' + body + '</section>';
 }
 function homeHousekeeping() {
-  const quiet = state.tasks.filter(isQuiet).sort((a, b) => ms(a.updatedAt) - ms(b.updatedAt));
+  const quiet = myTasks().filter(isQuiet).sort((a, b) => ms(a.updatedAt) - ms(b.updatedAt));
   // Waiting tasks with a follow-up date come first, soonest first; a date that has arrived is picked out
-  const waiting = state.tasks.filter(isWaiting).sort((a, b) => (a.followUp || '9999') < (b.followUp || '9999') ? -1 : (a.followUp || '9999') > (b.followUp || '9999') ? 1 : 0);
+  const waiting = myTasks().filter(isWaiting).sort((a, b) => (a.followUp || '9999') < (b.followUp || '9999') ? -1 : (a.followUp || '9999') > (b.followUp || '9999') ? 1 : 0);
   const waitText = (t) => t.title + (t.waitingOn ? ' · ' + t.waitingOn : '') + (t.followUp ? ' · follow up ' + fmtDueIn(t.followUp) : '');
   const chip = (t, cls, text) => '<button type="button" class="cc-chip ' + cls + '" data-task="' + esc(t.id) + '" title="Open: ' + esc(t.title) + '">' + esc(text) + '</button>';
   return '<section class="panel house" aria-label="Gone quiet and waiting on others">' +
@@ -4051,7 +4312,7 @@ function homeHousekeeping() {
     '</section>';
 }
 function homePage() {
-  return '<div class="home' + (cc.cosOpen ? '' : ' cos-shut') + '">' + cosPanel() + '<div class="home-main">' + actionPlan() + '<div class="row2">' + homeFleet() + homeTime() + '</div>' + homeActivity() + homeHousekeeping() + '</div></div>';
+  return '<div class="home' + (cc.cosOpen ? '' : ' cos-shut') + '">' + cosPanel() + '<div class="home-main">' + statusBar() + attentionPanel() + actionPlan() + '<div class="row2">' + homeFleet() + homeTime() + '</div>' + homeActivity() + homeHousekeeping() + '</div></div>';
 }
 
 /* ---------- Business overview: Home with a group chosen ---------- */
@@ -4080,20 +4341,19 @@ function businessPage(a) {
   let all = 0, here = 0;
   D.activity.forEach(x => { const t = ms(x.at); if (t != null && t >= wk && x.minutes > 0) { all += x.minutes; if (mine(x)) here += x.minutes; } });
   const share = all > 0 ? Math.round((here / all) * 100) + '%' : '–';
-  const brief = sid ? latestBrief(sid) : null;
-  const briefText = brief ? [brief.standing, brief.holding, brief.late].filter(x => x && String(x).trim()).join('\n\n') : '';
   const jobs = visibleJobs().filter(mine).sort(jobSort);
   const acts = D.activity.filter(mine).slice(0, 30);
   const doneCount = tasks.filter(isDone).length;
 
-  const note = !cc.loaded ? '<p class="muted" style="font-size:13px">Loading…</p>'
-    : !sid ? '<p class="muted" style="font-size:13px">This group is not linked to a business yet, so briefs and agent work for it are not gathered here. Link it under Backup &amp; settings, Groups.</p>'
-    : brief ? freshnessHtml(brief, { tasks, mine }) + '<p>' + esc(briefText || 'No text in the latest note.') + '</p><span class="when">' + esc(fmtStamp(ms(brief.at))) + '</span>' + decisionHtml(brief, false)
-    : '<p class="muted" style="font-size:13px">No note on this business yet. Your Chief of Staff’s latest view of it will appear here.</p>';
+  const hasNote = sid && latestBrief(sid) && briefWords(latestBrief(sid));
+  const sub = a.internal ? 'The Chief of Staff’s own tasks. They stay out of your Action plan, task lists and business pages, and show only here.'
+    : 'Live work, agents and parked ideas for this business' + (doneCount ? ' · ' + doneCount + ' in the Archive' : '');
+  const hint = a.internal ? '' : !sid ? '<p class="biz-hint">This group is not linked to a business yet, so agent work for it is not gathered here. Link it under Backup &amp; settings, Groups.</p>'
+    : hasNote ? '<p class="biz-hint">Your Chief of Staff’s note on this business is on <a href="#/home">Home</a>, under By business.</p>' : '';
   const head = '<section class="panel biz-head" aria-label="Overview">' +
-    '<div class="biz-top"><span class="stile" style="background:' + L.tint + '"><i style="background:' + L.colour + '"></i></span><div class="t"><b>Overview</b><span>Live work, agents and parked ideas for this business' + (doneCount ? ' · ' + doneCount + ' in the Archive' : '') + '</span></div>' +
+    '<div class="biz-top"><span class="stile" style="background:' + L.tint + '"><i style="background:' + L.colour + '"></i></span><div class="t"><b>Overview</b><span>' + sub + '</span></div>' +
     '<a class="btn" href="#/home">All businesses</a><a class="btn" href="#/list/g/' + encodeURIComponent(a.id) + '">Task list</a><a class="btn" href="#/done/g/' + encodeURIComponent(a.id) + '">Archive</a></div>' +
-    '<div class="note"><div class="cos-av" aria-hidden="true">CS</div><div class="x"><b>Latest from your Chief of Staff</b>' + note + '</div></div>' +
+    hint +
     '<div class="stats"><div class="stat"><span>Live</span><b>' + live.length + '</b></div><div class="stat"><span>Parked</span><b>' + parked.length + '</b></div><div class="stat"><span>Last done</span><b>' + esc(fmtShort(lastDone)) + '</b></div><div class="stat"><span>Share of time this week</span><b>' + share + '</b></div></div></section>';
 
   const rowOpts = { hideArea: true };
@@ -4117,45 +4377,6 @@ function ccBanner() { return cc.error ? '<div class="banner" role="alert">' + es
 function renderHomeView() {
   const a = ui.filterArea ? areaOf(ui.filterArea) : null;
   return '<div class="cc">' + ccBanner() + (a ? businessPage(a) : homePage()) + '</div>';
-}
-
-/* ---------- Agents page ---------- */
-function renderAgents() {
-  const b = latestBrief(null);
-  const jobs = visibleJobs();
-  const c = statusCounts(jobs);
-  const agentNames = new Set(jobs.filter(j => !isCos(j.agent)).map(j => j.agent));
-  const sub = (agentNames.size ? 'Coordinating ' + plural(agentNames.size, 'agent') : 'No agents working yet') + (b ? ' · last brief ' + fmtStamp(ms(b.at)) : '');
-  const cos = '<div class="cos-dark"><div class="hd"><div class="cos-av" aria-hidden="true">CS</div><div class="t"><b>Chief of Staff</b><span>' + esc(sub) + '</span></div></div>' +
-    (b ? '<p>' + esc(b.standing || b.holding || b.late || 'The latest brief has no text yet.') + '</p>' + decisionHtml(b, true) : '<p>' + (cc.loaded ? 'No brief yet. Once your Chief of Staff is running, its latest view of the fleet appears here.' : 'Loading…') + '</p>') +
-    '<div><a href="#/home">Message it from Home</a></div></div>';
-  const counts = '<div class="counts" aria-label="Agent status counts">' + STATUS_ORDER.map(s => '<div class="panel count"><span><span class="dot" style="width:8px;height:8px;background:' + DOT[STATUS[s].key] + '"></span>' + STATUS[s].label + '</span><b>' + c[s] + '</b></div>').join('') + '</div>';
-
-  const groups = fleetGroups(agentsState);
-  let fleet = '<section class="panel panel-pad" aria-label="Fleet at work" style="display:flex;flex-direction:column;gap:10px"><div class="panel-head"><h2>Fleet at work<small>Business → agent → what comes back to you</small></h2>' +
-    (jobs.length ? '<button type="button" class="btn" data-cc="agents-all" data-v="open">Expand all</button><button type="button" class="btn" data-cc="agents-all" data-v="close">Collapse all</button>' : '') + '</div>';
-  if (!jobs.length) fleet += '<p class="cc-empty">' + (cc.loaded ? 'No agent work yet. When your Chief of Staff hands a job to an agent, it appears here with its progress, how long it has been running, and what it will bring back to you.' : 'Loading…') + '</p>';
-  else {
-    groups.forEach(g => {
-      const L = look(g.k === '__all' ? null : g.k);
-      const open = !!cc.agentsOpen[g.k];
-      fleet += '<div class="ag-group" style="background:' + (open ? 'var(--panel)' : L.soft) + '">' + groupHead(g, L, 'agents-toggle', open, ' style="color:' + L.ink + '"');
-      if (open) {
-        fleet += '<div class="ag-rows">' + g.js.map(j => {
-          const s = STATUS[j.status] || STATUS.Idle;
-          const out = safeUrl(j.output_url);
-          return '<div class="ag-row"><div class="ag-job"><div class="in" aria-hidden="true">' + esc(initials(j.agent)) + '</div><div class="who"><div class="l1"><b>' + esc(j.agent) + '</b>' + statusBadge(j.status) + '</div><span class="jt">' + jobLine(j) + '</span></div>' +
-            '<div class="prog">' + stepBars(j) + '<div class="m"><span>' + esc(stepText(j)) + '</span><span class="mono">' + esc(runningTime(j)) + '</span></div></div></div>' +
-            '<div class="ag-arrow" aria-hidden="true"><svg width="28" height="12" viewBox="0 0 28 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h22M19 1.5L24 6l-5 4.5"></path></svg></div>' +
-            '<div class="ag-out"><span class="l">' + esc(s.out) + '</span><span class="v">' + esc(j.returns || '–') + '</span>' + (out ? '<a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer" style="font-size:13px">Open output</a>' : '') + '</div></div>';
-        }).join('') + '</div>';
-      }
-      fleet += '</div>';
-    });
-  }
-  fleet += '</section>';
-  const time = '<section class="panel panel-pad timebox" aria-label="Where the time went"><div class="panel-head"><h2>Where the time went</h2>' + periodSeg(cc.agentsPeriod, 'agents-period') + '</div>' + timeRows(cc.agentsPeriod) + '</section>';
-  return '<div class="cc">' + ccBanner() + '<section class="agents-top" aria-label="Chief of Staff and agent status">' + cos + counts + '</section>' + fleet + time + '</div>';
 }
 
 /* ---------- Task history: every update logged against one task ---------- */
@@ -4227,10 +4448,11 @@ async function ccLoad() {
     sb.from('agent_jobs').select('*').order('created_at', { ascending: false }).limit(500),
     sb.from('activity').select('*').order('at', { ascending: false }).limit(2000),
     sb.from('briefs').select('*').order('at', { ascending: false }).limit(200),
+    sb.from('questions').select('*').order('at', { ascending: false }).limit(300),
   ]);
   const bad = res.find(r => r.error);
   if (bad) throw new Error(bad.error.message || 'query failed');
-  [D.streams, D.jobs, D.activity, D.briefs] = res.map(r => r.data || []);
+  [D.streams, D.jobs, D.activity, D.briefs, D.questions] = res.map(r => r.data || []);
   cc.loaded = true; cc.error = null; cc.actVersion++;
 }
 let ccReloadTimer = null;
@@ -4247,7 +4469,7 @@ let ccChannel = null;
 function ccSubscribe() {
   if (ccChannel) sb.removeChannel(ccChannel);
   ccChannel = sb.channel('sorted-home');
-  ['streams', 'agent_jobs', 'activity', 'briefs'].forEach(t => {
+  ['streams', 'agent_jobs', 'activity', 'briefs', 'questions'].forEach(t => {
     ccChannel.on('postgres_changes', { event: '*', schema: SB_SCHEMA, table: t, filter: 'user_id=eq.' + sbUser.id }, ccScheduleReload);
   });
   ccChannel.subscribe();
@@ -4260,8 +4482,8 @@ async function ccStart() {
 }
 function ccReset() {
   if (ccChannel && sb) { sb.removeChannel(ccChannel); ccChannel = null; }
-  D.streams = []; D.jobs = []; D.activity = []; D.briefs = [];
-  cc.loaded = false; cc.error = null; cc.taskActs = {}; cc.actVersion++; cc.msgDraft = '';
+  D.streams = []; D.jobs = []; D.activity = []; D.briefs = []; D.questions = [];
+  cc.loaded = false; cc.error = null; cc.taskActs = {}; cc.actVersion++; cc.msgDraft = ''; cc.ansDraft = {};
 }
 
 /* ---------- Actions ---------- */
@@ -4272,24 +4494,57 @@ function setPriorityLive(taskId, p) {
   save();
   return true;
 }
-async function decide(briefId, i) {
+/* Answer the decision on a brief: by option (i), or in Ifran's own words (text). */
+async function decide(briefId, i, text) {
   const b = D.briefs.find(x => x.id === briefId);
   const d = pendingDecision(b);
-  if (!d || !d.options[i]) return;
-  const opt = d.options[i];
-  const act = opt.action || null;
+  const own = String(text || '').trim();
+  if (!d || (!own && !d.options[i])) return;
+  const opt = own ? null : d.options[i];
+  const act = (opt && opt.action) || null;
   let did = '';
   if (act && act.type === 'set_priority' && getTask(act.task_id) && [1, 2, 3, 4].includes(Number(act.priority))) {
     if (setPriorityLive(act.task_id, Number(act.priority))) did = ' and set priority ' + Number(act.priority);
   }
   const now = new Date().toISOString();
-  const label = opt.label || ('Option ' + (i + 1));
+  const label = own || opt.label || ('Option ' + (i + 1));
   const up = await sb.from('briefs').update({ decision_choice: label, decided_at: now }).eq('id', briefId);
   if (up.error) { toast('Could not record your decision: ' + up.error.message); return; }
   b.decision_choice = label; b.decided_at = now;
-  const task = act && getTask(act.task_id) ? getTask(act.task_id) : null;
+  const anyAct = d.options.map(o => o && o.action).find(x => x && x.task_id);
+  const task = getTask(d.task_id || (act && act.task_id) || (anyAct && anyAct.task_id)) || null;
   await sb.from('activity').insert({ who: 'Ifran', kind: 'decision', stream: b.stream || (task ? taskStream(task) : null), task_id: task ? task.id : null, description: 'Chose “' + label + '”' + (d.question ? ' on: ' + d.question : '') });
-  toast('Decision recorded' + did + '.');
+  delete cc.ansDraft['d-' + briefId];
+  toast('Decision recorded' + did + (task ? ' and logged on the task.' : '.'));
+  ccScheduleReload();
+  render();
+}
+/* Answer a question from the Chief of Staff or an agent. The answer is kept on the question and
+   logged on its task, so it sits in that task's history. */
+async function answerQuestion(id, text) {
+  const q = D.questions.find(x => x.id === id);
+  const ans = String(text || '').trim();
+  if (!q || q.answered_at) return;
+  if (!ans) { toast('Type an answer, or pick one of the options'); return; }
+  const now = new Date().toISOString();
+  const up = await sb.from('questions').update({ answer: ans, answered_at: now }).eq('id', id);
+  if (up.error) { toast('Could not record your answer: ' + up.error.message); return; }
+  q.answer = ans; q.answered_at = now;
+  const task = q.task_id ? getTask(q.task_id) : null;
+  const log = await sb.from('activity').insert({ who: 'Ifran', kind: 'decision', stream: q.stream || (task ? taskStream(task) : null), task_id: task ? task.id : null, description: 'Answered “' + ans + '” to ' + (q.who || 'Chief of Staff') + '’s question: ' + q.question });
+  delete cc.ansDraft['q-' + id];
+  toast(log.error ? 'Answer saved, but it could not be logged on the task.' : task ? 'Answer recorded and logged on the task.' : 'Answer recorded.');
+  ccScheduleReload();
+  render();
+}
+/* A finished job that only needed Ifran to see or do something: he can clear it himself. */
+async function jobDealtWith(id) {
+  const j = D.jobs.find(x => x.id === id);
+  if (!j || !j.finished_at) return;
+  const up = await sb.from('agent_jobs').update({ status: 'Idle' }).eq('id', id);
+  if (up.error) { toast('Could not update the job: ' + up.error.message); return; }
+  j.status = 'Idle';
+  toast('Marked as dealt with.');
   ccScheduleReload();
   render();
 }
@@ -4314,7 +4569,7 @@ function toggleDictation() {
   recog.onerror = () => { cc.listening = false; render(); };
   cc.listening = true; render(); recog.start();
 }
-/* Clicks on the Home, business and Agents pages. Returns true when it handled the click. */
+/* Clicks on the Home and business pages. Returns true when it handled the click. */
 function ccClick(e) {
   const b = e.target.closest('[data-cc]');
   if (!b) return false;
@@ -4324,14 +4579,12 @@ function ccClick(e) {
   if (act === 'cos-toggle') { cc.cosOpen = !cc.cosOpen; ccStore('cosOpen', cc.cosOpen); render(); refocus('[data-cc="cos-toggle"]'); }
   else if (act === 'plan-toggle') { cc.planOpen = !cc.planOpen; ccStore('planOpen', cc.planOpen); render(); refocus('[data-cc="plan-toggle"]'); }
   else if (act === 'home-period') { cc.homePeriod = v; render(); }
-  else if (act === 'agents-period') { cc.agentsPeriod = v; render(); }
   else if (act === 'act-filter') { cc.actFilter = v; cc.actShown = ACTIVITY_PAGE; render(); }
   else if (act === 'act-more') { cc.actShown += ACTIVITY_PAGE; render(); }
   else if (act === 'fleet-toggle') { cc.fleetOpen[b.dataset.k] = !cc.fleetOpen[b.dataset.k]; render(); }
-  else if (act === 'agents-toggle') { cc.agentsOpen[b.dataset.k] = !cc.agentsOpen[b.dataset.k]; render(); }
-  else if (act === 'fleet-all' || act === 'agents-all') {
+  else if (act === 'fleet-all') {
     const m = {}; visibleJobs().forEach(j => { m[j.stream || '__all'] = v === 'open'; });
-    if (act === 'fleet-all') cc.fleetOpen = m; else cc.agentsOpen = m;
+    cc.fleetOpen = m;
     render();
   }
   else if (act === 'make-live') { cc.makeLive = b.dataset.tid; render(); refocus('[data-cc="set-pri"]'); }
@@ -4342,12 +4595,30 @@ function ccClick(e) {
   }
   else if (act === 'show-noprio') { ui.view = 'list'; ui.filterArea = null; ui.filterProject = null; ui.fQuad = ''; ui.fStatus = ''; ui.fPri = '0'; render(); document.getElementById('content').scrollTop = 0; }
   else if (act === 'show-loose') { ui.view = 'list'; ui.filterArea = null; ui.filterProject = null; ui.fQuad = ''; ui.fStatus = ''; ui.fPri = ''; ui.search = ''; render(); document.getElementById('content').scrollTop = 0; }
-  else if (act === 'decide') { b.disabled = true; decide(b.dataset.brief, Number(b.dataset.i)); }
+  else if (act === 'ans-opt') {
+    b.disabled = true;
+    if (b.dataset.kind === 'd') decide(b.dataset.id, Number(b.dataset.i));
+    else { const q = D.questions.find(x => x.id === b.dataset.id); answerQuestion(b.dataset.id, q ? optionLabels(q.options)[Number(b.dataset.i)] : ''); }
+  }
+  else if (act === 'job-done') { b.disabled = true; jobDealtWith(b.dataset.id); }
+  else if (act === 'cos-biz') { cc.cosBizOpen[b.dataset.k] = !cc.cosBizOpen[b.dataset.k]; render(); refocus('[data-cc="cos-biz"][data-k="' + b.dataset.k + '"]'); }
   else if (act === 'dictate') { toggleDictation(); }
   return true;
 }
-document.addEventListener('input', (e) => { if (e.target && e.target.id === 'cos-msg') cc.msgDraft = e.target.value; });
+document.addEventListener('input', (e) => {
+  if (!e.target) return;
+  if (e.target.id === 'cos-msg') cc.msgDraft = e.target.value;
+  else if (e.target.dataset && e.target.dataset.ans) cc.ansDraft[e.target.dataset.ans] = e.target.value;   // survives a re-render
+});
 document.addEventListener('submit', (e) => {
+  const ans = e.target.closest('[data-form="ans"]');
+  if (ans) {
+    e.preventDefault();
+    const text = cc.ansDraft[ans.dataset.kind + '-' + ans.dataset.id] || '';
+    if (!text.trim()) { toast('Type an answer, or pick one of the options'); return; }
+    if (ans.dataset.kind === 'd') decide(ans.dataset.id, -1, text); else answerQuestion(ans.dataset.id, text);
+    return;
+  }
   const f = e.target.closest('[data-form="msg"]');
   if (!f) return;
   e.preventDefault();
@@ -4355,7 +4626,7 @@ document.addEventListener('submit', (e) => {
 });
 
 /* ---------- One address per page: Back, Forward and refresh all behave ----------
-   #/home, #/list, #/agents ... with /g/<group id> or /p/<project id> when one is chosen.
+   #/home, #/list ... with /g/<group id> or /p/<project id> when one is chosen.
    Old Command Centre addresses (#/stream/<id>, #/streams, #/parked) still land sensibly. */
 function navHash() {
   return '#/' + ui.view + (ui.filterProject ? '/p/' + encodeURIComponent(ui.filterProject) : ui.filterArea ? '/g/' + encodeURIComponent(ui.filterArea) : '');
@@ -4377,12 +4648,11 @@ function applyHash() {
   try { parts = raw.split('/').map(decodeURIComponent); } catch (e) { return false; }
   let view = parts[0], area = null, proj = null;
   if (view === 'stream' || view === 'streams') { const a = areaForStream(parts[1]); view = 'home'; area = a ? a.id : null; }
-  else if (view === 'parked') view = 'home';
+  else if (view === 'parked' || view === 'agents') view = 'home';
   else if (parts[1] === 'g' && parts[2] && areaOf(parts[2])) area = parts[2];
   else if (parts[1] === 'p' && parts[2] && state.projects.some(p => p.id === parts[2])) proj = parts[2];
   if (!NAV_VIEWS.includes(view)) return false;
-  if (proj && (view === 'home' || view === 'agents')) view = 'list';
-  if (area && view === 'agents') area = null;
+  if (proj && view === 'home') view = 'list';
   ui.view = view; ui.filterProject = proj; ui.filterArea = proj ? null : area;
   return true;
 }
