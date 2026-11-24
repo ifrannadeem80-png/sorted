@@ -69,7 +69,8 @@ h1, h2, h3, p { margin: 0; }
 .s-stuck { background: var(--stuck-bg); color: var(--stuck-fg); }
 .s-idle { background: var(--idle-bg); color: var(--idle-fg); }
 .topdate { font-size: 12px; color: var(--muted); }
-.toplink { font-size: 12px; font-weight: 500; }
+.toplink { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--ink); }
+.toplink:hover { background: var(--line-soft); color: var(--ink); text-decoration: none; }
 
 /* ---------- Shared panels ---------- */
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
@@ -149,8 +150,15 @@ h1, h2, h3, p { margin: 0; }
 .fleet { flex: 3 1 460px; display: flex; flex-direction: column; gap: 4px; }
 .timebox { flex: 2 1 340px; display: flex; flex-direction: column; gap: 12px; }
 .fgroup { border-top: 1px solid var(--line-soft); }
-.fgroup > button { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 2px; border: 0; background: transparent; text-align: left; }
-.fgroup > button .nm { font-size: 14px; font-weight: 600; flex: 1 1 auto; }
+.ghead { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 9px 2px; border-radius: 10px; }
+.gtoggle { border: 0; background: transparent; padding: 0; display: flex; align-items: center; }
+.gtoggle::after { content: ""; position: absolute; inset: 0; border-radius: 10px; }
+.gtoggle:focus-visible { outline: none; }
+.gtoggle:focus-visible::after { outline: 2px solid var(--link); outline-offset: -2px; }
+.ghead:hover { background: rgba(17,19,24,0.025); }
+.ghead .nm { position: relative; z-index: 1; font-size: 14px; font-weight: 600; color: var(--ink); }
+.ghead a.nm:hover { color: var(--ink); text-decoration: underline; }
+.gpills { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
 .fjobs { display: flex; flex-direction: column; gap: 6px; padding: 0 0 10px 22px; }
 .fjob { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--sub); }
 .fjob .in { font-size: 11px; font-weight: 600; color: var(--ink-3); width: 26px; flex: 0 0 auto; }
@@ -164,7 +172,12 @@ h1, h2, h3, p { margin: 0; }
 .tbar span { height: 100%; }
 .trow .hrs { font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: right; }
 .legend { display: flex; flex-wrap: wrap; gap: 10px; }
-.legend span { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.legend span, .legend a { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.legend a:hover { color: var(--ink); }
+.tlink { color: inherit; }
+.tlink:hover { color: inherit; text-decoration: underline; }
+.arow .biz a { display: flex; align-items: center; gap: 6px; color: var(--ink-3); }
+.arow .biz a:hover { color: var(--ink); }
 .legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
 
 .acts { overflow-x: auto; }
@@ -274,8 +287,9 @@ h1, h2, h3, p { margin: 0; }
 .bigpanel h2.sm { font-size: 17px; letter-spacing: 0; }
 .bigpanel .hd span { font-size: 14px; color: var(--muted); }
 .ag-group { border: 1px solid var(--line-soft); border-radius: 18px; }
-.ag-group > button { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border: 0; background: transparent; text-align: left; border-radius: 18px; }
-.ag-group > button .nm { font-size: 15px; font-weight: 600; flex: 1 1 auto; }
+.ag-group .ghead { padding: 12px 14px; gap: 10px; border-radius: 18px; }
+.ag-group .gtoggle::after { border-radius: 18px; }
+.ag-group .ghead .nm { font-size: 15px; }
 .ag-rows { display: flex; flex-direction: column; gap: 12px; padding: 4px 14px 16px; }
 .ag-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px 250px; align-items: center; }
 .ag-job { border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; background: var(--panel); }
@@ -295,7 +309,7 @@ h1, h2, h3, p { margin: 0; }
 .bigpanel .trow .nm { font-size: 14px; }
 .bigpanel .tbar { height: 16px; border-radius: 8px; }
 .bigpanel .trow .hrs { font-size: 13px; }
-.bigpanel .legend span { font-size: 13px; color: var(--ink-3); }
+.bigpanel .legend span, .bigpanel .legend a { font-size: 13px; color: var(--ink-3); }
 .bigpanel .legend i { width: 10px; height: 10px; border-radius: 3px; }
 
 /* Sign in, loading, toast */
@@ -354,7 +368,7 @@ h1, h2, h3, p { margin: 0; }
   .seg button { height: 40px; }
   .pchip button { height: 40px; }
   .iconbtn { width: 44px; height: 44px; }
-  .fgroup > button { min-height: 48px; }
+  .ghead { min-height: 48px; }
 }
 </style>
 </head>
@@ -474,6 +488,19 @@ function initials(agent) {
 function isCos(who) { return /^chief of staff$/i.test(String(who || '').trim()); }
 function isMe(who) { return /^(ifran|you)$/i.test(String(who || '').trim()); }
 function whoLabel(who) { return isMe(who) ? 'You' : who; }
+/* Links into Sorted (opens that exact task) and to stream pages. */
+function taskHref(id) { return '../#task=' + encodeURIComponent(id); }
+function taskLink(id, html, cls) { return '<a class="tlink' + (cls ? ' ' + cls : '') + '" href="' + taskHref(id) + '" title="Open in Sorted">' + html + '</a>'; }
+function streamHref(id) { return '#/stream/' + encodeURIComponent(id); }
+/* Group header: the whole row toggles (the button's ::after covers it), the name is its own link. */
+function groupHead(g, L, act, open, nameStyle, chev) {
+  const name = esc(L.name);
+  const nm = g.k === '__all'
+    ? '<span class="nm"' + nameStyle + '>' + name + '</span>'
+    : '<a class="nm" href="' + streamHref(g.k) + '"' + nameStyle + '>' + name + '</a>';
+  return '<div class="ghead"><button type="button" class="gtoggle" data-act="' + act + '" data-k="' + esc(g.k) + '" aria-expanded="' + open + '" aria-label="' + (open ? 'Hide' : 'Show') + ' jobs for ' + name + '">' + chev + '</button>' +
+    '<span class="dot" style="background:' + L.colour + '"></span>' + nm + '<span class="gpills">' + pillsFor(g.c) + '</span></div>';
+}
 
 /* ================= Task rules (brief section 3) ================= */
 function taskStream(t) {
@@ -562,7 +589,7 @@ function timeRows(period, cls) {
   const any = split.you.total + split.cos.total + split.agents.total > 0;
   let legend = '';
   if (any) {
-    D.streams.forEach(s => { if (used.has(s.id)) legend += '<span><i style="background:' + s.colour + '"></i>' + esc(s.name) + '</span>'; });
+    D.streams.forEach(s => { if (used.has(s.id)) legend += '<a href="' + streamHref(s.id) + '"><i style="background:' + s.colour + '"></i>' + esc(s.name) + '</a>'; });
     if (used.has('__none')) legend += '<span><i style="background:' + NONE_COLOUR + '"></i>No business</span>';
   }
   return html + (any ? '<div class="legend">' + legend + '</div>' : '<p class="empty">No time logged ' + (period === 'Day' ? 'today' : period === 'Week' ? 'in the last 7 days' : 'in the last 30 days') + '. Time appears here as work is logged through the system.</p>');
@@ -606,7 +633,7 @@ function topbar(r) {
     '<nav class="mainnav" aria-label="Main">' + nav + '</nav>' +
     '<div class="pills" aria-label="Agent status">' + pills + '</div>' +
     '<span class="topdate">' + esc(date) + '</span>' +
-    '<a class="toplink" href="../">Sorted</a>' +
+    '<a class="toplink" href="../"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Open Sorted</a>' +
     '</div></header>' +
     (loadError ? '<div class="banner" role="alert">' + esc(loadError) + '</div>' : '');
 }
@@ -672,7 +699,7 @@ function actionPlan() {
   if (UI.planOpen) {
     body = cols.length ? '<div class="plan-grid" id="plan-body">' + cols.map(c => {
       const L = look(c.s.id);
-      const items = c.items.slice(0, 3).map(t => '<div class="plan-item" style="background:' + L.soft + '"><span class="p" style="color:' + L.ink + '">' + (t.priority === 1 ? 'P1' : t.priority === 2 ? 'P2' : 'Focus') + '</span><div class="x"><b>' + esc(t.title) + '</b>' + (planNote(t) ? '<span style="color:' + L.ink + '">' + esc(planNote(t)) + '</span>' : '') + '</div></div>').join('');
+      const items = c.items.slice(0, 3).map(t => '<div class="plan-item" style="background:' + L.soft + '"><span class="p" style="color:' + L.ink + '">' + (t.priority === 1 ? 'P1' : t.priority === 2 ? 'P2' : 'Focus') + '</span><div class="x"><b>' + taskLink(t.id, esc(t.title)) + '</b>' + (planNote(t) ? '<span style="color:' + L.ink + '">' + esc(planNote(t)) + '</span>' : '') + '</div></div>').join('');
       const more = c.items.length > 3 ? '<a class="more" href="#/stream/' + encodeURIComponent(c.s.id) + '">+ ' + (c.items.length - 3) + ' more</a>' : '';
       return '<div class="plan-col"><a class="plan-name" href="#/stream/' + encodeURIComponent(c.s.id) + '"><b><span class="dot" style="background:' + c.s.colour + '"></span>' + esc(c.s.name) + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AA0AC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></b><span>' + c.live + ' live · ' + plural(c.jobs, 'job') + '</span></a>' + items + more + '</div>';
     }).join('') + '</div>' : '<div id="plan-body" class="panel-pad"><p class="empty">Nothing is at priority 1, priority 2 or in focus yet. Set those in Sorted and they appear here.</p></div>';
@@ -708,8 +735,8 @@ function homeFleet() {
   groups.forEach(g => {
     const L = look(g.k === '__all' ? null : g.k);
     const open = !!UI.fleetOpen[g.k];
-    html += '<div class="fgroup"><button type="button" data-act="fleet-toggle" data-k="' + esc(g.k) + '" aria-expanded="' + open + '"><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C6270" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg><span class="dot" style="background:' + L.colour + '"></span><span class="nm">' + esc(L.name) + '</span>' + pillsFor(g.c) + '</button>';
-    if (open) html += '<div class="fjobs">' + g.js.map(j => '<div class="fjob"><span class="in" title="' + esc(j.agent) + '">' + esc(initials(j.agent)) + '</span><span class="jt"><span class="vh">' + esc(j.agent) + ': </span>' + esc(j.title) + '</span>' + '<div style="flex:0 0 80px">' + stepBars(j) + '</div>' + statusBadge(j.status) + '</div>').join('') + '</div>';
+    html += '<div class="fgroup">' + groupHead(g, L, 'fleet-toggle', open, '', '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C6270" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>');
+    if (open) html += '<div class="fjobs">' + g.js.map(j => '<div class="fjob"><span class="in" title="' + esc(j.agent) + '">' + esc(initials(j.agent)) + '</span><span class="jt"><span class="vh">' + esc(j.agent) + ': </span>' + (j.task_id ? taskLink(j.task_id, esc(j.title)) : esc(j.title)) + '</span>' + '<div style="flex:0 0 80px">' + stepBars(j) + '</div>' + statusBadge(j.status) + '</div>').join('') + '</div>';
     html += '</div>';
   });
   return html + '</section>';
@@ -722,7 +749,8 @@ function activityRows(list) {
     const L = look(a.stream);
     const link = safeUrl(a.link);
     const what = (a.kind === 'message' ? '<span class="tag">To your Chief of Staff: </span>' : '') + esc(a.description) + (link ? ' <a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Open</a>' : '');
-    const biz = (a.stream || a.kind === 'work') ? '<span class="dot" style="width:7px;height:7px;background:' + L.colour + '"></span>' + esc(L.name) : '<span class="muted">—</span>';
+    const dotHtml = '<span class="dot" style="width:7px;height:7px;background:' + L.colour + '"></span>' + esc(L.name);
+    const biz = a.stream ? '<a href="' + streamHref(a.stream) + '">' + dotHtml + '</a>' : a.kind === 'work' ? dotHtml : '<span class="muted">—</span>';
     return '<div class="arow"><span class="w">' + esc(fmtWhen(ms(a.at))) + '</span><span class="who">' + esc(whoLabel(a.who)) + '</span><span class="biz">' + biz + '</span><span class="what">' + what + '</span><span class="took">' + esc(fmtMins(a.minutes)) + '</span></div>';
   }).join('');
 }
@@ -740,7 +768,7 @@ function homeActivity() {
 function homeHousekeeping() {
   const quiet = D.tasks.filter(isQuiet).sort((a, b) => ms(a.updated_at) - ms(b.updated_at));
   const waiting = D.tasks.filter(t => t.status === 'waiting');
-  const chip = (t, cls, text) => { const s = taskStream(t); const href = s ? '#/stream/' + encodeURIComponent(s) : '#/home'; return '<a class="chip ' + cls + '" href="' + href + '" title="' + esc(t.title) + '">' + esc(text) + '</a>'; };
+  const chip = (t, cls, text) => '<a class="chip ' + cls + '" href="' + taskHref(t.id) + '" title="Open in Sorted: ' + esc(t.title) + '">' + esc(text) + '</a>';
   return '<section class="panel house" aria-label="Gone quiet and waiting on others">' +
     '<span class="lbl">Gone quiet</span><div class="chips">' + (quiet.length ? quiet.map(t => chip(t, 'chip-quiet', t.title + ' · ' + daysAgo(ms(t.updated_at)) + ' d')).join('') : '<span class="empty" style="padding:0">Nothing live has gone quiet.</span>') + '</div>' +
     '<span class="lbl">Waiting on others</span><div class="chips">' + (waiting.length ? waiting.map(t => chip(t, 'chip-wait', t.title)).join('') : '<span class="empty" style="padding:0">Nothing is waiting on others.</span>') + '</div>' +
@@ -767,13 +795,13 @@ function streamTaskItem(t, L) {
   else if (t.status === 'doing') tag = '<span class="tag s-run">In progress</span>';
   else if (isQuiet(t)) tag = '<span class="tag" style="background:var(--quiet-bg);color:var(--quiet-fg)">Quiet ' + daysAgo(ms(t.updated_at)) + ' d</span>';
   else if (noPriority(t)) tag = '<span class="tag s-need">No priority</span>';
-  return '<div class="titem"><span class="dot" style="background:' + L.colour + '"></span><div class="x"><b>' + esc(t.title) + '</b><span>' + esc(meta.join(' · ')) + '</span></div>' + tag + '</div>';
+  return '<div class="titem"><span class="dot" style="background:' + L.colour + '"></span><div class="x"><b>' + taskLink(t.id, esc(t.title)) + '</b><span>' + esc(meta.join(' · ')) + '</span></div>' + tag + '</div>';
 }
 function jobCard(j) {
   const s = STATUS[j.status] || STATUS.Idle;
   const out = safeUrl(j.output_url);
   return '<div class="jcard" style="border-color:var(--' + s.key + '-line)"><div class="top"><div class="in" aria-hidden="true">' + esc(initials(j.agent)) + '</div><span class="an">' + esc(j.agent) + '</span>' + statusBadge(j.status) + '</div>' +
-    '<span class="jt">' + esc(j.title) + '</span>' + stepBars(j) +
+    '<span class="jt">' + (j.task_id ? taskLink(j.task_id, esc(j.title)) : esc(j.title)) + '</span>' + stepBars(j) +
     '<div class="meta"><span>' + esc(stepText(j)) + '</span><span class="mono">' + esc(runningTime(j)) + '</span></div>' +
     (j.returns || out ? '<span class="jt" style="font-size:13px"><b style="font-weight:600">' + esc(s.out) + ':</b> ' + esc(j.returns || '') + (out ? ' <a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') + '</span>' : '') +
     '</div>';
@@ -823,7 +851,7 @@ function renderStream(id) {
       const ctrl = picking
         ? '<span class="vh">Choose a priority for ' + esc(t.title) + '</span>' + [1, 2, 3].map(p => '<button type="button" class="pri" data-act="set-pri" data-task="' + esc(t.id) + '" data-p="' + p + '">P' + p + '</button>').join('') + '<button type="button" data-act="make-live-cancel">Cancel</button>'
         : '<button type="button" data-act="make-live" data-task="' + esc(t.id) + '" aria-label="Make ' + esc(t.title) + ' live">Make live</button>';
-      return '<div class="pchip"><span class="tt">' + esc(t.title) + '</span>' + (noPriority(t) ? '<span class="np">No priority</span>' : '') + ctrl + '</div>';
+      return '<div class="pchip">' + taskLink(t.id, esc(t.title), 'tt') + (noPriority(t) ? '<span class="np">No priority</span>' : '') + ctrl + '</div>';
     }).join('') + '</div>' : '<p class="empty">Nothing parked here.</p>') + '</section>';
   const pActs = '<section class="card-lg" aria-label="Activity in this stream" style="gap:4px"><h2 style="margin-bottom:6px">Activity in this stream</h2>' +
     (acts.length ? acts.map(a => { const link = safeUrl(a.link); return '<div class="srow"><span class="w">' + esc(fmtWhen(ms(a.at))) + '</span><span class="x"><b>' + esc(whoLabel(a.who)) + '</b> ' + (a.kind === 'message' ? 'to the Chief of Staff: ' : '') + esc(a.description) + (link ? ' <a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Open</a>' : '') + '</span><span class="took">' + esc(fmtMins(a.minutes)) + '</span></div>'; }).join('') : '<p class="empty">No activity logged for this business yet.</p>') + '</section>';
@@ -851,12 +879,12 @@ function renderAgents() {
     groups.forEach(g => {
       const L = look(g.k === '__all' ? null : g.k);
       const open = !!UI.agentsOpen[g.k];
-      fleet += '<div class="ag-group" style="background:' + (open ? '#FFFFFF' : L.soft) + '"><button type="button" data-act="agents-toggle" data-k="' + esc(g.k) + '" aria-expanded="' + open + '"><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6270" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg><span class="dot" style="width:10px;height:10px;background:' + L.colour + '"></span><span class="nm" style="color:' + L.ink + '">' + esc(L.name) + '</span>' + pillsFor(g.c) + '</button>';
+      fleet += '<div class="ag-group" style="background:' + (open ? '#FFFFFF' : L.soft) + '">' + groupHead(g, L, 'agents-toggle', open, ' style="color:' + L.ink + '"', '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5C6270" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>');
       if (open) {
         fleet += '<div class="ag-rows">' + g.js.map(j => {
           const s = STATUS[j.status] || STATUS.Idle;
           const out = safeUrl(j.output_url);
-          return '<div class="ag-row"><div class="ag-job" style="border-color:var(--' + s.key + '-line)"><div class="in" aria-hidden="true">' + esc(initials(j.agent)) + '</div><div class="who"><div class="l1"><b>' + esc(j.agent) + '</b>' + statusBadge(j.status) + '</div><span class="jt">' + esc(j.title) + '</span></div>' +
+          return '<div class="ag-row"><div class="ag-job" style="border-color:var(--' + s.key + '-line)"><div class="in" aria-hidden="true">' + esc(initials(j.agent)) + '</div><div class="who"><div class="l1"><b>' + esc(j.agent) + '</b>' + statusBadge(j.status) + '</div><span class="jt">' + (j.task_id ? taskLink(j.task_id, esc(j.title)) : esc(j.title)) + '</span></div>' +
             '<div class="prog">' + stepBars(j) + '<div class="m"><span>' + esc(stepText(j)) + '</span><span class="mono">' + esc(runningTime(j)) + '</span></div></div></div>' +
             '<div class="ag-arrow" aria-hidden="true"><svg width="28" height="12" viewBox="0 0 28 12" fill="none" stroke="#C4C8D2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h22M19 1.5L24 6l-5 4.5"></path></svg></div>' +
             '<div class="ag-out"><span class="l">' + esc(s.out) + '</span><span class="v">' + esc(j.returns || '—') + '</span>' + (out ? '<a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer" style="font-size:13px">Open output</a>' : '') + '</div></div>';
