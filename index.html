@@ -186,6 +186,25 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .side-label button { color: var(--ink-faint); font-size: 16px; line-height: 1; padding: 0 2px; }
+  /* Master groups: a heading above its groups, in the sidebar and in the List, that folds them away */
+  .side-master {
+    display: flex; align-items: center; gap: 6px; width: calc(100% - 12px); margin: 12px 6px 2px; padding: 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft);
+    border-radius: 6px; text-align: left;
+  }
+  .side-master:hover { background: var(--surface-2); color: var(--ink); }
+  .m-caret { width: 12px; flex: none; font-size: 11px; color: var(--ink-faint); text-align: center; }
+  .master-head {
+    display: flex; align-items: center; gap: 8px; width: 100%; margin: 24px 0 4px; padding: 6px 2px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft);
+    border-bottom: 1px solid var(--line); text-align: left;
+  }
+  .master-head:hover { color: var(--ink); }
+  .master-head .g-count { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0; color: var(--ink-faint); }
+  .toolbar + .master-head, .drag-hint + .master-head { margin-top: 10px; }
+  .master-head + .group-head { margin-top: 12px; }
+  .master-head + .board { margin-top: 10px; }
+  .board + .board { margin-top: 4px; }
   .side-label button:hover { color: var(--link); }
   .proj-btn {
     display: flex; align-items: center; gap: 9px;
@@ -684,6 +703,8 @@
     .ax.vert { display: none; }
     .matrix-wrap .quad { grid-column: 1 / -1; min-height: 0; }
     .board { grid-template-columns: repeat(4, 82vw); }
+    /* List in columns: on a phone the groups of a master group stack, with no sideways scrolling */
+    .board.mboard { grid-template-columns: 1fr !important; overflow-x: visible; }
     .tabbar {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
       background: var(--surface);
@@ -739,6 +760,7 @@
   .cc .s-need { background: var(--need-bg); color: var(--need-fg); }
   .cc .s-stuck { background: var(--stuck-bg); color: var(--stuck-fg); }
   .cc .s-idle { background: var(--idle-bg); color: var(--idle-fg); }
+  .cc .s-done { background: var(--track); color: var(--ink-3); }
   .cc .steps { display: flex; gap: 3px; }
   .cc .steps span { flex: 1 1 0; height: 5px; border-radius: 3px; background: var(--line); }
   .cc .chev { transition: transform .15s ease; flex: 0 0 auto; color: var(--muted); }
@@ -929,6 +951,18 @@
   .cc .cb-h > span:last-child { font-size: 11px; color: var(--muted); }
   .cc .cb-b { display: flex; flex-direction: column; gap: 8px; padding: 4px 2px 10px 21px; }
   .cc .cb-b p { font-size: 13px; line-height: 1.55; color: var(--ink-2); white-space: pre-line; }
+  .cc .cb-when { font-size: 11px; color: var(--muted); }
+
+  /* Hand-offs: the prompt to give each chat next, with a button to copy it */
+  .cc .handoffs { display: flex; flex-direction: column; gap: 8px; }
+  .cc .handoffs h3 { margin-bottom: 0; }
+  .cc .ho-sub { font-size: 12px; color: var(--muted); margin-top: -4px; }
+  .cc .ho { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--sub); display: flex; flex-direction: column; gap: 4px; }
+  .cc .ho-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cc .ho-h b { font-size: 12.5px; font-weight: 600; overflow-wrap: anywhere; }
+  .cc .ho p { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); white-space: pre-line; overflow-wrap: anywhere; }
+  .cc .ho-copy { flex: 0 0 auto; min-height: 26px; padding: 2px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); font-size: 12px; font-weight: 500; color: var(--ink-3); }
+  .cc .ho-copy:hover { background: var(--track); }
 
   /* Fleet rows say what the job is doing and what comes back; plan cards can carry a small picture */
   .cc .fjob .jd { display: block; margin-top: 2px; font-size: 11.5px; line-height: 1.45; color: var(--muted); }
@@ -980,6 +1014,7 @@
   .h-job { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; margin-left: 6px; }
   .h-job.run { background: var(--q2-soft); color: var(--q2); } .h-job.need { background: var(--q3-soft); color: var(--q3); }
   .h-job.stuck { background: var(--q1-soft); color: var(--q1); } .h-job.idle { background: var(--q4-soft); color: var(--q4); }
+  .h-job.done { background: var(--surface-2); color: var(--ink-soft); }
   .hist-add { display: flex; gap: 6px; margin-top: 8px; align-items: flex-start; flex-wrap: wrap; }
   .hist-add textarea { flex: 1 1 220px; min-height: 40px; }
   .hist-add input { width: 78px; flex: none; }
@@ -1074,6 +1109,7 @@ const defaultSettings = () => ({
   mapLayout: 'centred',
   mapRootLabel: 'My Projects',
   mapSides: {},
+  listCollapsedMasters: [],
 });
 
 function persistListPrefs() {
@@ -1171,8 +1207,8 @@ const rowToTask = (r) => ({ id: r.id, title: r.title, notes: r.notes || '', proj
    stale copy on one device can never overwrite a newer status line. */
 const projToRow = (p) => ({ id: p.id, name: p.name, colour: p.colour, area_id: p.areaId || null });
 const rowToProj = (r) => ({ id: r.id, name: r.name, colour: r.colour, areaId: r.area_id || null });
-const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '', stream: a.stream || null, internal: !!a.internal });
-const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '', stream: r.stream || null, internal: !!r.internal });
+const areaToRow = (a) => ({ id: a.id, name: a.name, colour: a.colour, position: a.position || 0, bg: a.bg || '', stream: a.stream || null, internal: !!a.internal, master: masterOf(a) || null });
+const rowToArea = (r) => ({ id: r.id, name: r.name, colour: r.colour, position: r.position || 0, bg: r.bg || '', stream: r.stream || null, internal: !!r.internal, master: r.master || null });
 function sortAreas() { state.areas.sort((a, b) => (a.position || 0) - (b.position || 0)); }
 
 /* Group backdrops: token stored in area.bg */
@@ -1754,6 +1790,19 @@ async function pullStatusLine(id) {
 /* A group marked internal holds the Chief of Staff's own tasks. They stay out of every view of
    Ifran's work and show only when that group (or a project in it) is the one opened. */
 function isInternalTask(t) { const a = areaOf(taskAreaId(t)); return !!(a && a.internal); }
+/* Master groups sit above groups: a group may name one (area.master), and master groups appear in
+   the order of their first group. A section with no name holds the groups that stand on their own. */
+function masterOf(a) { return String((a && a.master) || '').trim(); }
+function masterSections(areas) {
+  const out = [];
+  areas.forEach(a => {
+    const name = masterOf(a);
+    let sec = out.find(x => x.name === name);
+    if (!sec) { sec = { name, areas: [] }; out.push(sec); }
+    sec.areas.push(a);
+  });
+  return out;
+}
 function myTasks() { return state.areas.some(a => a.internal) ? state.tasks.filter(t => !isInternalTask(t)) : state.tasks; }
 
 function visibleTasks() {
@@ -1938,22 +1987,38 @@ function renderSidebar() {
   };
   html += '<div class="side-label">Groups <button data-addproj title="New project" aria-label="New project">+</button></div>';
   const collapsed = state.settings.collapsed || [];
-  const sideAreas = state.areas.filter(a => !a.internal).concat(state.areas.filter(a => a.internal));
-  let apartLabelled = false;
-  for (const a of sideAreas) {
-    if (a.internal && !apartLabelled) { apartLabelled = true; html += '<div class="side-label" title="Tasks in these groups stay out of your Action plan, lists and business pages">Kept apart</div>'; }
+  // Groups sit under their master group (Property, Business, Systems ...), each of which folds away.
+  // A group kept apart (the Chief of Staff's own) with no master group goes last, under its own label.
+  const areaRowHTML = (a) => {
     const c = (a.internal ? state.tasks.filter(t => t.status !== 'done') : open).filter(t => taskAreaId(t) === a.id).length;
     const isCollapsed = collapsed.includes(a.id);
-    html += '<div class="area-row">' +
-      '<button class="proj-btn' + (ui.filterArea === a.id ? ' active' : '') + '" data-area="' + a.id + '">' +
+    let out = '<div class="area-row">' +
+      '<button class="proj-btn' + (ui.filterArea === a.id ? ' active' : '') + '" data-area="' + a.id + '"' + (a.internal ? ' title="Kept apart: these tasks stay out of your Action plan, lists and business pages"' : '') + '>' +
       '<span class="proj-dot" style="background:' + a.colour + '"></span><span class="proj-name">' + esc(a.name) + '</span>' +
       (c ? '<span class="nav-count">' + c + '</span>' : '') + '</button>' +
       '<button class="kebab" data-astyle="' + a.id + '" title="Group backdrop" aria-label="Backdrop for ' + esc(a.name) + '">&#8943;</button>' +
       '<button class="caret" data-caret="' + a.id + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + esc(a.name) + '">' + (isCollapsed ? '&#9656;' : '&#9662;') + '</button>' +
       '</div>';
     if (!isCollapsed) {
-      for (const p of state.projects.filter(p => p.areaId === a.id)) html += projBtn(p, true);
+      for (const p of state.projects.filter(p => p.areaId === a.id)) out += projBtn(p, true);
     }
+    return out;
+  };
+  const apart = state.areas.filter(a => a.internal && !masterOf(a));
+  const sideSections = masterSections(state.areas.filter(a => !apart.includes(a)));
+  for (const sec of sideSections) {
+    // Groups with no master group get a plain label, so they do not look part of the one above
+    if (!sec.name && sideSections.some(x => x.name)) html += '<div class="side-label">Other groups</div>';
+    if (sec.name) {
+      const shut = collapsed.includes('m:' + sec.name);
+      html += '<button class="side-master" data-mcaret="' + esc(sec.name) + '" aria-expanded="' + !shut + '"><span class="m-caret" aria-hidden="true">' + (shut ? '&#9656;' : '&#9662;') + '</span>' + esc(sec.name) + '</button>';
+      if (shut) continue;
+    }
+    for (const a of sec.areas) html += areaRowHTML(a);
+  }
+  if (apart.length) {
+    html += '<div class="side-label" title="Tasks in these groups stay out of your Action plan, lists and business pages">Kept apart</div>';
+    for (const a of apart) html += areaRowHTML(a);
   }
   const unfiled = state.projects.filter(p => !p.areaId);
   if (unfiled.length) {
@@ -2209,22 +2274,45 @@ function renderList() {
     return tops.map(t => rowPlusKids(t, opts || {}, 0)).join('');
   };
 
+  // Which groups this list covers: the one chosen, or all of Ifran's (never a group kept apart, unless it is the one chosen)
+  const chosenArea = ui.filterArea || (ui.filterProject ? ((state.projects.find(p => p.id === ui.filterProject) || {}).areaId || null) : null);
+  const listAreas = chosenArea ? state.areas.filter(a => a.id === chosenArea) : state.areas.filter(a => !a.internal);
+  const sections = masterSections(listAreas);
+  const shutMasters = state.settings.listCollapsedMasters || [];
+  const named = sections.some(sec => sec.name);
+  // A master group's heading: press it to fold its groups away
+  const masterHead = (sec, count) => {
+    const label = sec.name || 'Other groups';
+    const shut = shutMasters.includes(label);
+    return { shut, html: '<button type="button" class="master-head" data-mtoggle="' + esc(label) + '" aria-expanded="' + !shut + '"><span class="m-caret" aria-hidden="true">' + (shut ? '&#9656;' : '&#9662;') + '</span>' + esc(label) +
+      ' <span class="g-count">' + count + '</span></button>' };
+  };
+
   if (inColumns) {
-    const cols = state.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour }));
-    // Tasks in no group come first. As the last column they sat off the right-hand edge and looked lost.
-    if (open.some(t => !taskAreaId(t))) cols.unshift({ id: null, name: 'No group', colour: null });
-    html += '<div class="board" style="grid-template-columns:repeat(' + cols.length + ',minmax(250px,1fr))">';
-    for (const c of cols) {
+    const colHTML = (c) => {
       const items = open.filter(t => taskAreaId(t) === c.id).sort(listSort());
       const colBg = c.id ? resolveAreaBg(areaOf(c.id)) : '';
-      html += '<div class="col"' + (colBg ? ' style="background:' + (colBg + ' var(--surface-2)').replace(/"/g, '&quot;') + '"' : '') + '>' +
+      return '<div class="col"' + (colBg ? ' style="background:' + (colBg + ' var(--surface-2)').replace(/"/g, '&quot;') + '"' : '') + '>' +
         '<div class="col-head">' + (c.colour ? '<span class="g-dot" style="background:' + c.colour + ';width:10px;height:10px;border-radius:50%"></span>' : '') + esc(c.name) +
         '<span class="q-count">' + items.length + '</span></div>' +
         wrap(items, { hideArea: true }) +
         (items.length ? '' : '<div class="empty" style="padding:16px 8px;font-size:13px">Nothing here</div>') +
         '</div>';
+    };
+    // One row of columns per master group, so the groups that belong together sit together and
+    // nothing runs off the right-hand edge. Every row uses the same column widths.
+    const widest = Math.max(1, ...sections.map(sec => sec.areas.length));
+    const board = (cols) => '<div class="board mboard" style="grid-template-columns:repeat(' + widest + ',minmax(250px,1fr))">' + cols.map(colHTML).join('') + '</div>';
+    // Tasks in no group come first, where they cannot be missed
+    if (open.some(t => !taskAreaId(t))) html += board([{ id: null, name: 'No group', colour: null }]);
+    for (const sec of sections) {
+      if (named) {
+        const head = masterHead(sec, open.filter(t => sec.areas.some(a => a.id === taskAreaId(t))).length);
+        html += head.html;
+        if (head.shut) continue;
+      }
+      html += board(sec.areas.map(a => ({ id: a.id, name: a.name, colour: a.colour })));
     }
-    html += '</div>';
     if (done.length) {
       html += '<div class="toolbar" style="margin-top:18px"><button class="link-btn" data-toggledone>' + (ui.showDone ? 'Hide' : 'Show') + ' completed (' + done.length + ')</button></div>';
       if (ui.showDone) html += rowsHTML(done.slice(0, 100));
@@ -2236,7 +2324,7 @@ function renderList() {
     // "No group" leads, and a task pointing at a project or group that no longer exists lands there
     // too, so nothing can drop out of the list.
     const realArea = (id) => (id && areaOf(id) ? id : null);
-    for (const a of [null, ...state.areas]) {
+    const areaBlock = (a) => {
       const aid = a ? a.id : null;
       const direct = open.filter(t => !projectOf(t) && realArea(t.areaId) === aid);
       const blocks = [];
@@ -2244,15 +2332,27 @@ function renderList() {
         const items = open.filter(t => t.projectId === p.id);
         if (items.length) blocks.push({ p, items });
       }
-      if (!blocks.length && !direct.length) continue;
+      if (!blocks.length && !direct.length) return { total: 0, html: '' };
       const total = direct.length + blocks.reduce((n, b) => n + b.items.length, 0);
-      html += '<div class="group-head">' +
+      let out = '<div class="group-head">' +
         (a ? '<span class="g-dot" style="background:' + a.colour + '"></span>' + esc(a.name) : 'No group') +
         ' <span class="g-count">' + total + '</span></div>';
-      if (direct.length) html += wrap(direct, { hideProject: true, hideArea: true });
+      if (direct.length) out += wrap(direct, { hideProject: true, hideArea: true });
       for (const b of blocks) {
-        html += '<div class="sub-head"><span class="g-dot" style="background:' + b.p.colour + '"></span>' + esc(b.p.name) + ' <span class="g-count">' + b.items.length + '</span></div>' + wrap(b.items, { hideProject: true });
+        out += '<div class="sub-head"><span class="g-dot" style="background:' + b.p.colour + '"></span>' + esc(b.p.name) + ' <span class="g-count">' + b.items.length + '</span></div>' + wrap(b.items, { hideProject: true });
       }
+      return { total, html: out };
+    };
+    html += areaBlock(null).html;
+    for (const sec of sections) {
+      const parts = sec.areas.map(areaBlock).filter(x => x.total);
+      if (!parts.length) continue;
+      if (named) {
+        const head = masterHead(sec, parts.reduce((n, x) => n + x.total, 0));
+        html += head.html;
+        if (head.shut) continue;
+      }
+      html += parts.map(x => x.html).join('');
     }
   } else if (ui.groupBy === 'due') {
     const t = todayISO();
@@ -2923,7 +3023,7 @@ function refreshOpenStatus() {
 
 const ICON_CAL = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>';
 
-/* The task sheet. Order, top to bottom: title, current status, description, steps, project and group,
+/* The task sheet. Order, top to bottom: name, description, current status, steps, project and group,
    the sorting fields, then History and updates at the very bottom. Save stays pinned in view. */
 function openEdit(id) {
   const t = getTask(id);
@@ -2959,9 +3059,9 @@ function openEdit(id) {
       '<div class="f-row" style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft)">Sub-task of <b>' + esc(getTask(t.parentId).title) + '</b>' +
       '<button class="pick" id="etDetach">Make top-level</button></div>' : '') +
     '<div class="f-row"><label class="f-label" for="etTitle">Task</label><input class="f-input" id="etTitle" value="' + esc(t.title) + '"></div>' +
+    '<div class="f-row"><label class="f-label" for="etNotes">Description</label><textarea class="f-textarea" id="etNotes" placeholder="What this is about and what done looks like">' + esc(t.notes || '') + '</textarea></div>' +
     '<div class="f-row"><label class="f-label" for="etStatus">Current status<span class="f-aside" id="etStatusAt">' + esc(statusStampText(t)) + '</span></label>' +
     '<textarea class="f-textarea f-status" id="etStatus" rows="1" maxlength="300" data-shown="' + esc(t.currentStatus || '') + '" placeholder="One line on where this stands. It refreshes itself whenever an update is logged.">' + esc(t.currentStatus || '') + '</textarea></div>' +
-    '<div class="f-row"><label class="f-label" for="etNotes">Description</label><textarea class="f-textarea" id="etNotes" placeholder="What this is about and what done looks like">' + esc(t.notes || '') + '</textarea></div>' +
     '<div class="f-row"><span class="f-label">Steps</span><div class="steps-wrap"><div class="steps-main"><div id="etSteps"></div>' +
     '<div style="display:flex;gap:6px;margin-top:4px"><input class="f-input" id="etStepNew" placeholder="Break the task into steps"><button class="pick" id="etStepAdd">Add</button></div></div>' +
     '<div class="task-img none" id="etImg"></div></div><input type="file" id="etImgFile" accept="image/*" style="display:none" aria-hidden="true" tabindex="-1"></div>' +
@@ -3319,6 +3419,7 @@ function openSettings() {
     (D.streams.length ? '<select class="f-select" style="width:116px;flex:none" data-astream="' + a.id + '" aria-label="Business for ' + esc(a.name) + '" title="The business this group belongs to. Briefs and agent work for that business show under this group.">' +
       '<option value="">No business</option>' + D.streams.map(s => '<option value="' + esc(s.id) + '"' + (!a.internal && a.stream === s.id ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') +
       '<option value="__apart"' + (a.internal ? ' selected' : '') + '>Chief of Staff’s own (kept apart)</option></select>' : '') +
+    '<input class="f-input" style="width:104px;flex:none" list="setMasters" data-amaster="' + a.id + '" value="' + esc(masterOf(a)) + '" placeholder="Master group" aria-label="Master group for ' + esc(a.name) + '" title="The master group this group sits under, such as Property or Business. Type a new name to start one; leave empty for none.">' +
     '<button class="btn-quiet" style="border:1px solid var(--line);padding:6px 10px" data-asty="' + a.id + '">Backdrop</button>' +
     '<button class="btn-danger" style="margin:0;padding:6px 10px" data-adel="' + a.id + '">Delete</button>' +
     '</div>'
@@ -3372,7 +3473,8 @@ function openSettings() {
     '</div>' +
 
     '<div class="f-row"><span class="f-label">Groups</span>' + areaRows + newAreaRow +
-    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your top-level areas of work, one per business. The business setting ties a group to its briefs and agent work on Home. A group set to “Chief of Staff’s own” holds its own tasks: they stay out of your Action plan, lists and business pages and show only when you open that group. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
+    '<datalist id="setMasters">' + masterSections(state.areas).filter(x => x.name).map(x => '<option value="' + esc(x.name) + '"></option>').join('') + '</datalist>' +
+    '<div style="font-size:12.5px;color:var(--ink-faint);margin-top:6px">Groups are your areas of work, one per business. A master group (Property, Business, Systems) gathers related groups under one heading in the sidebar and the List, where it folds away. The business setting ties a group to its briefs and agent work on Home. A group set to “Chief of Staff’s own” holds its own tasks: they stay out of your Action plan, lists and business pages and show only when you open that group. Deleting a group keeps its projects and tasks; they simply become ungrouped.</div>' +
     '</div>' +
     '<div class="f-row"><span class="f-label">Projects</span>' + projRows +
     '<div style="margin-top:8px"><button class="btn-quiet" id="setNewProject" style="border:1px solid var(--line)">Add a project</button></div>' +
@@ -3531,6 +3633,10 @@ function openSettings() {
       const a = state.areas.find(a => a.id === inp.dataset.acol);
       if (a) a.colour = inp.value;
     });
+    root.querySelectorAll('[data-amaster]').forEach(inp => {
+      const a = state.areas.find(a => a.id === inp.dataset.amaster);
+      if (a) a.master = inp.value.trim() || null;
+    });
     root.querySelectorAll('[data-astream]').forEach(sel => {
       const a = state.areas.find(a => a.id === sel.dataset.astream);
       if (a) { a.internal = sel.value === '__apart'; a.stream = a.internal ? null : (sel.value || null); }
@@ -3651,6 +3757,15 @@ document.getElementById('sidebar').addEventListener('click', (e) => {
     save(); render();
     return;
   }
+  const mcaret = e.target.closest('[data-mcaret]');
+  if (mcaret) {
+    const key = 'm:' + mcaret.dataset.mcaret;
+    const c = state.settings.collapsed || (state.settings.collapsed = []);
+    const i = c.indexOf(key);
+    if (i === -1) c.push(key); else c.splice(i, 1);
+    save(); render();
+    return;
+  }
   const styleBtn = e.target.closest('[data-astyle]');
   if (styleBtn) { openAreaStyle(styleBtn.dataset.astyle); return; }
   const area = e.target.closest('[data-area]');
@@ -3712,6 +3827,14 @@ document.getElementById('content').addEventListener('change', (e) => {
 
 document.getElementById('content').addEventListener('click', (e) => {
   if (ccClick(e)) return;
+  const mtoggle = e.target.closest('[data-mtoggle]');
+  if (mtoggle) {   // fold or unfold a master group in the List
+    const c = state.settings.listCollapsedMasters || (state.settings.listCollapsedMasters = []);
+    const i = c.indexOf(mtoggle.dataset.mtoggle);
+    if (i === -1) c.push(mtoggle.dataset.mtoggle); else c.splice(i, 1);
+    save(); render();
+    return;
+  }
   const groupBtn = e.target.closest('[data-group]');
   if (groupBtn) { ui.groupBy = groupBtn.dataset.group; persistListPrefs(); render(); return; }
   const sortBtn = e.target.closest('[data-sort]');
@@ -3831,9 +3954,11 @@ const STATUS = {
   'Needs you': { key: 'need',  rank: 1, label: 'Needs you', lower: 'need you', out: 'Waiting on you' },
   'Stuck':     { key: 'stuck', rank: 0, label: 'Stuck',     lower: 'stuck',    out: 'Blocked on' },
   'Idle':      { key: 'idle',  rank: 3, label: 'Idle',      lower: 'idle',     out: 'Could take on' },
+  'Done':      { key: 'done',  rank: 4, label: 'Done',      lower: 'done',     out: 'Came back as' },
 };
+const DONE_SHOWN_HOURS = 48;   // a finished job stays in the fleet this long, then drops off (it stays in its task's history)
 const STATUS_ORDER = ['Running', 'Needs you', 'Stuck', 'Idle'];
-const DOT = { run: '#2563EB', need: '#E39A2B', stuck: '#D9483B', idle: '#9AA0AC' };
+const DOT = { run: '#2563EB', need: '#E39A2B', stuck: '#D9483B', idle: '#9AA0AC', done: '#5C6270' };
 const NAV_VIEWS = ['home', 'today', 'list', 'matrix', 'board', 'priority', 'map', 'done'];
 
 const D = { streams: [], jobs: [], activity: [], briefs: [], questions: [] };
@@ -3901,6 +4026,11 @@ function fmtShort(t) {
 function fmtClock(t) { return new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); }
 function fmtWhen(t) { if (t == null) return '–'; return t >= startOfToday() ? fmtClock(t) : fmtShort(t); }
 function fmtStamp(t) { return t == null ? '' : fmtShort(t) + ', ' + fmtClock(t); }
+/* The full date and time, never "Today": for saying exactly when something was written. */
+function fmtExact(t) {
+  if (t == null) return '';
+  return new Date(t).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) + ' at ' + fmtClock(t);
+}
 function fmtMins(m) {
   m = Math.round(m || 0);
   if (m <= 0) return '–';
@@ -3945,10 +4075,13 @@ function liveSort(a, b) { return ((a.priority || 9) - (b.priority || 9)) || byDu
 
 /* ---------- Agent job rules ---------- */
 // A job is on the board until it is finished, and stays while it still needs Ifran or is stuck.
-const jobVisible = (j) => !j.finished_at || j.status === 'Needs you' || j.status === 'Stuck';
+// A finished job is Done: it shows for a couple of days with its finished time, then drops off.
+const jobVisible = (j) => j.status === 'Done'
+  ? (ms(j.finished_at) || 0) > Date.now() - DONE_SHOWN_HOURS * 3600000
+  : (!j.finished_at || j.status === 'Needs you' || j.status === 'Stuck');
 const visibleJobs = () => D.jobs.filter(jobVisible);
-function jobsForTask(taskId) { return visibleJobs().filter(j => j.task_id === taskId); }
-function statusCounts(jobs) { const c = { 'Running': 0, 'Needs you': 0, 'Stuck': 0, 'Idle': 0 }; jobs.forEach(j => { if (c[j.status] != null) c[j.status]++; }); return c; }
+function jobsForTask(taskId) { return visibleJobs().filter(j => j.task_id === taskId && j.status !== 'Done'); }
+function statusCounts(jobs) { const c = { 'Running': 0, 'Needs you': 0, 'Stuck': 0, 'Idle': 0, 'Done': 0 }; jobs.forEach(j => { if (c[j.status] != null) c[j.status]++; }); return c; }
 function jobSort(a, b) { return ((STATUS[a.status] || STATUS.Idle).rank - (STATUS[b.status] || STATUS.Idle).rank) || ((ms(b.updated_at) || 0) - (ms(a.updated_at) || 0)); }
 function runningTime(j) {
   const s = ms(j.started_at); if (s == null) return '–';
@@ -3957,6 +4090,7 @@ function runningTime(j) {
   return m < 1 ? 'under 1 min' : fmtMins(m);
 }
 function stepText(j) {
+  if (j.status === 'Done') return 'Finished ' + fmtStamp(ms(j.finished_at));
   const parts = [];
   if (j.steps_total > 0) parts.push('Step ' + Math.min(j.steps_done, j.steps_total) + ' of ' + j.steps_total);
   if (j.step_note) parts.push(j.step_note);
@@ -3976,7 +4110,7 @@ function statusBadge(status) {
   return '<span class="badge s-' + s.key + '"><span class="bd" style="background:' + DOT[s.key] + '"></span>' + esc(s.label) + '</span>';
 }
 function pillsFor(c) {
-  return ['Stuck', 'Needs you', 'Running', 'Idle'].filter(s => c[s]).map(s => '<span class="badge s-' + STATUS[s].key + '">' + c[s] + ' ' + STATUS[s].lower + '</span>').join('');
+  return ['Stuck', 'Needs you', 'Running', 'Idle', 'Done'].filter(s => c[s]).map(s => '<span class="badge s-' + STATUS[s].key + '">' + c[s] + ' ' + STATUS[s].lower + '</span>').join('');
 }
 function jobLine(j) { return j.task_id ? taskBtn(j.task_id, esc(j.title)) : esc(j.title); }
 /* Group header: the whole row toggles (the button's ::after covers it), the name is its own link. */
@@ -4037,6 +4171,32 @@ function pendingDecision(b) { return b && b.decision && !b.decided_at && Array.i
 /* A decision already made is noted under the brief. One still open is asked in "Needs your attention". */
 function decidedNote(b) {
   return b && b.decision && b.decided_at ? '<p class="decided">You chose “' + esc(b.decision_choice || '') + '” ' + esc(fmtStamp(ms(b.decided_at))) + '.</p>' : '';
+}
+/* Hand-offs: for each chat that has something to do next, the prompt to give it. */
+function handoffList(b) {
+  return (Array.isArray(b && b.handoffs) ? b.handoffs : [])
+    .map(h => ({ chat: String((h && h.chat) || '').trim(), prompt: String((h && h.prompt) || '').trim() }))
+    .filter(h => h.chat && h.prompt).slice(0, 12);
+}
+function handoffsHtml(b) {
+  const list = handoffList(b);
+  if (!list.length) return '';
+  return '<div class="cos-part handoffs"><h3>Hand-offs</h3><span class="ho-sub">What to say in each chat next. Copy a prompt and paste it into that chat.</span>' +
+    list.map((h, i) => '<div class="ho"><div class="ho-h"><b>' + esc(h.chat) + '</b><button type="button" class="ho-copy" data-cc="copy-handoff" data-brief="' + esc(b.id) + '" data-i="' + i + '" aria-label="Copy the prompt for ' + esc(h.chat) + '">Copy</button></div><p>' + esc(h.prompt) + '</p></div>').join('') + '</div>';
+}
+async function copyHandoff(briefId, i) {
+  const h = handoffList(D.briefs.find(x => x.id === briefId))[i];
+  if (!h) return;
+  let ok = false;
+  try { await navigator.clipboard.writeText(h.prompt); ok = true; } catch (e) {
+    // Older browsers, or a page without clipboard permission: fall back to a hidden text box
+    const ta = document.createElement('textarea');
+    ta.value = h.prompt; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+    ta.remove();
+  }
+  toast(ok ? 'Copied. Paste it into the ' + h.chat + ' chat.' : 'Could not copy. Select the text and copy it by hand.');
 }
 function briefWords(b) { return b ? [b.standing, b.holding, b.late].filter(x => x && String(x).trim()).join('\n\n') : ''; }
 /* The tasks and activity that belong to one business, for the "changed since" line on its note. */
@@ -4125,7 +4285,7 @@ function attentionPanel() {
 function statusBar() {
   const c = statusCounts(visibleJobs());
   return '<div class="panel statbar" role="group" aria-label="Agent status counts"><span class="sb-l">Agents</span>' +
-    STATUS_ORDER.map(s => '<span class="sb-i' + (c[s] ? '' : ' zero') + '"><span class="dot" style="background:' + DOT[STATUS[s].key] + '"></span>' + STATUS[s].label + '<b>' + c[s] + '</b></span>').join('') + '</div>';
+    STATUS_ORDER.concat(['Done']).map(s => '<span class="sb-i' + (c[s] ? '' : ' zero') + '"' + (s === 'Done' ? ' title="Finished in the last ' + DONE_SHOWN_HOURS + ' hours"' : '') + '><span class="dot" style="background:' + DOT[STATUS[s].key] + '"></span>' + STATUS[s].label + '<b>' + c[s] + '</b></span>').join('') + '</div>';
 }
 
 /* What has changed in Sorted since a brief was written. The brief's words are a snapshot; this is
@@ -4173,10 +4333,10 @@ function cosPanel() {
     const open = !!cc.cosBizOpen[x.s.id], L = look(x.s.id);
     return '<div class="cb"><button type="button" class="cb-h" data-cc="cos-biz" data-k="' + esc(x.s.id) + '" aria-expanded="' + open + '">' + CHEV +
       '<span class="dot" style="background:' + L.colour + '"></span><b>' + esc(L.name) + '</b><span>' + esc(fmtShort(ms(x.b.at))) + '</span></button>' +
-      (open ? '<div class="cb-b">' + freshnessHtml(x.b, bizScope(x.s.id)) + '<p>' + esc(briefWords(x.b)) + '</p>' + decidedNote(x.b) + '</div>' : '') + '</div>';
+      (open ? '<div class="cb-b"><span class="cb-when">Written ' + esc(fmtExact(ms(x.b.at))) + '</span>' + freshnessHtml(x.b, bizScope(x.s.id)) + '<p>' + esc(briefWords(x.b)) + '</p>' + handoffsHtml(x.b) + decidedNote(x.b) + '</div>' : '') + '</div>';
   }).join('') + '</div>' : '';
   const body = !cc.loaded ? '<p class="cc-empty">Loading the latest brief…</p>'
-    : b ? freshnessHtml(b) + (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + decidedNote(b) + bizNotes
+    : b ? freshnessHtml(b) + (parts.length ? parts.map(p => '<div class="cos-part"><h3>' + p[0] + '</h3><p>' + esc(p[1]) + '</p></div>').join('') : '<p class="cc-empty">The latest brief has no text yet.</p>') + handoffsHtml(b) + decidedNote(b) + bizNotes
     : '<p class="cc-empty">No brief yet. When your Chief of Staff starts work, its latest brief appears here: where things stand, what is holding things up, and what is running late.</p>' + bizNotes;
   const open = myTasks().filter(t => !isDone(t));
   const np = open.filter(noPriority).length;
@@ -4188,7 +4348,7 @@ function cosPanel() {
     ? '<button type="button" class="sqbtn ghost" data-cc="dictate" aria-pressed="' + cc.listening + '" aria-label="' + (cc.listening ? 'Stop dictating' : 'Dictate a message') + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg></button>'
     : '';
   return '<aside class="panel cos" aria-label="Chief of Staff">' +
-    '<div class="cos-head"><div class="cos-av" aria-hidden="true">CS</div><div class="cos-title"><b>Chief of Staff</b><span>' + (b ? 'Brief · ' + esc(fmtStamp(ms(b.at))) : 'No brief yet') + '</span></div>' +
+    '<div class="cos-head"><div class="cos-av" aria-hidden="true">CS</div><div class="cos-title"><b>Chief of Staff</b><span>' + (b ? 'Brief written ' + esc(fmtExact(ms(b.at))) : 'No brief yet') + '</span></div>' +
     '<button type="button" class="iconbtn" data-cc="cos-toggle" aria-label="Collapse the Chief of Staff panel"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button></div>' +
     '<div class="cos-body">' + body + (notes.length ? '<div class="sysnote">' + notes.join('') + '</div>' : '') + '</div>' +
     '<form class="msgform" data-form="msg"><label for="cos-msg" class="vh">Message your Chief of Staff</label><input id="cos-msg" type="text" autocomplete="off" placeholder="Message your Chief of Staff…" value="' + esc(cc.msgDraft) + '">' + mic +
@@ -4402,9 +4562,9 @@ function taskHistoryHTML(t) {
   acts.forEach(a => rows.push({ at: ms(a.at) || 0, html: '<b>' + esc(whoLabel(a.who)) + '</b>' + (a.minutes > 0 ? '<span class="h-min">' + esc(fmtMins(a.minutes)) + '</span>' : '') + '<p>' + activityText(a) + '</p>' }));
   jobs.forEach(j => {
     const s = STATUS[j.status] || STATUS.Idle, out = safeUrl(j.output_url);
-    const fin = !!j.finished_at && j.status === 'Idle';
-    const detail = [fin ? '' : stepText(j), j.returns ? (fin ? 'Returned' : s.out) + ': ' + j.returns : '', j.finished_at ? 'Finished ' + fmtStamp(ms(j.finished_at)) : ''].filter(Boolean).join(' · ');
-    rows.push({ at: ms(j.started_at) || ms(j.created_at) || 0, html: '<b>' + esc(j.agent) + '</b><span class="h-job ' + s.key + '">' + (fin ? 'Finished' : esc(s.label)) + '</span><p>Agent job: ' + esc(j.title) + (detail ? '<br>' + esc(detail) : '') + (out ? ' <a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') + '</p>' });
+    const fin = j.status === 'Done' || (!!j.finished_at && j.status === 'Idle');   // Idle with a finished time: a row from before Done existed
+    const detail = [fin ? '' : stepText(j), j.returns ? (fin ? 'Came back as' : s.out) + ': ' + j.returns : '', j.finished_at ? 'Finished ' + fmtStamp(ms(j.finished_at)) : ''].filter(Boolean).join(' · ');
+    rows.push({ at: ms(j.started_at) || ms(j.created_at) || 0, html: '<b>' + esc(j.agent) + '</b><span class="h-job ' + (fin ? 'done' : s.key) + '">' + (fin ? 'Done' : esc(s.label)) + '</span><p>Agent job: ' + esc(j.title) + (detail ? '<br>' + esc(detail) : '') + (out ? ' <a href="' + esc(out) + '" target="_blank" rel="noopener noreferrer">Open output</a>' : '') + '</p>' });
   });
   if (t.status === 'done' && t.completedAt) rows.push({ at: t.completedAt, sys: true, html: 'Completed and moved to the Archive' });
   rows.sort((a, b) => a.at - b.at);
@@ -4541,9 +4701,9 @@ async function answerQuestion(id, text) {
 async function jobDealtWith(id) {
   const j = D.jobs.find(x => x.id === id);
   if (!j || !j.finished_at) return;
-  const up = await sb.from('agent_jobs').update({ status: 'Idle' }).eq('id', id);
+  const up = await sb.from('agent_jobs').update({ status: 'Done' }).eq('id', id);
   if (up.error) { toast('Could not update the job: ' + up.error.message); return; }
-  j.status = 'Idle';
+  j.status = 'Done';
   toast('Marked as dealt with.');
   ccScheduleReload();
   render();
@@ -4600,6 +4760,7 @@ function ccClick(e) {
     if (b.dataset.kind === 'd') decide(b.dataset.id, Number(b.dataset.i));
     else { const q = D.questions.find(x => x.id === b.dataset.id); answerQuestion(b.dataset.id, q ? optionLabels(q.options)[Number(b.dataset.i)] : ''); }
   }
+  else if (act === 'copy-handoff') { copyHandoff(b.dataset.brief, Number(b.dataset.i)); }
   else if (act === 'job-done') { b.disabled = true; jobDealtWith(b.dataset.id); }
   else if (act === 'cos-biz') { cc.cosBizOpen[b.dataset.k] = !cc.cosBizOpen[b.dataset.k]; render(); refocus('[data-cc="cos-biz"][data-k="' + b.dataset.k + '"]'); }
   else if (act === 'dictate') { toggleDictation(); }
